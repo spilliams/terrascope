@@ -35,11 +35,29 @@ want to take root dependency into account too.
 
 Speaking of, I do need it to have some concept of dynamic dependency. For
 example: "this root depends on another root". We'd have to do the math of
-excluding some scopes if necessary. Root A depending on root B means that we'd
+excluding some scopes _if necessary_. Root A depending on root B means that we'd
 take all the B scopes that match A's, and make sure the values are the same.
 That "if necessary" is important though: maybe root A depends on root B but with
-some key scope differences (e.g. "account-networking" for scope:domain=Product
-depends on "transit-gateway" for scope:domain=Networking)
+some important scope differences (e.g. root named "account-networking" with
+`scope:domain=Product` depends on root named "transit-gateway" with scope
+`scope:domain=Networking`).
+
+That probably looks like a `root` block of
+
+```hcl
+root "account-networking" {
+  scopes = ["org", "platform", "domain", "environment", "region"]
+
+  dependency {
+    root = "transit-gateway"
+    scopes = {
+      # unset scopes here will retain the values of the dependant
+      domain = "Networking"
+    }
+  }
+}
+
+```
 
 I'm not sure how much to build the parameter pattern into it. I can get away
 with tagging dependencies. Where the example above is "root named A depends on
@@ -55,10 +73,11 @@ Here's the core of terraboots:
 - you don't need anything other than terraform to run it. This means its config
   files are dead simple.
 - it will tell you when it is improperly configured. This is important because
-  this configuration is confusing! And guardrails are just as important as docs.
+  configuration is confusing! And guardrails are just as important as docs.
   This means the configs will all be in HCL, and the tool will validate them at
   runtime.
 - it can solve the `affected` problem quickly. This means it has to be
-  performant.
-- it can solve the dependencies quickly to generate a parallelizable task
+  performant. And maybe it has to be extensible, because people have different
+  ideas of what it means to be "affected".
+- it can solve root dependencies quickly to generate a parallelizable task
   manifest. Again, it has to be performant.
