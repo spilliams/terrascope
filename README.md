@@ -1,10 +1,16 @@
 # terraboots
 
+Still very much a work in progress.
+
 My attempt at a Terraform build orchestrator, for large platform projects with
 hundreds of root modules.
 
 This repository contains both the source code for the tool `terraboots`, as well
 as a sample monorepo managed by that tool.
+
+## Installation & Usage
+
+Come back later :P
 
 ## Example Monorepo
 
@@ -21,6 +27,10 @@ you define in the top level hcl, and selectively apply to each of your roots.
 This allows you to maintain a few root "templates" that each could be planned
 and applied dozens or hundreds of times depending on the permutations of your
 scopes.
+
+## Terraboots HCL
+
+For schema documentation, please see `docs/hcl-schema.md`
 
 ## Terraboots CLI
 
