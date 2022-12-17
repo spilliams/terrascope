@@ -1,6 +1,11 @@
 package terraboots
 
 import (
+	"errors"
+	"fmt"
+	"os"
+	"path"
+
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )
 
@@ -13,7 +18,7 @@ type Project struct {
 	RootsDir string `hcl:"rootsDir"`
 
 	Scopes []*ProjectScope `hcl:"scope,block"`
-	// roots  []*root
+	Roots  map[string]*Root
 }
 
 type ProjectScope struct {
@@ -28,7 +33,7 @@ type ProjectScopeValidation struct {
 	ErrorMessage string `hcl:"error_message"`
 }
 
-func ParseProject(filename string) (*Project, error) {
+func ParseProject(cfgFile string) (*Project, error) {
 	cfg := &ProjectConfig{}
 	// TODO: use this for parsing scope validation blocks...
 	// ctx := &hcl.EvalContext{
@@ -95,9 +100,55 @@ func ParseProject(filename string) (*Project, error) {
 	// 		"zipmap":          stdlib.ZipmapFunc,
 	// 	},
 	// }
-	err := hclsimple.DecodeFile(filename, nil, cfg)
+	err := hclsimple.DecodeFile(cfgFile, nil, cfg)
 	if err != nil {
 		return nil, err
 	}
+
 	return cfg.Project, nil
+}
+
+func (p *Project) BuildRoot(rootName string) (*Root, error) {
+	root, ok := p.Roots[rootName]
+	if !ok {
+		var err error
+		root, err = p.AddRoot(rootName)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// TODO
+	return root, nil
+}
+
+func (p *Project) AddRoot(rootName string) (*Root, error) {
+	// look for named root
+	rootDir := path.Join(p.RootsDir, rootName)
+	_, err := os.Stat(rootDir)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("could not locate a root named '%s' in the roots directory '%s'", rootName, p.RootsDir)
+	} else if err != nil {
+		return nil, err
+	}
+
+	// look for terraboots file
+	rootCfg := path.Join(rootDir, "terraboots.hcl")
+	_, err = os.Stat(rootCfg)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, fmt.Errorf("found a root named '%s' in the roots directory '%s', but it does not contain a terraboots.hcl configuration", rootName, p.RootsDir)
+	} else if err != nil {
+		return nil, err
+	}
+
+	root, err := ParseRoot(rootCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.Roots == nil {
+		p.Roots = make(map[string]*Root)
+	}
+	p.Roots[root.ID] = root
+	return root, nil
 }

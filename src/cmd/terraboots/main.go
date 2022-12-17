@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -148,8 +150,9 @@ func newRootBuildCommand() *cobra.Command {
 		Short: "Builds the given root and prints the location of the built root to stdout",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.Warn("not yet implemented")
-			return nil
+			root, err := project.BuildRoot(args[0])
+			logrus.Debugf("%+v\n", root)
+			return err
 		},
 	}
 
@@ -198,13 +201,22 @@ func newRootListCommand() *cobra.Command {
 var project *terraboots.Project
 
 func bootsbootsPreRunE(cmd *cobra.Command, args []string) error {
-	logrus.Debug("hi i'm bootsboots")
-
+	logrus.Debugf("Using project configuration file: %s", configFile)
 	var err error
 	project, err = terraboots.ParseProject(configFile)
 	if err != nil {
 		return err
 	}
+
+	rootsDir := path.Join(path.Dir(configFile), project.RootsDir)
+	rootsDir, err = filepath.Abs(rootsDir)
+	if err != nil {
+		return err
+	}
+	project.RootsDir = rootsDir
+	logrus.Debugf("Project roots directory: %s", project.RootsDir)
+
+	// TODO: load scope data?
 
 	return nil
 }

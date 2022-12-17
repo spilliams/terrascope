@@ -23,36 +23,27 @@ Here's the core of terraboots:
 - it can solve root dependencies quickly to generate a parallelizable task
   manifest. Again, it has to be performant.
 
-## CLI Command Structure
-
-How do I want the CLI to operate? What's its command structure?
-
-```sh
-# housekeeping
-terraboots # prints short help
-terraboots [-h|--help] # prints long help
-terraboots version # prints version of terraboots
-
-# running existing roots
-terraboots plan <root> # using primary terraform commands like init, plan, apply and output will do what they say on the tin
-terraboots plan <root> -- --var-file=foo.tfvars # plans the root with some extra tf cli arguments
-terraboots terraform|tf <root> -- state list # runs `terraform state list` in the given root
-terraboots plan <root> -v|--verbose # makes sure the user knows what's happening in the templating
-
-# inspecting your infrastructure
-terraboots scope list # list all your scopes
-terraboots root list # list every single permutation of every root
-terraboots root list --affected # lists every single permutation of every root *which has been affected* (for some definition of "affected")
-
-# building new stuff
-terraboots project generate acme-infrastructure # builds a whole new monorepo named "acme-infrastructure"
-terraboots scope generate team # adds a new scope into the mix
-terraboots root generate my-awesome-stack # builds a new root module named 'my-awesome-stack'
-```
-
 The primary goal of `terraboots root list` is to make sure we can build a matrix
 for GitHub Actions or any other CI runner to know exactly what to run. It might
 want to take root dependency into account too.
+
+## up next
+
+1. I need to parse a single root, and build it.
+2. I need a schema for the scope data.
+3. scope validation is a future feature.
+4. root graph is an interesting idea, to show all dependencies
+
+## affected
+
+what makes it so that a root is worth running?
+
+1. the scope data changed
+2. the root itself changed
+3. the modules the root relied on changed? not sure how to do this quickly
+   without either parsing the entire AST or assuming semver sources
+
+## root dependencies
 
 Speaking of, I do need it to have some concept of dynamic dependency. For
 example: "this root depends on another root". We'd have to do the math of
@@ -77,7 +68,6 @@ root "account-networking" {
     }
   }
 }
-
 ```
 
 I'm not sure how much to build the parameter pattern into it. I can get away
