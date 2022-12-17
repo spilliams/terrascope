@@ -1,8 +1,29 @@
 # thoughts
 
-The CLI should make sure scopes don't have the same name as each other (or
-special characters, etc).
-Then we can use something like `{{scope.org}}` in a template file in a root.
+- The CLI should make sure scopes don't have the same name as each other (or
+  special characters, etc).
+  Then we can use something like `{{scope.org}}` in a template file in a root.
+- People will probably want some kind of output wiring (not unlike Terragrunt's
+  `dependency` blocks). This will likely have to be a new feature after v1
+  though.
+
+## The Core
+
+Here's the core of terraboots:
+
+- you don't need anything other than terraform to run it. This means its config
+  files are dead simple.
+- it will tell you when it is improperly configured. This is important because
+  configuration is confusing! And guardrails are just as important as docs.
+  This means the configs will all be in HCL, and the tool will validate them at
+  runtime.
+- it can solve the `affected` problem quickly. This means it has to be
+  performant. And maybe it has to be extensible, because people have different
+  ideas of what it means to be "affected".
+- it can solve root dependencies quickly to generate a parallelizable task
+  manifest. Again, it has to be performant.
+
+## CLI Command Structure
 
 How do I want the CLI to operate? What's its command structure?
 
@@ -65,19 +86,3 @@ root named B", this example is more like "root tagged consumer:foo depends on
 root tagged producer:foo". Building this into terraboots looks like a way to set
 in the main repo config that "all roots tagged `consumer:` will depend on their
 corresponding `producer:` roots".
-
-## The Core
-
-Here's the core of terraboots:
-
-- you don't need anything other than terraform to run it. This means its config
-  files are dead simple.
-- it will tell you when it is improperly configured. This is important because
-  configuration is confusing! And guardrails are just as important as docs.
-  This means the configs will all be in HCL, and the tool will validate them at
-  runtime.
-- it can solve the `affected` problem quickly. This means it has to be
-  performant. And maybe it has to be extensible, because people have different
-  ideas of what it means to be "affected".
-- it can solve root dependencies quickly to generate a parallelizable task
-  manifest. Again, it has to be performant.

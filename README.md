@@ -15,10 +15,12 @@ Come back later :P
 ## Example Monorepo
 
 The main configuration file for the monorepo is `terraboots.hcl`. This defines
-where our root configurations live.
+where our root configurations live, as well as what `scope`s our monorepo deals
+with.
 
-Each of these roots has its own `terraboots.hcl` which contains configuration
-details about that root.
+Each of the roots has its own `terraboots.hcl` which contains configuration
+details about that root. This includes what `scope`s apply to the root, and
+what dependencies the root might have.
 
 The main concept to terraboots is that it expects you to manage your platform
 with many small terraform root configurations. You do this through `scope`s that
