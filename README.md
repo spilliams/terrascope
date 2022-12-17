@@ -2,8 +2,8 @@
 
 Still very much a work in progress.
 
-My attempt at a Terraform build orchestrator, for large platform projects with
-hundreds of root modules.
+My attempt at a Terraform build orchestrator, for large infrastructure projects
+with hundreds of root modules.
 
 This repository contains both the source code for the tool `terraboots`, as well
 as a sample monorepo managed by that tool.
@@ -22,8 +22,8 @@ Each of the roots has its own `terraboots.hcl` which contains configuration
 details about that root. This includes what `scope`s apply to the root, and
 what dependencies the root might have.
 
-The main concept to terraboots is that it expects you to manage your platform
-with many small terraform root configurations. You do this through `scope`s that
+The main concept to terraboots is that it expects you to manage your
+infrastructure with many small terraform root configurations. You do this through `scope`s that
 you define in the top level hcl, and selectively apply to each of your roots.
 
 This allows you to maintain a few root "templates" that each could be planned

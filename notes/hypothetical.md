@@ -10,9 +10,9 @@ their applications on their own (read: they use DevOps methods). You also know
 that it'll probably be more secure if you can put bulkheads between each teams'
 environments.
 
-You decide to use AWS Organizations to power your platform. You also want to
-keep some bulkheads in place to help contain certain high-security elements from
-lower-security elements. With this in ind, you set up the following AWS
+You decide to use AWS Organizations to power your infrastructure. You also want
+to keep some bulkheads in place to help contain certain high-security elements
+from lower-security elements. With this in ind, you set up the following AWS
 accounts:
 
 1. an Organization account. This will be your Consolidated Billing account for
@@ -31,7 +31,7 @@ to manage! Organization, Security Portal, Networking, Product Dev, Product
 Stage, and Product Prod.
 
 Because you also need a sandbox for your own team to develop changes to your
-platform, you need a second Security Portal, Networking and set of Domain
+infrastructure, you need a second Security Portal, Networking and set of Domain
 accounts. So this is 5 more accounts to manage, and the names "Security Portal"
 and "Networking" are already taken. Time to introduce the first core concept of
 terraboots: scope.

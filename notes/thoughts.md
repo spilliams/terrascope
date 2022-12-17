@@ -39,15 +39,15 @@ terraboots plan <root> -- --var-file=foo.tfvars # plans the root with some extra
 terraboots terraform|tf <root> -- state list # runs `terraform state list` in the given root
 terraboots plan <root> -v|--verbose # makes sure the user knows what's happening in the templating
 
-# inspecting your platform
+# inspecting your infrastructure
 terraboots scope list # list all your scopes
 terraboots root list # list every single permutation of every root
 terraboots root list --affected # lists every single permutation of every root *which has been affected* (for some definition of "affected")
 
 # building new stuff
-terraboots new monorepo acme-infrastructure # builds a whole new monorepo named "acme-infrastructure"
-terraboots new scope team # adds a new scope into the mix
-terraboots new root my-awesome-stack # builds a new root module named 'my-awesome-stack'
+terraboots project generate acme-infrastructure # builds a whole new monorepo named "acme-infrastructure"
+terraboots scope generate team # adds a new scope into the mix
+terraboots root generate my-awesome-stack # builds a new root module named 'my-awesome-stack'
 ```
 
 The primary goal of `terraboots root list` is to make sure we can build a matrix
