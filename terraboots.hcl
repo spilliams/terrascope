@@ -1,6 +1,5 @@
 terraboots "AcmeInc" {
-  modulesDir = "terraform/modules"
-  rootsDir   = "terraform/roots"
+  rootsDir = "terraform/roots"
 
   scope {
     name        = "org"
