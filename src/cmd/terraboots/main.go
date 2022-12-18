@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -53,79 +52,78 @@ func newRootCmd() *cobra.Command {
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerraboots, Title: "Working with your terraboots project"})
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerraform, Title: "Terraform Commands"})
 
-	cmd.AddCommand(newTerraformCommand("init"))
-	cmd.AddCommand(newTerraformCommand("plan"))
-	cmd.AddCommand(newTerraformCommand("apply"))
-	cmd.AddCommand(newTerraformCommand("destroy"))
-	cmd.AddCommand(newTerraformCommand("output"))
-	cmd.AddCommand(newTerraformCommand("console"))
+	// cmd.AddCommand(newTerraformCommand("init"))
+	// cmd.AddCommand(newTerraformCommand("plan"))
+	// cmd.AddCommand(newTerraformCommand("apply"))
+	// cmd.AddCommand(newTerraformCommand("destroy"))
+	// cmd.AddCommand(newTerraformCommand("output"))
+	// cmd.AddCommand(newTerraformCommand("console"))
 
-	// TODO: manual tf command
-	// cmd.AddCommand(newManualTfCommand())
-
-	cmd.AddCommand(newScopeCommand())
+	// cmd.AddCommand(newScopeCommand())
 	cmd.AddCommand(newRootCommand())
 
-	// TODO: command to generate a new project
-	// cmd.AddCommand(newProjectCommand())
-
 	return cmd
 }
 
-func newTerraformCommand(name string) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     fmt.Sprintf("%s ROOT", name),
-		Short:   fmt.Sprintf("Runs `terraform %s` in the given root", name),
-		GroupID: commandGroupIDTerraform,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.Warn("not yet implemented")
-			return nil
-		},
-	}
+// func newTerraformCommand(name string) *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:     fmt.Sprintf("%s ROOT", name),
+// 		Short:   fmt.Sprintf("Runs `terraform %s` in the given root", name),
+// 		GroupID: commandGroupIDTerraform,
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			logrus.Warn("not yet implemented")
+// 			return nil
+// 		},
+// 	}
 
-	return cmd
-}
+// 	return cmd
+// }
 
-func newScopeCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "scope",
-		Short:   "Commands relating to scopes",
-		GroupID: commandGroupIDTerraboots,
+// func newScopeCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:     "scope",
+// 		Short:   "Commands relating to scopes",
+// 		GroupID: commandGroupIDTerraboots,
 
-		PersistentPreRunE: bootsbootsPreRunE,
-	}
+// 		PersistentPreRunE: bootsbootsPreRunE,
+// 	}
 
-	cmd.AddCommand(newScopeListCommand())
-	cmd.AddCommand(newScopeGenerateCommand())
+// 	// cmd.AddCommand(newScopeListCommand())
+// 	// cmd.AddCommand(newScopeGenerateCommand())
 
-	return cmd
-}
+// 	return cmd
+// }
 
-func newScopeListCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "Lists all scopes in this project",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.Warn("not yet implemented")
-			return nil
-		},
-	}
+// func newScopeListCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "list",
+// 		Short: "Lists all scopes in this project",
+// 		RunE: func(cmd *cobra.Command, args []string) error {
 
-	return cmd
-}
+// 			logrus.Infof("There are %d scopes in the project %s", len(project.Scopes), project.ID)
+// 			for _, scope := range project.Scopes {
+// 				fmt.Println(scope.Name)
+// 			}
 
-func newScopeGenerateCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "generate",
-		Short: "Generate a new scope in this project",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.Warn("not yet implemented")
-			return nil
-		},
-	}
+// 			return nil
+// 		},
+// 	}
 
-	return cmd
-}
+// 	return cmd
+// }
+
+// func newScopeGenerateCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "generate",
+// 		Short: "Generate a new scope in this project",
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			logrus.Warn("not yet implemented")
+// 			return nil
+// 		},
+// 	}
+
+// 	return cmd
+// }
 
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -137,8 +135,8 @@ func newRootCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(newRootBuildCommand())
-	cmd.AddCommand(newRootGenerateCommand())
-	cmd.AddCommand(newRootGraphCommand())
+	// cmd.AddCommand(newRootGenerateCommand())
+	// cmd.AddCommand(newRootGraphCommand())
 	cmd.AddCommand(newRootListCommand())
 
 	return cmd
@@ -159,31 +157,31 @@ func newRootBuildCommand() *cobra.Command {
 	return cmd
 }
 
-func newRootGenerateCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "generate",
-		Short: "",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.Warn("not yet implemented")
-			return nil
-		},
-	}
+// func newRootGenerateCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "generate",
+// 		Short: "",
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			logrus.Warn("not yet implemented")
+// 			return nil
+// 		},
+// 	}
 
-	return cmd
-}
+// 	return cmd
+// }
 
-func newRootGraphCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "graph",
-		Short: "",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			logrus.Warn("not yet implemented")
-			return nil
-		},
-	}
+// func newRootGraphCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "graph",
+// 		Short: "",
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			logrus.Warn("not yet implemented")
+// 			return nil
+// 		},
+// 	}
 
-	return cmd
-}
+// 	return cmd
+// }
 
 func newRootListCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -215,8 +213,6 @@ func bootsbootsPreRunE(cmd *cobra.Command, args []string) error {
 	}
 	project.RootsDir = rootsDir
 	logrus.Debugf("Project roots directory: %s", project.RootsDir)
-
-	// TODO: load scope data?
 
 	return nil
 }

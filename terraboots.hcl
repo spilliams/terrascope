@@ -1,5 +1,6 @@
 terraboots "AcmeInc" {
-  rootsDir = "terraform/roots"
+  rootsDir  = "terraform/roots"
+  scopeData = "scope-data.hcl"
 
   scope {
     name        = "org"

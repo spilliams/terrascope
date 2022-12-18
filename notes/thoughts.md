@@ -1,12 +1,5 @@
 # thoughts
 
-- The CLI should make sure scopes don't have the same name as each other (or
-  special characters, etc).
-  Then we can use something like `{{scope.org}}` in a template file in a root.
-- People will probably want some kind of output wiring (not unlike Terragrunt's
-  `dependency` blocks). This will likely have to be a new feature after v1
-  though.
-
 ## The Core
 
 Here's the core of terraboots:
@@ -27,13 +20,6 @@ The primary goal of `terraboots root list` is to make sure we can build a matrix
 for GitHub Actions or any other CI runner to know exactly what to run. It might
 want to take root dependency into account too.
 
-## up next
-
-1. I need to parse a single root, and build it.
-2. I need a schema for the scope data.
-3. scope validation is a future feature.
-4. root graph is an interesting idea, to show all dependencies
-
 ## affected
 
 what makes it so that a root is worth running?
@@ -43,36 +29,22 @@ what makes it so that a root is worth running?
 3. the modules the root relied on changed? not sure how to do this quickly
    without either parsing the entire AST or assuming semver sources
 
-## root dependencies
+## scope data
 
-Speaking of, I do need it to have some concept of dynamic dependency. For
-example: "this root depends on another root". We'd have to do the math of
-excluding some scopes _if necessary_. Root A depending on root B means that we'd
-take all the B scopes that match A's, and make sure the values are the same.
-That "if necessary" is important though: maybe root A depends on root B but with
-some important scope differences (e.g. root named "account-networking" with
-`scope:domain=Product` depends on root named "transit-gateway" with scope
-`scope:domain=Networking`).
+Each root has scopes it follows. It will hydrate itself based on the values of
+those scopes, but it can't take a naive approach. Sometimes a scope is different
+depending on its ancestry. For instance: the "Gold" platform has different
+domains than the "Silver" platform.
 
-That probably looks like a `root` block of
+So the solution seems to be to spell out exactly how the scope tree goes. This
+might be too verbose though! Oh well, it's still better than spelling out all
+the roots separately.
 
-```hcl
-root "account-networking" {
-  scopes = ["org", "platform", "domain", "environment", "region"]
+So, do I spell the scope tree out with YAML or HCL? After a short experiment
+(see `scopeTree1.hcl` and `scopeTree2.yml`), it seems the HCL isn't that much
+more verbose than YAML, and I think it could pose some benefits for the parser.
 
-  dependency {
-    root = "transit-gateway"
-    scopes = {
-      # unset scopes here will retain the values of the dependant
-      domain = "Networking"
-    }
-  }
-}
-```
+This also raises a new topic for internal scope validation: the scope names
+cannot be "attributes" or "roots".
 
-I'm not sure how much to build the parameter pattern into it. I can get away
-with tagging dependencies. Where the example above is "root named A depends on
-root named B", this example is more like "root tagged consumer:foo depends on
-root tagged producer:foo". Building this into terraboots looks like a way to set
-in the main repo config that "all roots tagged `consumer:` will depend on their
-corresponding `producer:` roots".
+If it's hcl there's some fun stuff we can do like set locals to reuse.
