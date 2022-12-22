@@ -12,9 +12,9 @@ import (
 
 func (p *Project) NewScopeDataGenerator(logger *logrus.Logger) (ScopeDataGenerator, error) {
 	if len(p.Scopes) == 0 {
-		logger.Errorf("This project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again.", p.configFile)
 		return nil, fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
+
 	scopeTypes := make([]string, len(p.Scopes))
 	for i, el := range p.Scopes {
 		scopeTypes[i] = el.Name
@@ -64,8 +64,16 @@ func (sdg *scopeDataGenerator) Create(input io.Reader, output io.Writer) error {
 	for _, scope := range scopes {
 		sdg.Debugf("scope address: %s", scope)
 	}
-	// TODO use scopes to write the file
 	sdg.Infof("%d scope addresses created", len(scopes))
+
+	file, err := sdg.generateScopeDataFile(scopes)
+	if err != nil {
+		return err
+	}
+
+	sdg.Debug(string(file))
+	// TODO write the file
+
 	sdg.Warn("the rest of this is not yet implemented")
 
 	return nil
@@ -103,6 +111,8 @@ func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.W
 		sdg.Debugf("user entered blank line, exiting")
 		return nil, nil
 	}
+	// TODO: validate input against list of blocklisted words, and the above
+	// charset, and each other (no dupes)...
 	firstValues := strings.Split(scanner.Text(), " ")
 	sdg.Debugf("read new scope values %v", firstValues)
 
@@ -139,6 +149,8 @@ func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.W
 			scopes = append(scopes, prompt.address)
 			continue
 		}
+		// TODO: validate input against list of blocklisted words, and the above
+		// charset, and each other (no dupes)...
 
 		values := strings.Split(scanner.Text(), " ")
 		sdg.Debugf("read new scope values %v", values)
@@ -152,4 +164,11 @@ func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.W
 	}
 
 	return scopes, nil
+}
+
+func (sdg *scopeDataGenerator) generateScopeDataFile(scopes []string) ([]byte, error) {
+	// TODO: check out hclwrite!
+	// https://pkg.go.dev/github.com/hashicorp/hcl/v2@v2.15.0/hclwrite
+
+	return nil, nil
 }
