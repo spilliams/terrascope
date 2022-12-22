@@ -44,6 +44,12 @@ unsorted shower thoughts:
       replica), stable-candidate silver (prod release candidate), and
       candidate-stable silver (silver release candidate). Maybe I'm too far in
       the weeds here.
+6. `include(file, [scopeAddress], [attributesObj])` function for the root
+   configuration
+7. how should the CLI log?
+   1. definitely to stdout, the way the user would like (e.g. verbose or quiet)
+   2. definitely to a file in the build folder. How verbose?
+   3. maybe also to a long-term cache in `~/.terraboots/logs/`. How verbose?
 
 ## Feature
 
