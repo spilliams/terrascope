@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"path/filepath"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )
@@ -14,9 +15,10 @@ type ProjectConfig struct {
 }
 
 type Project struct {
-	ID        string `hcl:"id,label"`
-	RootsDir  string `hcl:"rootsDir"`
-	ScopeData string `hcl:"scopeData"`
+	configFile string
+	ID         string `hcl:"id,label"`
+	RootsDir   string `hcl:"rootsDir"`
+	ScopeData  string `hcl:"scopeData"`
 
 	Scopes []*ProjectScope `hcl:"scope,block"`
 	Roots  map[string]*Root
@@ -36,12 +38,18 @@ type ProjectScopeValidation struct {
 
 func ParseProject(cfgFile string) (*Project, error) {
 	cfg := &ProjectConfig{}
-	err := hclsimple.DecodeFile(cfgFile, nil, cfg)
+	cfgFile, err := filepath.Abs(cfgFile)
+	if err != nil {
+		return nil, err
+	}
+	err = hclsimple.DecodeFile(cfgFile, nil, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: read scope data
+
+	cfg.Project.configFile = cfgFile
 
 	return cfg.Project, nil
 }

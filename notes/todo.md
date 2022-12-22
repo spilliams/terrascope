@@ -4,6 +4,7 @@
 
 - cli should be able to read a project config and create a skeletal scope data file
 - read a scope data file
+- cli should be able to add to the scope data file
 
 ## Feature
 
