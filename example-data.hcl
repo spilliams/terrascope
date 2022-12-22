@@ -1,189 +1,88 @@
 org "acme-inc" {
-  attributes = {
-    aws_account_id = 12345678
-  }
-  roots = ["org-account-setup", "sso-groups"]
+  aws_account_id = 12345678
 
   platform "gold" {
     domain "commerce" {
-      roots = ["sso-permissions"]
       environment "dev" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = [
-          "account-settings",
-          "aws-config-global",
-          "terraform-backend",
-          "foo"
-        ]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
       environment "stage" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
       environment "prod" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
     }
     domain "data-science" {
-      roots = ["sso-permissions"]
       environment "dev" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
       environment "prod" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
     }
     domain "networking" {
-      roots = ["sso-permissions"]
       environment "global" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global"]
-        region "us-west-1" {
-          roots = ["aws-config-regional"]
-        }
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-1" {}
+        region "us-west-2" {}
       }
     }
     domain "product" {
-      roots = ["sso-permissions"]
       environment "dev" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-1" {
-          roots = ["aws-config-regional"]
-        }
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-1" {}
+        region "us-west-2" {}
       }
       environment "stage" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-1" {
-          roots = ["aws-config-regional"]
-        }
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-1" {}
+        region "us-west-2" {}
       }
       environment "prod" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-1" {
-          roots = ["aws-config-regional"]
-        }
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-1" {}
+        region "us-west-2" {}
       }
     }
     domain "security-portal" {
-      roots = ["sso-permissions"]
       environment "global" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
     }
   }
   platform "silver" {
     domain "networking" {
-      roots = ["sso-permissions"]
       environment "global" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global"]
-        region "us-west-1" {
-          roots = ["aws-config-regional"]
-        }
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-1" {}
+        region "us-west-2" {}
       }
     }
     domain "red" {
-      roots = ["sso-permissions"]
       environment "dev" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
       environment "stage" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
       environment "prod" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global", "terraform-backend"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
     }
     domain "security-portal" {
-      roots = ["sso-permissions"]
       environment "global" {
-        attributes = {
-          aws_account_id = 12345678
-        }
-        roots = ["account-settings", "aws-config-global"]
-        region "us-west-2" {
-          roots = ["aws-config-regional"]
-        }
+        aws_account_id = 12345678
+        region "us-west-2" {}
       }
     }
   }
