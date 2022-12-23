@@ -2,11 +2,15 @@ package terraboots
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"strings"
 
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,13 +25,11 @@ func (p *Project) NewScopeDataGenerator(logger *logrus.Logger) (ScopeDataGenerat
 	}
 
 	// this file doesn't have to exist yet
-	scopeDataFile := path.Join(p.configFile, p.ScopeData)
+	scopeDataFile := path.Join(path.Dir(p.configFile), p.ScopeData)
 
 	s := &scopeDataGenerator{
 		scopeTypes: scopeTypes,
-		fileName:   scopeDataFile,
-		// TODO: read existing data to put in here
-		// scopeData:
+		filename:   scopeDataFile,
 
 		Logger: logger,
 	}
@@ -41,45 +43,72 @@ type ScopeDataGenerator interface {
 
 type scopeDataGenerator struct {
 	scopeTypes []string
-	scopeData  map[string]interface{}
-	fileName   string
+	filename   string
 	*logrus.Logger
 }
 
 type scopeValue struct {
+	name           string
+	scopeType      string
 	address        string
+	children       map[string]scopeValue
 	scopeTypeIndex int
 }
 
 func (sdg *scopeDataGenerator) Create(input io.Reader, output io.Writer) error {
-	scopes, err := sdg.promptForScopeValues(input, output)
+	rootScopes, err := sdg.promptForScopeValues(input, output)
 	if err != nil {
 		return err
 	}
-	if len(scopes) == 0 {
+	if len(rootScopes) == 0 {
 		sdg.Warn("No scopes were generated, exiting.")
 		return nil
 	}
 
-	for _, scope := range scopes {
-		sdg.Debugf("scope address: %s", scope)
-	}
-	sdg.Infof("%d scope addresses created", len(scopes))
+	hclfile := sdg.generateScopeDataFile(rootScopes)
 
-	file, err := sdg.generateScopeDataFile(scopes)
+	file, err := os.OpenFile(sdg.filename, os.O_WRONLY, 0644)
+	defer file.Close()
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			sdg.Debug("file open errored, is ErrNotExist, creating file")
+			file, err = os.Create(sdg.filename)
+			if err != nil {
+				sdg.Debug("file create failed")
+				return err
+			}
+		} else {
+			sdg.Debug("file open errored, is not ErrNotExist, throwing")
+			return err
+		}
+	} else {
+		// err == nil means file was found
+		sdg.Warnf("A file '%s' already exists! Overwrite? [Y/n]", sdg.filename)
+		scanner := bufio.NewScanner(input)
+		scanner.Scan()
+		err := scanner.Err()
+		if err != nil {
+			sdg.Debug("scanner errored")
+			return err
+		}
+		if len(scanner.Text()) != 0 {
+			sdg.Debug("scanner returned text")
+			if scanner.Text() != "y" && scanner.Text() != "Y" {
+				sdg.Debugf("User does not want to overwrite, printing and exiting.")
+				output.Write(hclfile.Bytes())
+				return nil
+			}
+		}
+	}
+	_, err = hclfile.WriteTo(file)
 	if err != nil {
 		return err
 	}
 
-	sdg.Debug(string(file))
-	// TODO write the file
-
-	sdg.Warn("the rest of this is not yet implemented")
-
 	return nil
 }
 
-func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.Writer) ([]string, error) {
+func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.Writer) ([]scopeValue, error) {
 	logrus.Debugf("[scopeDataGenerator.Create]")
 
 	fmt.Fprintln(output, "Scope types in this projct, in order, are:")
@@ -116,14 +145,18 @@ func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.W
 	firstValues := strings.Split(scanner.Text(), " ")
 	sdg.Debugf("read new scope values %v", firstValues)
 
-	scopes := make([]string, 0)
-
+	roots := make([]scopeValue, len(firstValues))
 	prompts := make([]scopeValue, len(firstValues))
 	for i, el := range firstValues {
-		prompts[i] = scopeValue{
-			address:        el,
+		value := scopeValue{
+			name:           el,
+			scopeType:      sdg.scopeTypes[0],
 			scopeTypeIndex: 0,
+			children:       make(map[string]scopeValue),
 		}
+		value.address = fmt.Sprintf("%s.%s", value.scopeType, value.name)
+		roots[i] = value
+		prompts[i] = value
 	}
 
 	for len(prompts) > 0 {
@@ -132,7 +165,6 @@ func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.W
 
 		if prompt.scopeTypeIndex+1 == len(sdg.scopeTypes) {
 			// this scope value cannot have children
-			scopes = append(scopes, prompt.address)
 			continue
 		}
 
@@ -146,7 +178,6 @@ func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.W
 		if len(scanner.Text()) == 0 {
 			// user entered none
 			sdg.Debugf("user entered no values for prompt, closing this scope")
-			scopes = append(scopes, prompt.address)
 			continue
 		}
 		// TODO: validate input against list of blocklisted words, and the above
@@ -156,19 +187,53 @@ func (sdg *scopeDataGenerator) promptForScopeValues(input io.Reader, output io.W
 		sdg.Debugf("read new scope values %v", values)
 		for _, el := range values {
 			value := scopeValue{
-				address:        strings.Join([]string{prompt.address, el}, "."),
+				name:           el,
+				scopeType:      sdg.scopeTypes[prompt.scopeTypeIndex+1],
 				scopeTypeIndex: prompt.scopeTypeIndex + 1,
+				children:       make(map[string]scopeValue),
 			}
+			value.address = strings.Join([]string{prompt.address, value.scopeType, value.name}, ".")
+			prompt.children[el] = value
 			prompts = append(prompts, value)
 		}
 	}
 
-	return scopes, nil
+	sdg.Debugf("%+v", roots)
+
+	return roots, nil
 }
 
-func (sdg *scopeDataGenerator) generateScopeDataFile(scopes []string) ([]byte, error) {
-	// TODO: check out hclwrite!
-	// https://pkg.go.dev/github.com/hashicorp/hcl/v2@v2.15.0/hclwrite
+func (sdg *scopeDataGenerator) generateScopeDataFile(rootScopes []scopeValue) *hclwrite.File {
+	f := hclwrite.NewEmptyFile()
+	rootBody := f.Body()
 
-	return nil, nil
+	rootBody.AppendUnstructuredTokens(commentTokens("This file was generated by terraboots"))
+	rootBody.AppendNewline()
+
+	for _, root := range rootScopes {
+		rootBody = addScopeValueToBody(root, rootBody)
+	}
+
+	return f
+}
+
+func addScopeValueToBody(scope scopeValue, body *hclwrite.Body) *hclwrite.Body {
+	childBlock := body.AppendNewBlock(scope.scopeType, []string{scope.name})
+	childBody := childBlock.Body()
+	for _, grandchild := range scope.children {
+		childBody = addScopeValueToBody(grandchild, childBody)
+	}
+	return body
+}
+
+func commentTokens(msg string) hclwrite.Tokens {
+	if !strings.HasPrefix(msg, "# ") {
+		msg = fmt.Sprintf("# %s", msg)
+	}
+	msgToken := &hclwrite.Token{
+		Type:         hclsyntax.TokenComment,
+		Bytes:        []byte(msg),
+		SpacesBefore: 0,
+	}
+	return []*hclwrite.Token{msgToken}
 }
