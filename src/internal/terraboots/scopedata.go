@@ -33,6 +33,10 @@ func (p *Project) NewScopeDataGenerator(logger *logrus.Logger) (scopedata.Genera
 
 // readScopeData reads all of the scope data known to the receiver
 func (p *Project) readScopeData() error {
+	if len(p.Scopes) == 0 {
+		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
+	}
+
 	for _, filename := range p.ScopeData {
 		err := p.readScopeDataFile(filename)
 		if err != nil {
@@ -42,8 +46,16 @@ func (p *Project) readScopeData() error {
 	return nil
 }
 
-// readScopeDataFile reads a single file with scope data in it
+// readScopeDataFile reads a single file with all of the receiver's scope data
+// in it
 func (p *Project) readScopeDataFile(filename string) error {
-	// TODO
+	scopeTypes := make([]string, len(p.Scopes))
+	for i, el := range p.Scopes {
+		scopeTypes[i] = el.Name
+	}
+
+	// WIP
+	// gotta build some Specs?
+
 	return nil
 }
