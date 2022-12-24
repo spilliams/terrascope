@@ -1,5 +1,7 @@
 # demo flow
 
+(checkboxes indicate the feature is built)
+
 1. [ ] create a new project from nothing.
    1. [ ] prompts for top directory, project name, scope names, roots directory, scope data file name
    2. [ ] generates a project-level terraboots.hcl
