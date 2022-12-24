@@ -8,13 +8,12 @@ import (
 	"os"
 	"path"
 
-	"github.com/sirupsen/logrus"
 	"github.com/spilliams/terraboots/internal/scopedata"
 )
 
 // GenerateScopeData builds a generator for new scope data, then executes it,
 // saving the results in a file
-func (p *Project) GenerateScopeData(input io.Writer, output io.Reader, logger *logrus.Logger) error {
+func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 	if len(p.Scopes) == 0 {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
@@ -24,54 +23,54 @@ func (p *Project) GenerateScopeData(input io.Writer, output io.Reader, logger *l
 		scopeTypes[i] = el.Name
 	}
 
-	gen := scopedata.NewGenerator(scopeTypes, logger)
-	err = gen.Create(input, output)
+	gen := scopedata.NewGenerator(scopeTypes, p.Logger)
+	bytes, err := gen.Create(input, output)
 	if err != nil {
 		return err
 	}
 
 	// this file doesn't have to exist yet
 	dataFilename := "data.hcl"
-	if p.ScopeData != nil && len(p.ScopeData) > 0 {
+	if p.ScopeDataFiles != nil && len(p.ScopeDataFiles) > 0 {
 		// TODO: which filename? a new one? and then update the project config with the new filename?
-		dataFilename = p.ScopeData[0]
+		dataFilename = p.ScopeDataFiles[0]
 	}
-	scopeDataFile := path.Join(path.Dir(p.configFile), dataFilename)
+	dataFilename = path.Join(p.projectDir(), dataFilename)
 
-	file, err := os.OpenFile(g.filename, os.O_WRONLY, 0644)
+	file, err := os.OpenFile(dataFilename, os.O_WRONLY, 0644)
 	defer file.Close()
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			g.Debug("file open errored, is ErrNotExist, creating file")
-			file, err = os.Create(g.filename)
+			p.Debug("file open errored, is ErrNotExist, creating file")
+			file, err = os.Create(dataFilename)
 			if err != nil {
-				g.Debug("file create failed")
+				p.Debug("file create failed")
 				return err
 			}
 		} else {
-			g.Debug("file open errored, is not ErrNotExist, throwing")
+			p.Debug("file open errored, is not ErrNotExist, throwing")
 			return err
 		}
 	} else {
 		// err == nil means file was found
-		g.Warnf("A file '%s' already exists! Overwrite? [Y/n]", g.filename)
+		p.Warnf("A file '%s' already exists! Overwrite? [Y/n]", dataFilename)
 		scanner := bufio.NewScanner(input)
 		scanner.Scan()
 		err := scanner.Err()
 		if err != nil {
-			g.Debug("scanner errored")
+			p.Debug("scanner errored")
 			return err
 		}
 		if len(scanner.Text()) != 0 {
-			g.Debug("scanner returned text")
+			p.Debug("scanner returned text")
 			if scanner.Text() != "y" && scanner.Text() != "Y" {
-				g.Debugf("User does not want to overwrite, printing and exiting.")
-				output.Write(hclfile.Bytes())
+				p.Debugf("User does not want to overwrite, printing and exiting.")
+				output.Write(bytes)
 				return nil
 			}
 		}
 	}
-	_, err = hclfile.WriteTo(file)
+	_, err = file.Write(bytes)
 	return err
 }
 
@@ -81,25 +80,21 @@ func (p *Project) readScopeData() error {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
 
-	for _, filename := range p.ScopeData {
-		err := p.readScopeDataFile(filename)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// readScopeDataFile reads a single file with all of the receiver's scope data
-// in it
-func (p *Project) readScopeDataFile(filename string) error {
 	scopeTypes := make([]string, len(p.Scopes))
 	for i, el := range p.Scopes {
 		scopeTypes[i] = el.Name
 	}
 
-	// WIP
-	// gotta build some Specs?
+	filenames := make([]string, len(p.ScopeDataFiles))
+	for i, filename := range p.ScopeDataFiles {
+		filenames[i] = path.Join(p.projectDir(), filename)
+	}
+	reader := scopedata.NewReader(scopeTypes, filenames, p.Logger)
+	var err error
+	p.rootScopeValues, err = reader.Read()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

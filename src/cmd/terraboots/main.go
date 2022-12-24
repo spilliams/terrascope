@@ -13,6 +13,7 @@ import (
 
 var verbose bool
 var configFile string
+var logger *logrus.Logger
 
 func init() {
 	cobra.OnInitialize(initLogger)
@@ -27,10 +28,11 @@ func main() {
 }
 
 func initLogger() {
-	logrus.SetLevel(logrus.InfoLevel)
-	logrus.SetFormatter(&logrus.TextFormatter{})
+	logger = logrus.StandardLogger()
+	logger.SetLevel(logrus.InfoLevel)
+	logger.SetFormatter(&logrus.TextFormatter{})
 	if verbose {
-		logrus.SetLevel(logrus.DebugLevel)
+		logger.SetLevel(logrus.DebugLevel)
 	}
 }
 
@@ -72,7 +74,7 @@ func newRootCmd() *cobra.Command {
 // 		Short:   fmt.Sprintf("Runs `terraform %s` in the given root", name),
 // 		GroupID: commandGroupIDTerraform,
 // 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logrus.Warn("not yet implemented")
+// 			logger.Warn("not yet implemented")
 // 			return nil
 // 		},
 // 	}
@@ -103,7 +105,7 @@ func newScopeListCommand() *cobra.Command {
 		Short:   "Lists all scope types in this project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			logrus.Infof("There are %d scopes in the project %s", len(project.Scopes), project.ID)
+			logger.Infof("There are %d scopes in the project %s", len(project.Scopes), project.ID)
 			for _, scope := range project.Scopes {
 				fmt.Println(scope.Name)
 			}
@@ -121,7 +123,7 @@ func newScopeGenerateCommand() *cobra.Command {
 		Aliases: []string{"g", "gen"},
 		Short:   "Generates a new scope data file in this project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return project.GenerateScopeData(os.Stdin, os.Stdout, logrus.StandardLogger())
+			return project.GenerateScopeData(os.Stdin, os.Stdout)
 		},
 	}
 
@@ -154,7 +156,7 @@ func newRootBuildCommand() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root, err := project.BuildRoot(args[0])
-			logrus.Debugf("%+v\n", root)
+			logger.Debugf("%+v\n", root)
 			return err
 		},
 	}
@@ -167,7 +169,7 @@ func newRootBuildCommand() *cobra.Command {
 // 		Use:   "generate",
 // 		Short: "",
 // 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logrus.Warn("not yet implemented")
+// 			logger.Warn("not yet implemented")
 // 			return nil
 // 		},
 // 	}
@@ -180,7 +182,7 @@ func newRootBuildCommand() *cobra.Command {
 // 		Use:   "graph",
 // 		Short: "",
 // 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logrus.Warn("not yet implemented")
+// 			logger.Warn("not yet implemented")
 // 			return nil
 // 		},
 // 	}
@@ -194,7 +196,7 @@ func newRootBuildCommand() *cobra.Command {
 
 // 		Short: "",
 // 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logrus.Warn("not yet implemented")
+// 			logger.Warn("not yet implemented")
 // 			return nil
 // 		},
 // 	}
@@ -205,9 +207,9 @@ func newRootBuildCommand() *cobra.Command {
 var project *terraboots.Project
 
 func bootsbootsPreRunE(cmd *cobra.Command, args []string) error {
-	logrus.Debugf("Using project configuration file: %s", configFile)
+	logger.Debugf("Using project configuration file: %s", configFile)
 	var err error
-	project, err = terraboots.ParseProject(configFile)
+	project, err = terraboots.ParseProject(configFile, logger)
 	if err != nil {
 		return err
 	}
@@ -220,7 +222,7 @@ func bootsbootsPreRunE(cmd *cobra.Command, args []string) error {
 	project.RootsDir = rootsDir
 	logrus.Debugf("Project roots directory: %s", project.RootsDir)
 
-	logrus.Debugf("Project scope data files: %s", project.ScopeData)
+	logrus.Debugf("Project scope data files: %s", project.ScopeDataFiles)
 
 	return nil
 }

@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/sirupsen/logrus"
+	"github.com/spilliams/terraboots/internal/scopedata"
 )
 
 // ProjectConfig represents the configuration file of a Terraboots project
@@ -21,11 +23,14 @@ type Project struct {
 	configFile string
 	ID         string `hcl:"id,label"`
 
-	Scopes    []*ProjectScope `hcl:"scope,block"`
-	ScopeData []string        `hcl:"scopeData"`
+	Scopes          []*ProjectScope `hcl:"scope,block"`
+	ScopeDataFiles  []string        `hcl:"scopeData"`
+	rootScopeValues []scopedata.Value
 
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*Root
+
+	*logrus.Logger
 }
 
 // ProjectScope represents a single scope available to a project
@@ -44,7 +49,7 @@ type ProjectScope struct {
 
 // ParseProject reads the given configuration file and parses it as a new
 // Terraboots project
-func ParseProject(cfgFile string) (*Project, error) {
+func ParseProject(cfgFile string, logger *logrus.Logger) (*Project, error) {
 	cfg := &ProjectConfig{}
 	cfgFile, err := filepath.Abs(cfgFile)
 	if err != nil {
@@ -55,14 +60,20 @@ func ParseProject(cfgFile string) (*Project, error) {
 		return nil, err
 	}
 
-	err = cfg.Project.readScopeData()
+	project := cfg.Project
+	project.configFile = cfgFile
+	project.Logger = logger
+
+	err = project.readScopeData()
 	if err != nil {
 		return nil, err
 	}
 
-	cfg.Project.configFile = cfgFile
+	return project, nil
+}
 
-	return cfg.Project, nil
+func (p *Project) projectDir() string {
+	return path.Dir(p.configFile)
 }
 
 // BuildRoot tells the receiver to build a root module
