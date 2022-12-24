@@ -225,7 +225,7 @@ func bootsbootsPreRunE(cmd *cobra.Command, args []string) error {
 	project.RootsDir = rootsDir
 	logrus.Debugf("Project roots directory: %s", project.RootsDir)
 
-	logrus.Debugf("Project scope data file: %s", project.ScopeData)
+	logrus.Debugf("Project scope data files: %s", project.ScopeData)
 
 	return nil
 }

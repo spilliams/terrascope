@@ -25,7 +25,12 @@ func (p *Project) NewScopeDataGenerator(logger *logrus.Logger) (ScopeDataGenerat
 	}
 
 	// this file doesn't have to exist yet
-	scopeDataFile := path.Join(path.Dir(p.configFile), p.ScopeData)
+	dataFilename := "data.hcl"
+	if p.ScopeData != nil && len(p.ScopeData) > 0 {
+		// TODO: which filename? a new one? and then update the project config with the new filename?
+		dataFilename = p.ScopeData[0]
+	}
+	scopeDataFile := path.Join(path.Dir(p.configFile), dataFilename)
 
 	s := &scopeDataGenerator{
 		scopeTypes: scopeTypes,

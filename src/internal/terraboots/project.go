@@ -16,9 +16,9 @@ type ProjectConfig struct {
 
 type Project struct {
 	configFile string
-	ID         string `hcl:"id,label"`
-	RootsDir   string `hcl:"rootsDir"`
-	ScopeData  string `hcl:"scopeData"`
+	ID         string   `hcl:"id,label"`
+	RootsDir   string   `hcl:"rootsDir"`
+	ScopeData  []string `hcl:"scopeData"`
 
 	Scopes []*ProjectScope `hcl:"scope,block"`
 	Roots  map[string]*Root
