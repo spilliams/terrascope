@@ -10,32 +10,40 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )
 
+// ProjectConfig represents the configuration file of a Terraboots project
 type ProjectConfig struct {
 	Project *Project `hcl:"terraboots,block"`
 }
 
+// Project represents a single Terraboots project, complete with scope types,
+// scope data, and root configurations.
 type Project struct {
 	configFile string
-	ID         string   `hcl:"id,label"`
-	RootsDir   string   `hcl:"rootsDir"`
-	ScopeData  []string `hcl:"scopeData"`
+	ID         string `hcl:"id,label"`
 
-	Scopes []*ProjectScope `hcl:"scope,block"`
-	Roots  map[string]*Root
+	Scopes    []*ProjectScope `hcl:"scope,block"`
+	ScopeData []string        `hcl:"scopeData"`
+
+	RootsDir string `hcl:"rootsDir"`
+	Roots    map[string]*Root
 }
 
+// ProjectScope represents a single scope available to a project
 type ProjectScope struct {
-	Name         string                    `hcl:"name"`
-	Description  string                    `hcl:"description,optional"`
-	DefaultValue string                    `hcl:"default,optional"`
-	Validations  []*ProjectScopeValidation `hcl:"validation,block"`
+	Name         string `hcl:"name"`
+	Description  string `hcl:"description,optional"`
+	DefaultValue string `hcl:"default,optional"`
+	// Validations  []*ProjectScopeValidation `hcl:"validation,block"`
 }
 
-type ProjectScopeValidation struct {
-	Condition    bool   `hcl:"condition"`
-	ErrorMessage string `hcl:"error_message"`
-}
+// ProjectScopeValidation
+// type ProjectScopeValidation struct {
+// 	Condition    bool   `hcl:"condition"`
+// 	ErrorMessage string `hcl:"error_message"`
+// }
 
+// ParseProject reads the given configuration file and parses it as a new
+// Terraboots project
 func ParseProject(cfgFile string) (*Project, error) {
 	cfg := &ProjectConfig{}
 	cfgFile, err := filepath.Abs(cfgFile)
@@ -47,13 +55,17 @@ func ParseProject(cfgFile string) (*Project, error) {
 		return nil, err
 	}
 
-	// TODO: read scope data
+	err = cfg.Project.readScopeData()
+	if err != nil {
+		return nil, err
+	}
 
 	cfg.Project.configFile = cfgFile
 
 	return cfg.Project, nil
 }
 
+// BuildRoot tells the receiver to build a root module
 func (p *Project) BuildRoot(rootName string) (*Root, error) {
 	root, ok := p.Roots[rootName]
 	if !ok {
@@ -68,6 +80,8 @@ func (p *Project) BuildRoot(rootName string) (*Root, error) {
 	return root, nil
 }
 
+// AddRoot tells the receiver to add a root module to its internal records.
+// The `rootName` must be a directory name located in the receiver's `RootsDir`.
 func (p *Project) AddRoot(rootName string) (*Root, error) {
 	// look for named root
 	rootDir := path.Join(p.RootsDir, rootName)

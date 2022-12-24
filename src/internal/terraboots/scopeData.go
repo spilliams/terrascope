@@ -8,6 +8,7 @@ import (
 	"github.com/spilliams/terraboots/internal/scopedata"
 )
 
+// NewScopeDataGenerator builds a generator for new scope data
 func (p *Project) NewScopeDataGenerator(logger *logrus.Logger) (scopedata.Generator, error) {
 	if len(p.Scopes) == 0 {
 		return nil, fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
@@ -28,4 +29,21 @@ func (p *Project) NewScopeDataGenerator(logger *logrus.Logger) (scopedata.Genera
 
 	s := scopedata.NewGenerator(scopeTypes, scopeDataFile, logger)
 	return s, nil
+}
+
+// readScopeData reads all of the scope data known to the receiver
+func (p *Project) readScopeData() error {
+	for _, filename := range p.ScopeData {
+		err := p.readScopeDataFile(filename)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// readScopeDataFile reads a single file with scope data in it
+func (p *Project) readScopeDataFile(filename string) error {
+	// TODO
+	return nil
 }

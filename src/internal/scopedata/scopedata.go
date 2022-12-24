@@ -13,10 +13,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Generator objects can work with scope data, taking input from the user and
+// saving the data to files.
 type Generator interface {
 	Create(io.Reader, io.Writer) error
 }
 
+// NewGenerator builds a new Generator with the given scope types, destination
+// filename, and logger.
 func NewGenerator(scopeTypes []string, filename string, logger *logrus.Logger) Generator {
 	return &generator{
 		scopeTypes: scopeTypes,
@@ -25,12 +29,16 @@ func NewGenerator(scopeTypes []string, filename string, logger *logrus.Logger) G
 	}
 }
 
+// generator stores an ordered list of scope types, a filename to store data to,
+// and composes a Logger for debugging
 type generator struct {
 	scopeTypes []string
 	filename   string
 	*logrus.Logger
 }
 
+// scopeValue represents one value for a single scope type. This value may have
+// children of the next scope type in the hierarchy.
 type scopeValue struct {
 	name           string
 	scopeType      string
@@ -39,6 +47,8 @@ type scopeValue struct {
 	scopeTypeIndex int
 }
 
+// Create prompts the user for input using `input` and `output`, and saves the
+// generated scope data to the receiver's `filename`.
 func (g *generator) Create(input io.Reader, output io.Writer) error {
 	rootScopes, err := g.promptForScopeValues(input, output)
 	if err != nil {
@@ -92,9 +102,11 @@ func (g *generator) Create(input io.Reader, output io.Writer) error {
 	return nil
 }
 
+// promptForScopeValues uses the receiver's scopeTypes to ask the user for all
+// the different values of the scopes.
+// Returns a list of the top-level scope values (the scope values for the first
+// scope type)
 func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]scopeValue, error) {
-	logrus.Debugf("[scopeDataGenerator.Create]")
-
 	fmt.Fprintln(output, "Scope types in this projct, in order, are:")
 	fmt.Fprintln(output, strings.Join(g.scopeTypes, ", "))
 	fmt.Fprintln(output, "")
@@ -187,6 +199,8 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]s
 	return roots, nil
 }
 
+// generateScopeDataFile reads the given scopes and produces an `hclwrite.File`
+// object that is ready to be written to disk.
 func (g *generator) generateScopeDataFile(rootScopes []scopeValue) *hclwrite.File {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
@@ -201,6 +215,8 @@ func (g *generator) generateScopeDataFile(rootScopes []scopeValue) *hclwrite.Fil
 	return f
 }
 
+// addScopeValueToBody writes a new block representing the scope value to the
+// given body. This is especially useful for writing nested scope values.
 func addScopeValueToBody(scope scopeValue, body *hclwrite.Body) *hclwrite.Body {
 	childBlock := body.AppendNewBlock(scope.scopeType, []string{scope.name})
 	childBody := childBlock.Body()
@@ -210,6 +226,7 @@ func addScopeValueToBody(scope scopeValue, body *hclwrite.Body) *hclwrite.Body {
 	return body
 }
 
+// commentTokens helps write hcl tokens for a comment line in the configuration
 func commentTokens(msg string) hclwrite.Tokens {
 	if !strings.HasPrefix(msg, "# ") {
 		msg = fmt.Sprintf("# %s", msg)
