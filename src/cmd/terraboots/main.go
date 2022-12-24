@@ -121,12 +121,7 @@ func newScopeGenerateCommand() *cobra.Command {
 		Aliases: []string{"g", "gen"},
 		Short:   "Generates a new scope data file in this project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			gen, err := project.NewScopeDataGenerator(logrus.StandardLogger())
-			if err != nil {
-				return err
-			}
-			err = gen.Create(os.Stdin, os.Stdout)
-			return err
+			return project.GenerateScopeData(os.Stdin, os.Stdout, logrus.StandardLogger())
 		},
 	}
 

@@ -2,10 +2,8 @@ package scopedata
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/hashicorp/hcl/v2/hclsyntax"
@@ -16,97 +14,46 @@ import (
 // Generator objects can work with scope data, taking input from the user and
 // saving the data to files.
 type Generator interface {
-	Create(io.Reader, io.Writer) error
-}
-
-// NewGenerator builds a new Generator with the given scope types, destination
-// filename, and logger.
-func NewGenerator(scopeTypes []string, filename string, logger *logrus.Logger) Generator {
-	return &generator{
-		scopeTypes: scopeTypes,
-		filename:   filename,
-		Logger:     logger,
-	}
+	Create(io.Reader, io.Writer) ([]byte, error)
 }
 
 // generator stores an ordered list of scope types, a filename to store data to,
 // and composes a Logger for debugging
 type generator struct {
 	scopeTypes []string
-	filename   string
 	*logrus.Logger
 }
 
-// scopeValue represents one value for a single scope type. This value may have
-// children of the next scope type in the hierarchy.
-type scopeValue struct {
-	name           string
-	scopeType      string
-	address        string
-	children       map[string]scopeValue
-	scopeTypeIndex int
+// NewGenerator builds a new Generator with the given scope types, destination
+// filename, and logger.
+func NewGenerator(scopeTypes []string, logger *logrus.Logger) Generator {
+	return &generator{
+		scopeTypes: scopeTypes,
+		Logger:     logger,
+	}
 }
 
-// Create prompts the user for input using `input` and `output`, and saves the
-// generated scope data to the receiver's `filename`.
-func (g *generator) Create(input io.Reader, output io.Writer) error {
+// Create prompts the user for input using `input` and `output`, and returns
+// bytes representing an hcl file
+func (g *generator) Create(input io.Reader, output io.Writer) ([]byte, error) {
 	rootScopes, err := g.promptForScopeValues(input, output)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if len(rootScopes) == 0 {
 		g.Warn("No scopes were generated, exiting.")
-		return nil
+		return nil, nil
 	}
 
 	hclfile := g.generateScopeDataFile(rootScopes)
-
-	file, err := os.OpenFile(g.filename, os.O_WRONLY, 0644)
-	defer file.Close()
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			g.Debug("file open errored, is ErrNotExist, creating file")
-			file, err = os.Create(g.filename)
-			if err != nil {
-				g.Debug("file create failed")
-				return err
-			}
-		} else {
-			g.Debug("file open errored, is not ErrNotExist, throwing")
-			return err
-		}
-	} else {
-		// err == nil means file was found
-		g.Warnf("A file '%s' already exists! Overwrite? [Y/n]", g.filename)
-		scanner := bufio.NewScanner(input)
-		scanner.Scan()
-		err := scanner.Err()
-		if err != nil {
-			g.Debug("scanner errored")
-			return err
-		}
-		if len(scanner.Text()) != 0 {
-			g.Debug("scanner returned text")
-			if scanner.Text() != "y" && scanner.Text() != "Y" {
-				g.Debugf("User does not want to overwrite, printing and exiting.")
-				output.Write(hclfile.Bytes())
-				return nil
-			}
-		}
-	}
-	_, err = hclfile.WriteTo(file)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return hclfile.Bytes(), nil
 }
 
 // promptForScopeValues uses the receiver's scopeTypes to ask the user for all
 // the different values of the scopes.
 // Returns a list of the top-level scope values (the scope values for the first
 // scope type)
-func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]scopeValue, error) {
+func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]Value, error) {
 	fmt.Fprintln(output, "Scope types in this projct, in order, are:")
 	fmt.Fprintln(output, strings.Join(g.scopeTypes, ", "))
 	fmt.Fprintln(output, "")
@@ -141,16 +88,16 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]s
 	firstValues := strings.Split(scanner.Text(), " ")
 	g.Debugf("read new scope values %v", firstValues)
 
-	roots := make([]scopeValue, len(firstValues))
-	prompts := make([]scopeValue, len(firstValues))
+	roots := make([]Value, len(firstValues))
+	prompts := make([]Value, len(firstValues))
 	for i, el := range firstValues {
-		value := scopeValue{
-			name:           el,
-			scopeType:      g.scopeTypes[0],
+		value := Value{
+			Name:           el,
+			Scope:          Scope(g.scopeTypes[0]),
 			scopeTypeIndex: 0,
-			children:       make(map[string]scopeValue),
+			Children:       make(map[string]Value),
 		}
-		value.address = fmt.Sprintf("%s.%s", value.scopeType, value.name)
+		value.Address = fmt.Sprintf("%s.%s", value.Scope, value.Name)
 		roots[i] = value
 		prompts[i] = value
 	}
@@ -164,7 +111,7 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]s
 			continue
 		}
 
-		fmt.Fprintf(output, "Within %s, what are the allowable values for `%s`?\n", prompt.address, g.scopeTypes[prompt.scopeTypeIndex+1])
+		fmt.Fprintf(output, "Within %s, what are the allowable values for `%s`?\n", prompt.Address, g.scopeTypes[prompt.scopeTypeIndex+1])
 
 		scanner.Scan()
 		err := scanner.Err()
@@ -182,14 +129,14 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]s
 		values := strings.Split(scanner.Text(), " ")
 		g.Debugf("read new scope values %v", values)
 		for _, el := range values {
-			value := scopeValue{
-				name:           el,
-				scopeType:      g.scopeTypes[prompt.scopeTypeIndex+1],
+			value := Value{
+				Name:           el,
+				Scope:          Scope(g.scopeTypes[prompt.scopeTypeIndex+1]),
 				scopeTypeIndex: prompt.scopeTypeIndex + 1,
-				children:       make(map[string]scopeValue),
+				Children:       make(map[string]Value),
 			}
-			value.address = strings.Join([]string{prompt.address, value.scopeType, value.name}, ".")
-			prompt.children[el] = value
+			value.Address = strings.Join([]string{prompt.Address, string(value.Scope), value.Name}, ".")
+			prompt.Children[el] = value
 			prompts = append(prompts, value)
 		}
 	}
@@ -201,7 +148,7 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]s
 
 // generateScopeDataFile reads the given scopes and produces an `hclwrite.File`
 // object that is ready to be written to disk.
-func (g *generator) generateScopeDataFile(rootScopes []scopeValue) *hclwrite.File {
+func (g *generator) generateScopeDataFile(rootScopes []Value) *hclwrite.File {
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
@@ -217,10 +164,10 @@ func (g *generator) generateScopeDataFile(rootScopes []scopeValue) *hclwrite.Fil
 
 // addScopeValueToBody writes a new block representing the scope value to the
 // given body. This is especially useful for writing nested scope values.
-func addScopeValueToBody(scope scopeValue, body *hclwrite.Body) *hclwrite.Body {
-	childBlock := body.AppendNewBlock(scope.scopeType, []string{scope.name})
+func addScopeValueToBody(scope Value, body *hclwrite.Body) *hclwrite.Body {
+	childBlock := body.AppendNewBlock(string(scope.Scope), []string{scope.Name})
 	childBody := childBlock.Body()
-	for _, grandchild := range scope.children {
+	for _, grandchild := range scope.Children {
 		childBody = addScopeValueToBody(grandchild, childBody)
 	}
 	return body
