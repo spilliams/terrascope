@@ -21,7 +21,7 @@ type Generator interface {
 // and composes a Logger for debugging
 type generator struct {
 	scopeTypes []string
-	*logrus.Logger
+	*logrus.Entry
 }
 
 // NewGenerator builds a new Generator with the given scope types, destination
@@ -29,7 +29,7 @@ type generator struct {
 func NewGenerator(scopeTypes []string, logger *logrus.Logger) Generator {
 	return &generator{
 		scopeTypes: scopeTypes,
-		Logger:     logger,
+		Entry:      logger.WithField("prefix", "scopedata"),
 	}
 }
 

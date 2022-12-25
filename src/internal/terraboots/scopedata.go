@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terraboots/internal/scopedata"
 )
 
@@ -74,23 +75,37 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 	return err
 }
 
+type scopeDataConfig struct {
+	RootScopes []*scopedata.Scope `hcl:"terraboots,block"`
+}
+
 // readScopeData reads all of the scope data known to the receiver
 func (p *Project) readScopeData() error {
 	if len(p.ScopeTypes) == 0 {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
 
-	scopeTypes := make([]string, len(p.ScopeTypes))
-	for i, el := range p.ScopeTypes {
-		scopeTypes[i] = el.Name
+	// scopeTypes := make([]string, len(p.ScopeTypes))
+	// for i, el := range p.ScopeTypes {
+	// 	scopeTypes[i] = el.Name
+	// }
+
+	rootScopes := make([]*scopedata.Scope, 0)
+
+	for _, filename := range p.ScopeDataFiles {
+		filename := path.Join(p.projectDir(), filename)
+		p.Debugf("Reading scope data file %s", filename)
+		
+		cfg := &scopeDataConfig{}
+		err := hclsimple.DecodeFile(filename, nil, cfg)
+		if err != nil {
+			p.Warnf("error decoding scope data file %s", filename)
+			return err
+		}
+
+		rootScopes = append(rootScopes, cfg.RootScopes...)
 	}
 
-	filenames := make([]string, len(p.ScopeDataFiles))
-	for i, filename := range p.ScopeDataFiles {
-		filenames[i] = path.Join(p.projectDir(), filename)
-	}
-
-	// TODO: read scope data files
-
+	p.rootScopeValues = rootScopes
 	return nil
 }

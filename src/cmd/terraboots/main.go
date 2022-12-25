@@ -9,11 +9,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spilliams/terraboots/internal/terraboots"
+	"github.com/spilliams/terraboots/pkg/logformatter"
 )
 
 var verbose bool
 var configFile string
-var logger *logrus.Logger
+var log *logrus.Entry
 
 func init() {
 	cobra.OnInitialize(initLogger)
@@ -28,12 +29,15 @@ func main() {
 }
 
 func initLogger() {
-	logger = logrus.StandardLogger()
+	logger := logrus.StandardLogger()
 	logger.SetLevel(logrus.InfoLevel)
-	logger.SetFormatter(&logrus.TextFormatter{})
+	logger.SetFormatter(&logformatter.PrefixedTextFormatter{
+		UseColor: true,
+	})
 	if verbose {
 		logger.SetLevel(logrus.DebugLevel)
 	}
+	log = logger.WithField("prefix", "main")
 }
 
 const commandGroupIDTerraform = "terraform"
@@ -105,7 +109,7 @@ func newScopeListCommand() *cobra.Command {
 		Short:   "Lists all scope types in this project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			logger.Infof("There are %d scopes in the project %s", len(project.ScopeTypes), project.ID)
+			log.Infof("There are %d scopes in the project %s", len(project.ScopeTypes), project.ID)
 			for _, scope := range project.ScopeTypes {
 				fmt.Println(scope.Name)
 			}
@@ -156,7 +160,7 @@ func newRootBuildCommand() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			root, err := project.BuildRoot(args[0])
-			logger.Debugf("%+v\n", root)
+			log.Debugf("%+v\n", root)
 			return err
 		},
 	}
@@ -207,9 +211,9 @@ func newRootBuildCommand() *cobra.Command {
 var project *terraboots.Project
 
 func bootsbootsPreRunE(cmd *cobra.Command, args []string) error {
-	logger.Debugf("Using project configuration file: %s", configFile)
+	log.Debugf("Using project configuration file: %s", configFile)
 	var err error
-	project, err = terraboots.ParseProject(configFile, logger)
+	project, err = terraboots.ParseProject(configFile, log.Logger)
 	if err != nil {
 		return err
 	}

@@ -30,7 +30,7 @@ type Project struct {
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*Root
 
-	*logrus.Logger
+	*logrus.Entry
 }
 
 // ScopeType represents a single scope available to a project
@@ -62,7 +62,7 @@ func ParseProject(cfgFile string, logger *logrus.Logger) (*Project, error) {
 
 	project := cfg.Project
 	project.configFile = cfgFile
-	project.Logger = logger
+	project.Entry = logger.WithField("prefix", "project")
 
 	err = project.readScopeData()
 	if err != nil {
