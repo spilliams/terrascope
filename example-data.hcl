@@ -1,88 +1,88 @@
-org "acme-inc" {
+scope "org" "acme-inc" {
   aws_account_id = 12345678
 
-  platform "gold" {
-    domain "commerce" {
-      environment "dev" {
+  scope "platform" "gold" {
+    scope "domain" "commerce" {
+      scope "environment" "dev" {
         aws_account_id = 12345678
-        region "us-west-2" {}
+        scope "region" "us-west-2" {}
       }
-      environment "stage" {
+      scope "environment" "stage" {
         aws_account_id = 12345678
-        region "us-west-2" {}
+        scope "region" "us-west-2" {}
       }
-      environment "prod" {
+      scope "environment" "prod" {
         aws_account_id = 12345678
-        region "us-west-2" {}
-      }
-    }
-    domain "data-science" {
-      environment "dev" {
-        aws_account_id = 12345678
-        region "us-west-2" {}
-      }
-      environment "prod" {
-        aws_account_id = 12345678
-        region "us-west-2" {}
+        scope "region" "us-west-2" {}
       }
     }
-    domain "networking" {
-      environment "global" {
+    scope "domain" "data-science" {
+      scope "environment" "dev" {
         aws_account_id = 12345678
-        region "us-west-1" {}
-        region "us-west-2" {}
+        scope "region" "us-west-2" {}
+      }
+      scope "environment" "prod" {
+        aws_account_id = 12345678
+        scope "region" "us-west-2" {}
       }
     }
-    domain "product" {
-      environment "dev" {
+    scope "domain" "networking" {
+      scope "environment" "global" {
         aws_account_id = 12345678
-        region "us-west-1" {}
-        region "us-west-2" {}
-      }
-      environment "stage" {
-        aws_account_id = 12345678
-        region "us-west-1" {}
-        region "us-west-2" {}
-      }
-      environment "prod" {
-        aws_account_id = 12345678
-        region "us-west-1" {}
-        region "us-west-2" {}
+        scope "region" "us-west-1" {}
+        scope "region" "us-west-2" {}
       }
     }
-    domain "security-portal" {
-      environment "global" {
+    scope "domain" "product" {
+      scope "environment" "dev" {
         aws_account_id = 12345678
-        region "us-west-2" {}
+        scope "region" "us-west-1" {}
+        scope "region" "us-west-2" {}
+      }
+      scope "environment" "stage" {
+        aws_account_id = 12345678
+        scope "region" "us-west-1" {}
+        scope "region" "us-west-2" {}
+      }
+      scope "environment" "prod" {
+        aws_account_id = 12345678
+        scope "region" "us-west-1" {}
+        scope "region" "us-west-2" {}
+      }
+    }
+    scope "domain" "security-portal" {
+      scope "environment" "global" {
+        aws_account_id = 12345678
+        scope "region" "us-west-2" {}
       }
     }
   }
-  platform "silver" {
-    domain "networking" {
-      environment "global" {
+  scope "platform" "silver" {
+    scope "domain" "networking" {
+      scope "environment" "global" {
         aws_account_id = 12345678
-        region "us-west-1" {}
-        region "us-west-2" {}
+        scope "region" "us-west-1" {}
+        scope "region" "us-west-2" {}
       }
     }
-    domain "red" {
-      environment "dev" {
+    scope "domain" "red" {
+      scope "environment" "dev" {
         aws_account_id = 12345678
-        region "us-west-2" {}
+        scope "region" "us-west-2" {}
       }
-      environment "stage" {
+      scope "environment" "stage" {
         aws_account_id = 12345678
-        region "us-west-2" {}
+        scope "region" "us-west-2" {}
       }
-      environment "prod" {
+      scope "environment" "prod" {
         aws_account_id = 12345678
-        region "us-west-2" {}
+        scope "region" "us-west-2" {}
       }
     }
-    domain "security-portal" {
-      environment "global" {
+    scope "domain" "security-portal" {
+      scope "environment" "global" {
         aws_account_id = 12345678
-        region "us-west-2" {}
+        scope "region" "us-west-2" {}
       }
     }
   }

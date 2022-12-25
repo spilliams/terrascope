@@ -14,12 +14,12 @@ import (
 // GenerateScopeData builds a generator for new scope data, then executes it,
 // saving the results in a file
 func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
-	if len(p.Scopes) == 0 {
+	if len(p.ScopeTypes) == 0 {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
 
-	scopeTypes := make([]string, len(p.Scopes))
-	for i, el := range p.Scopes {
+	scopeTypes := make([]string, len(p.ScopeTypes))
+	for i, el := range p.ScopeTypes {
 		scopeTypes[i] = el.Name
 	}
 
@@ -76,12 +76,12 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 
 // readScopeData reads all of the scope data known to the receiver
 func (p *Project) readScopeData() error {
-	if len(p.Scopes) == 0 {
+	if len(p.ScopeTypes) == 0 {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
 
-	scopeTypes := make([]string, len(p.Scopes))
-	for i, el := range p.Scopes {
+	scopeTypes := make([]string, len(p.ScopeTypes))
+	for i, el := range p.ScopeTypes {
 		scopeTypes[i] = el.Name
 	}
 
@@ -89,12 +89,8 @@ func (p *Project) readScopeData() error {
 	for i, filename := range p.ScopeDataFiles {
 		filenames[i] = path.Join(p.projectDir(), filename)
 	}
-	reader := scopedata.NewReader(scopeTypes, filenames, p.Logger)
-	var err error
-	p.rootScopeValues, err = reader.Read()
-	if err != nil {
-		return err
-	}
+
+	// TODO: read scope data files
 
 	return nil
 }

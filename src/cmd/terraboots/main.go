@@ -105,8 +105,8 @@ func newScopeListCommand() *cobra.Command {
 		Short:   "Lists all scope types in this project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			logger.Infof("There are %d scopes in the project %s", len(project.Scopes), project.ID)
-			for _, scope := range project.Scopes {
+			logger.Infof("There are %d scopes in the project %s", len(project.ScopeTypes), project.ID)
+			for _, scope := range project.ScopeTypes {
 				fmt.Println(scope.Name)
 			}
 

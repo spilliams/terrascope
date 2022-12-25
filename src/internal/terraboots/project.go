@@ -23,9 +23,9 @@ type Project struct {
 	configFile string
 	ID         string `hcl:"id,label"`
 
-	Scopes          []*ProjectScope `hcl:"scope,block"`
-	ScopeDataFiles  []string        `hcl:"scopeData"`
-	rootScopeValues []scopedata.Value
+	ScopeTypes      []*ScopeType `hcl:"scope,block"`
+	ScopeDataFiles  []string     `hcl:"scopeData"`
+	rootScopeValues []*scopedata.Scope
 
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*Root
@@ -33,8 +33,8 @@ type Project struct {
 	*logrus.Logger
 }
 
-// ProjectScope represents a single scope available to a project
-type ProjectScope struct {
+// ScopeType represents a single scope available to a project
+type ScopeType struct {
 	Name         string `hcl:"name"`
 	Description  string `hcl:"description,optional"`
 	DefaultValue string `hcl:"default,optional"`

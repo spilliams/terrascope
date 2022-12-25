@@ -53,7 +53,7 @@ func (g *generator) Create(input io.Reader, output io.Writer) ([]byte, error) {
 // the different values of the scopes.
 // Returns a list of the top-level scope values (the scope values for the first
 // scope type)
-func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]Value, error) {
+func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]*Scope, error) {
 	fmt.Fprintln(output, "Scope types in this projct, in order, are:")
 	fmt.Fprintln(output, strings.Join(g.scopeTypes, ", "))
 	fmt.Fprintln(output, "")
@@ -88,16 +88,16 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]V
 	firstValues := strings.Split(scanner.Text(), " ")
 	g.Debugf("read new scope values %v", firstValues)
 
-	roots := make([]Value, len(firstValues))
-	prompts := make([]Value, len(firstValues))
+	roots := make([]*Scope, len(firstValues))
+	prompts := make([]*Scope, len(firstValues))
 	for i, el := range firstValues {
-		value := Value{
+		value := &Scope{
 			Name:           el,
-			Scope:          Scope(g.scopeTypes[0]),
+			Type:           ScopeType(g.scopeTypes[0]),
 			scopeTypeIndex: 0,
-			Children:       make(map[string]Value),
+			Children:       make([]*Scope, 0),
 		}
-		value.Address = fmt.Sprintf("%s.%s", value.Scope, value.Name)
+		value.Address = fmt.Sprintf("%s.%s", value.Type, value.Name)
 		roots[i] = value
 		prompts[i] = value
 	}
@@ -129,14 +129,14 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]V
 		values := strings.Split(scanner.Text(), " ")
 		g.Debugf("read new scope values %v", values)
 		for _, el := range values {
-			value := Value{
+			value := &Scope{
 				Name:           el,
-				Scope:          Scope(g.scopeTypes[prompt.scopeTypeIndex+1]),
+				Type:           ScopeType(g.scopeTypes[prompt.scopeTypeIndex+1]),
 				scopeTypeIndex: prompt.scopeTypeIndex + 1,
-				Children:       make(map[string]Value),
+				Children:       make([]*Scope, 0),
 			}
-			value.Address = strings.Join([]string{prompt.Address, string(value.Scope), value.Name}, ".")
-			prompt.Children[el] = value
+			value.Address = strings.Join([]string{prompt.Address, string(value.Type), value.Name}, ".")
+			prompt.Children = append(prompt.Children, value)
 			prompts = append(prompts, value)
 		}
 	}
@@ -148,7 +148,8 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]V
 
 // generateScopeDataFile reads the given scopes and produces an `hclwrite.File`
 // object that is ready to be written to disk.
-func (g *generator) generateScopeDataFile(rootScopes []Value) *hclwrite.File {
+func (g *generator) generateScopeDataFile(rootScopes []*Scope) *hclwrite.File {
+	// TODO: now that Scopes are gohcl structs, can we write the file more simply?
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 
@@ -164,8 +165,8 @@ func (g *generator) generateScopeDataFile(rootScopes []Value) *hclwrite.File {
 
 // addScopeValueToBody writes a new block representing the scope value to the
 // given body. This is especially useful for writing nested scope values.
-func addScopeValueToBody(scope Value, body *hclwrite.Body) *hclwrite.Body {
-	childBlock := body.AppendNewBlock(string(scope.Scope), []string{scope.Name})
+func addScopeValueToBody(scope *Scope, body *hclwrite.Body) *hclwrite.Body {
+	childBlock := body.AppendNewBlock("scope", []string{string(scope.Type), scope.Name})
 	childBody := childBlock.Body()
 	for _, grandchild := range scope.Children {
 		childBody = addScopeValueToBody(grandchild, childBody)
