@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/sirupsen/logrus"
-	"github.com/zclconf/go-cty/cty"
 )
 
 type Reader interface {
@@ -36,42 +35,64 @@ func (r *reader) Read() ([]Value, error) {
 		return nil, err
 	}
 
-	spec := r.spec.(*hcldec.BlockSpec)
-	r.Debugf("reader spec: %+v", spec)
-	for spec.Nested != nil {
-		r.Debugf("   (cont'd): %+v", spec.Nested)
-		spec = spec.Nested.(*hcldec.BlockSpec)
+	listSpec := r.spec.(*hcldec.BlockListSpec)
+	mapSpec := listSpec.Nested.(*hcldec.BlockMapSpec)
+	r.Debugf("reader spec: %+v", listSpec)
+	r.Debugf("   (cont'd): %+v", mapSpec)
+	for mapSpec.Nested != nil {
+		listSpec = mapSpec.Nested.(*hcldec.BlockListSpec)
+		mapSpec = listSpec.Nested.(*hcldec.BlockMapSpec)
+		r.Debugf("   (cont'd): %+v", listSpec)
+		r.Debugf("   (cont'd): %+v", mapSpec)
 	}
 
 	schema := hcldec.ImpliedSchema(r.spec)
-	r.Debugf("schema: %+v", schema)
+	r.Debugf("schema: %#v", schema)
 
-	values := make([]*cty.Value, len(r.files))
-	for i, filename := range r.files {
-		value, err := r.readScopeDataFile(filename)
+	values := make([]*Value, 0)
+	for _, filename := range r.files {
+		fileValues, err := r.readScopeDataFile(filename)
 		if err != nil {
 			return nil, err
 		}
-		values[i] = value
+		values = append(values, fileValues...)
 	}
 
 	return nil, nil
 }
 
 func (r *reader) buildSpec() error {
-	spec := &hcldec.BlockSpec{}
+	/* TODO: If the hcl file looks like this
+	org "opensesame" {
+		platform "gold" {}
+		platform "silver" {}
+	}
+	org "acme" {
+		platform "gold" {}
+	}
+
+	I probably need to make the spec look like this
+	BlockListSpec(typeName:"org")
+		BlockMapSpec(typeName:"org", labels:"id")
+			BlockListSpec(typeName:"platform")
+				BlockMapSpec(typeName:"platform", labels:"id")
+	*/
+	spec := &hcldec.BlockListSpec{}
 	for i, scope := range r.scopes {
 		spec.TypeName = scope
+		labeled := &hcldec.BlockMapSpec{
+			TypeName:   scope,
+			LabelNames: []string{"id"},
+		}
+		spec.Nested = labeled
 
 		if r.spec == nil {
-			spec.Required = true
 			r.spec = spec
 		}
 
 		if i < len(r.scopes)-1 {
-			parent := spec
-			child := &hcldec.BlockSpec{}
-			parent.Nested = child
+			child := &hcldec.BlockListSpec{}
+			labeled.Nested = child
 			spec = child
 		}
 	}
@@ -79,27 +100,31 @@ func (r *reader) buildSpec() error {
 }
 
 // readScopeDataFile reads a single file containing scope data
-func (r *reader) readScopeDataFile(filename string) (*cty.Value, error) {
+func (r *reader) readScopeDataFile(filename string) ([]*Value, error) {
 	parser := hclparse.NewParser()
 	f, diags := parser.ParseHCLFile(filename)
 	if err := handleDiags(diags, parser.Files(), nil); err != nil {
 		return nil, err
 	}
+	r.Debugf("scope data file body: %+v", f.Body)
 
-	// content, diags := f.Body.Content(schema)
-	// if err := handleDiags(diags, parser.Files(), nil); err != nil {
-	// 	return err
-	// }
-	// ctx := &hcl.EvalContext{
-	// 	Variables: map[string]cty.Value{},
-	// 	Functions: map[string]function.Function{},
-	// }
-	value, diags := hcldec.Decode(f.Body, r.spec, nil)
+	schema := hcldec.ImpliedSchema(r.spec)
+	// content, partial, diags := f.Body.PartialContent(schema)
+	content, diags := f.Body.Content(schema)
 	if err := handleDiags(diags, parser.Files(), nil); err != nil {
 		return nil, err
 	}
+	r.Debugf("f body content: %+v", content)
+	// r.Debugf("f body partial: %+v", partial)
 
-	return &value, nil
+	// _, diags = hcldec.Decode(f.Body, r.spec, nil)
+	// if err := handleDiags(diags, parser.Files(), nil); err != nil {
+	// 	return nil, err
+	// }
+
+	// TODO turn cty values into scope values...
+
+	return nil, nil
 }
 
 func handleDiags(diags hcl.Diagnostics, files map[string]*hcl.File, writer io.Writer) error {
