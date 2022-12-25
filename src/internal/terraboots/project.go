@@ -69,6 +69,11 @@ func ParseProject(cfgFile string, logger *logrus.Logger) (*Project, error) {
 		return nil, err
 	}
 
+	scopeCount := 0
+	for _, rootScope := range project.rootScopeValues {
+		scopeCount += rootScope.Count()
+	}
+	project.Debugf("Project has %d scope values", scopeCount)
 	return project, nil
 }
 
@@ -87,7 +92,7 @@ func (p *Project) BuildRoot(rootName string) (*Root, error) {
 		}
 	}
 
-	// TODO
+	// TODO: build a root
 	return root, nil
 }
 

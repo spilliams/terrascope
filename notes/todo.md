@@ -2,7 +2,6 @@
 
 ## Up Next
 
-- read a scope data file
 - read a root config
 - cli should be able to add to an existing scope data file
 

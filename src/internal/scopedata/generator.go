@@ -93,7 +93,7 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]*
 	for i, el := range firstValues {
 		value := &Scope{
 			Name:           el,
-			Type:           ScopeType(g.scopeTypes[0]),
+			Type:           g.scopeTypes[0],
 			scopeTypeIndex: 0,
 			Children:       make([]*Scope, 0),
 		}
@@ -131,7 +131,7 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]*
 		for _, el := range values {
 			value := &Scope{
 				Name:           el,
-				Type:           ScopeType(g.scopeTypes[prompt.scopeTypeIndex+1]),
+				Type:           g.scopeTypes[prompt.scopeTypeIndex+1],
 				scopeTypeIndex: prompt.scopeTypeIndex + 1,
 				Children:       make([]*Scope, 0),
 			}

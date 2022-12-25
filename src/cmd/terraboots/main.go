@@ -109,7 +109,7 @@ func newScopeListCommand() *cobra.Command {
 		Short:   "Lists all scope types in this project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			log.Infof("There are %d scopes in the project %s", len(project.ScopeTypes), project.ID)
+			log.Infof("There are %d scopes in the project %s:", len(project.ScopeTypes), project.ID)
 			for _, scope := range project.ScopeTypes {
 				fmt.Println(scope.Name)
 			}
@@ -224,9 +224,9 @@ func bootsbootsPreRunE(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	project.RootsDir = rootsDir
-	logrus.Debugf("Project roots directory: %s", project.RootsDir)
+	// log.Debugf("Project roots directory: %s", project.RootsDir)
 
-	logrus.Debugf("Project scope data files: %s", project.ScopeDataFiles)
+	// log.Debugf("Project scope data files: %s", project.ScopeDataFiles)
 
 	return nil
 }

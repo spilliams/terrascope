@@ -76,7 +76,7 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 }
 
 type scopeDataConfig struct {
-	RootScopes []*scopedata.Scope `hcl:"terraboots,block"`
+	RootScopes []*scopedata.Scope `hcl:"scope,block"`
 }
 
 // readScopeData reads all of the scope data known to the receiver
@@ -85,17 +85,12 @@ func (p *Project) readScopeData() error {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
 
-	// scopeTypes := make([]string, len(p.ScopeTypes))
-	// for i, el := range p.ScopeTypes {
-	// 	scopeTypes[i] = el.Name
-	// }
-
 	rootScopes := make([]*scopedata.Scope, 0)
 
 	for _, filename := range p.ScopeDataFiles {
 		filename := path.Join(p.projectDir(), filename)
 		p.Debugf("Reading scope data file %s", filename)
-		
+
 		cfg := &scopeDataConfig{}
 		err := hclsimple.DecodeFile(filename, nil, cfg)
 		if err != nil {
