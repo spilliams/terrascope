@@ -1,18 +1,34 @@
 package main
 
+import (
+	"github.com/sirupsen/logrus"
+	"github.com/spilliams/terraboots/pkg/logformatter"
+)
+
+var log = logrus.New()
+
+func init() {
+	log.Formatter = &logformatter.PrefixedTextFormatter{
+		UseColor: true,
+	}
+	log.Level = logrus.TraceLevel
+}
+
 func main() {
-	// f := hclwrite.NewEmptyFile()
-	// rootBody := f.Body()
-	// commentToken := &hclwrite.Token{
-	// 	Type:         hclsyntax.TokenComment,
-	// 	Bytes:        []byte("# foo"),
-	// 	SpacesBefore: 0,
-	// }
-	// rootBody.AppendUnstructuredTokens([]*hclwrite.Token{commentToken})
-	// rootBody.AppendNewline()
+	log.Trace("this is a trace message")
 
-	// fmt.Printf("%s", f.Bytes())
+	log.WithFields(logrus.Fields{
+		"prefix": "main",
+		"foo":    "bar",
+	}).Debug("this is a debug message")
 
-	// fmt.Printf("go string: '%s'\n", hclsyntax.TokenComment.GoString())
-	// fmt.Printf("string: '%s'\n", hclsyntax.TokenComment.String())
+	log.WithFields(logrus.Fields{
+		"prefix": "sensor",
+	}).Info("this is an info message")
+
+	log.Warn("this is a warn message")
+
+	log.Error("This is an error message")
+
+	log.Print("this is a print message")
 }
