@@ -35,11 +35,15 @@ func (r *reader) Read() ([]Value, error) {
 		return nil, err
 	}
 
-	spec := r.spec.(*hcldec.BlockMapSpec)
-	r.Debugf("reader spec: %+v", spec)
-	for spec.Nested != nil {
-		spec = spec.Nested.(*hcldec.BlockMapSpec)
-		r.Debugf("   (cont'd): %+v", spec)
+	listSpec := r.spec.(*hcldec.BlockListSpec)
+	mapSpec := listSpec.Nested.(*hcldec.BlockMapSpec)
+	r.Debugf("reader spec: %+v", listSpec)
+	r.Debugf("   (cont'd): %+v", mapSpec)
+	for mapSpec.Nested != nil {
+		listSpec = mapSpec.Nested.(*hcldec.BlockListSpec)
+		mapSpec = listSpec.Nested.(*hcldec.BlockMapSpec)
+		r.Debugf("   (cont'd): %+v", listSpec)
+		r.Debugf("   (cont'd): %+v", mapSpec)
 	}
 
 	schema := hcldec.ImpliedSchema(r.spec)
@@ -58,18 +62,37 @@ func (r *reader) Read() ([]Value, error) {
 }
 
 func (r *reader) buildSpec() error {
-	spec := &hcldec.BlockMapSpec{}
+	/* TODO: If the hcl file looks like this
+	org "opensesame" {
+		platform "gold" {}
+		platform "silver" {}
+	}
+	org "acme" {
+		platform "gold" {}
+	}
+
+	I probably need to make the spec look like this
+	BlockListSpec(typeName:"org")
+		BlockMapSpec(typeName:"org", labels:"id")
+			BlockListSpec(typeName:"platform")
+				BlockMapSpec(typeName:"platform", labels:"id")
+	*/
+	spec := &hcldec.BlockListSpec{}
 	for i, scope := range r.scopes {
 		spec.TypeName = scope
-		spec.LabelNames = []string{"id"}
+		labeled := &hcldec.BlockMapSpec{
+			TypeName:   scope,
+			LabelNames: []string{"id"},
+		}
+		spec.Nested = labeled
 
 		if r.spec == nil {
 			r.spec = spec
 		}
 
 		if i < len(r.scopes)-1 {
-			child := &hcldec.BlockMapSpec{}
-			spec.Nested = child
+			child := &hcldec.BlockListSpec{}
+			labeled.Nested = child
 			spec = child
 		}
 	}
@@ -86,20 +109,18 @@ func (r *reader) readScopeDataFile(filename string) ([]*Value, error) {
 	r.Debugf("scope data file body: %+v", f.Body)
 
 	schema := hcldec.ImpliedSchema(r.spec)
-	content, partial, diags := f.Body.PartialContent(schema)
-	// content, diags := f.Body.Content(schema)
+	// content, partial, diags := f.Body.PartialContent(schema)
+	content, diags := f.Body.Content(schema)
 	if err := handleDiags(diags, parser.Files(), nil); err != nil {
 		return nil, err
 	}
 	r.Debugf("f body content: %+v", content)
-	r.Debugf("f body partial: %+v", partial)
-	// TODO: the real data is still in the partial. The implied schema did not
-	// pull anything out of the file.
+	// r.Debugf("f body partial: %+v", partial)
 
-	_, diags = hcldec.Decode(f.Body, r.spec, nil)
-	if err := handleDiags(diags, parser.Files(), nil); err != nil {
-		return nil, err
-	}
+	// _, diags = hcldec.Decode(f.Body, r.spec, nil)
+	// if err := handleDiags(diags, parser.Files(), nil); err != nil {
+	// 	return nil, err
+	// }
 
 	// TODO turn cty values into scope values...
 

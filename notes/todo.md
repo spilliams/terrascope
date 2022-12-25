@@ -48,7 +48,6 @@ unsorted shower thoughts:
    1. should `scope gen` ask for "what attributes does each scope value get?"
    2. should that info be embedded in the scope type definition in the project
       config?
-7. I'm not doing anything with the scope description and default value yet
 
 ## Feature
 
