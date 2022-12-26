@@ -13,6 +13,7 @@ import (
 )
 
 var verbose bool
+var vertrace bool
 var configFile string
 var log *logrus.Entry
 
@@ -37,6 +38,9 @@ func initLogger() {
 	if verbose {
 		logger.SetLevel(logrus.DebugLevel)
 	}
+	if vertrace {
+		logger.SetLevel(logrus.TraceLevel)
+	}
 	log = logger.WithField("prefix", "main")
 }
 
@@ -50,6 +54,7 @@ func newRootCmd() *cobra.Command {
 	}
 
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase log output")
+	cmd.PersistentFlags().BoolVar(&vertrace, "vvv", false, "increase log output even more")
 	cmd.PersistentFlags().StringVarP(&configFile, "config-file", "c", "terraboots.hcl", "the filename of the project configuration")
 
 	// version
