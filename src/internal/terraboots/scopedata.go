@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"sort"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terraboots/internal/scopedata"
@@ -76,7 +77,7 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 }
 
 type scopeDataConfig struct {
-	RootScopes []*scopedata.Scope `hcl:"scope,block"`
+	RootScopes []*scopedata.NestedScope `hcl:"scope,block"`
 }
 
 // readScopeData reads all of the scope data known to the receiver
@@ -85,7 +86,7 @@ func (p *Project) readScopeData() error {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
 
-	rootScopes := make([]*scopedata.Scope, 0)
+	compiledScopes := make([]*scopedata.CompiledScope, 0)
 
 	for _, filename := range p.ScopeDataFiles {
 		filename := path.Join(p.projectDir(), filename)
@@ -98,9 +99,13 @@ func (p *Project) readScopeData() error {
 			return err
 		}
 
-		rootScopes = append(rootScopes, cfg.RootScopes...)
+		for _, rootScope := range cfg.RootScopes {
+			compiledScopes = append(compiledScopes, rootScope.CompiledScopes(nil)...)
+		}
 	}
+	compiledScopes = scopedata.CompiledScopes(compiledScopes).Deduplicate()
+	sort.Sort(scopedata.CompiledScopes(compiledScopes))
 
-	p.rootScopeValues = rootScopes
+	p.compiledScopes = compiledScopes
 	return nil
 }

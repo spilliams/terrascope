@@ -23,9 +23,9 @@ type Project struct {
 	configFile string
 	ID         string `hcl:"id,label"`
 
-	ScopeTypes      []*ScopeType `hcl:"scope,block"`
-	ScopeDataFiles  []string     `hcl:"scopeData"`
-	rootScopeValues []*scopedata.Scope
+	ScopeTypes     []*ScopeType `hcl:"scope,block"`
+	ScopeDataFiles []string     `hcl:"scopeData"`
+	compiledScopes []*scopedata.CompiledScope
 
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*Root
@@ -69,11 +69,10 @@ func ParseProject(cfgFile string, logger *logrus.Logger) (*Project, error) {
 		return nil, err
 	}
 
-	scopeCount := 0
-	for _, rootScope := range project.rootScopeValues {
-		scopeCount += rootScope.Count()
+	project.Debugf("Project has %d compiled scopes", len(project.compiledScopes))
+	for _, scope := range project.compiledScopes {
+		project.Trace(scope.Address())
 	}
-	project.Debugf("Project has %d scope values", scopeCount)
 	return project, nil
 }
 

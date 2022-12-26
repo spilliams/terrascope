@@ -2,6 +2,7 @@
 
 ## Up Next
 
+- scope values need arbitrary attributes
 - read a root config
 - cli should be able to add to an existing scope data file
 
