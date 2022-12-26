@@ -1,34 +1,51 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/spilliams/terraboots/pkg/logformatter"
+	"fmt"
+	"log"
+
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclsimple"
 )
 
-var log = logrus.New()
-
-func init() {
-	log.Formatter = &logformatter.PrefixedTextFormatter{
-		UseColor: true,
-	}
-	log.Level = logrus.TraceLevel
-}
+const data = `scope "foo" "top" {
+	account = "12345"
+	scope "bar" "next" {}
+}`
 
 func main() {
-	log.Trace("this is a trace message")
+	cfg, err := parse(data)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	log.Printf("%+v", cfg.Scopes)
+}
 
-	log.WithFields(logrus.Fields{
-		"prefix": "main",
-		"foo":    "bar",
-	}).Debug("this is a debug message")
+func parse(data string) (*config, error) {
+	cfg := &config{}
+	err := hclsimple.Decode("main.hcl", []byte(data), nil, cfg)
+	if err != nil {
+		log.Println("error decoding scope data")
+		return nil, err
+	}
+	return cfg, nil
+}
 
-	log.WithFields(logrus.Fields{
-		"prefix": "sensor",
-	}).Info("this is an info message")
+type config struct {
+	Scopes []*scope `hcl:"scope,block"`
+}
 
-	log.Warn("this is a warn message")
+type scope struct {
+	Type     string         `hcl:"type,label"`
+	Name     string         `hcl:"name,label"`
+	Children []*scope       `hcl:"scope,block"`
+	Attrs    hcl.Attributes `hcl:"attrs,remain"`
+}
 
-	log.Error("This is an error message")
-
-	log.Print("this is a print message")
+func (s *scope) String() string {
+	attrs := []string{}
+	for k := range s.Attrs {
+		attrs = append(attrs, k)
+	}
+	return fmt.Sprintf("<scope.%s.%s: %d children, attrs: %s>", s.Type, s.Name, len(s.Children), attrs)
 }

@@ -1,5 +1,7 @@
 package scopedata
 
+import "github.com/hashicorp/hcl/v2"
+
 // NestedScope represents one value for a single scope type. Instances may have
 // children of the next scope type in the hierarchy.
 // This is the type that we expect to read and write to "scope data" files.
@@ -8,6 +10,7 @@ type NestedScope struct {
 	Name     string `hcl:"name,label"`
 	Address  string
 	Children []*NestedScope `hcl:"scope,block"`
+	Attrs    hcl.Attributes `hcl:"attributes,remain"`
 
 	scopeTypeIndex int
 }
