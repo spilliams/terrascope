@@ -1,6 +1,8 @@
-package main
+package cli
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 func newRootCommand() *cobra.Command {
 	cmd := &cobra.Command{

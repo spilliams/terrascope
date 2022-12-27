@@ -1,4 +1,4 @@
-package main
+package cli
 
 // func newTerraformCommand(name string) *cobra.Command {
 // 	cmd := &cobra.Command{

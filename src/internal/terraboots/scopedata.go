@@ -137,3 +137,12 @@ func handleDecodeNestedScopeError(err error) error {
 	}
 	return nil
 }
+
+func (p *Project) GetCompiledScope(address string) *scopedata.CompiledScope {
+	for _, scope := range p.compiledScopes {
+		if scope.Address() == address {
+			return scope
+		}
+	}
+	return nil
+}
