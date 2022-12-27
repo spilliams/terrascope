@@ -1,3 +1,12 @@
 root "aws-config-global" {
-  scopes = ["org", "platform", "domain", "environment"]
+  scopeTypes = ["org", "platform", "domain", "environment"]
+
+  scopeMatch {
+    scopeTypes = {
+      org         = ".*"
+      platform    = ".*"
+      domain      = ".*"
+      environment = ".*"
+    }
+  }
 }

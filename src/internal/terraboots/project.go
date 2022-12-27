@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/sirupsen/logrus"
@@ -25,7 +26,7 @@ type Project struct {
 
 	ScopeTypes     []*ScopeType `hcl:"scope,block"`
 	ScopeDataFiles []string     `hcl:"scopeData"`
-	compiledScopes []*scopedata.CompiledScope
+	compiledScopes scopedata.CompiledScopes
 
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*Root
@@ -69,7 +70,7 @@ func ParseProject(cfgFile string, logger *logrus.Logger) (*Project, error) {
 		return nil, err
 	}
 
-	project.Debugf("Project has %d compiled scopes", len(project.compiledScopes))
+	project.Debugf("Project has %d compiled scopes", project.compiledScopes.Len())
 	for _, scope := range project.compiledScopes {
 		project.Trace(scope.Address())
 	}
@@ -82,6 +83,7 @@ func (p *Project) projectDir() string {
 
 // BuildRoot tells the receiver to build a root module
 func (p *Project) BuildRoot(rootName string) (*Root, error) {
+	// first, get the root
 	root, ok := p.Roots[rootName]
 	if !ok {
 		var err error
@@ -90,8 +92,20 @@ func (p *Project) BuildRoot(rootName string) (*Root, error) {
 			return nil, err
 		}
 	}
+	p.Debugf("root: %+v", root)
 
-	// TODO: build a root
+	// TODO: build the root's dependencies?
+
+	// what scopes to build for?
+	matchingScopes, err := p.determineMatchingScopes(root)
+	if err != nil {
+		return nil, err
+	}
+	p.Debugf("Root will be built for %d scopes", len(matchingScopes))
+	for _, scope := range matchingScopes {
+		p.Debug(scope.Address())
+	}
+
 	return root, nil
 }
 
@@ -126,4 +140,29 @@ func (p *Project) AddRoot(rootName string) (*Root, error) {
 	}
 	p.Roots[root.ID] = root
 	return root, nil
+}
+
+func (p *Project) determineMatchingScopes(root *Root) (scopedata.CompiledScopes, error) {
+	matchingScopes := scopedata.CompiledScopes{}
+	// if they don't specify any scope matches, assume .* for all
+	if root.ScopeMatches == nil || len(root.ScopeMatches) == 0 {
+		allScopeMatchTypes := make(map[string]string)
+		for _, scope := range root.ScopeTypes {
+			allScopeMatchTypes[scope] = ".*"
+		}
+		root.ScopeMatches = []*ScopeMatch{
+			{ScopeTypes: allScopeMatchTypes},
+		}
+	}
+	for _, scopeMatch := range root.ScopeMatches {
+		matches := p.compiledScopes.Matching(scopeMatch.ScopeTypes)
+		matchingScopes = append(matchingScopes, matches...)
+	}
+	matchingScopes = matchingScopes.Deduplicate()
+	sort.Sort(matchingScopes)
+
+	if len(matchingScopes) == 0 {
+		return nil, fmt.Errorf("No matching scope values found.\nRoot '%s' applies to the scope types %v.\nAll %d scopes in the project were searched, and none matched these types. Please provide\n\t- new scope data for the project,\n\t- different scope types in the root configuration file, or\n\t- new scope matches in the root configuration file.", root.ID, root.ScopeTypes, len(p.compiledScopes))
+	}
+	return matchingScopes, nil
 }

@@ -87,7 +87,7 @@ func (p *Project) readScopeData() error {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
 
-	compiledScopes := make([]*scopedata.CompiledScope, 0)
+	list := make([]*scopedata.CompiledScope, 0)
 
 	for _, filename := range p.ScopeDataFiles {
 		filename := path.Join(p.projectDir(), filename)
@@ -101,11 +101,13 @@ func (p *Project) readScopeData() error {
 		}
 
 		for _, rootScope := range cfg.RootScopes {
-			compiledScopes = append(compiledScopes, rootScope.CompiledScopes(nil)...)
+			list = append(list, rootScope.CompiledScopes(nil)...)
 		}
 	}
-	compiledScopes = scopedata.CompiledScopes(compiledScopes).Deduplicate()
-	sort.Sort(scopedata.CompiledScopes(compiledScopes))
+	
+	compiledScopes := scopedata.CompiledScopes(list)
+	compiledScopes = compiledScopes.Deduplicate()
+	sort.Sort(compiledScopes)
 
 	p.compiledScopes = compiledScopes
 	return nil

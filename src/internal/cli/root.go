@@ -29,8 +29,7 @@ func newRootBuildCommand() *cobra.Command {
 		Short:   "Builds the given root and prints the location of the built root to stdout",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			root, err := project.BuildRoot(args[0])
-			log.Debugf("%+v\n", root)
+			_, err := project.BuildRoot(args[0])
 			return err
 		},
 	}

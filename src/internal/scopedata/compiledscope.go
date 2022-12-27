@@ -1,6 +1,9 @@
 package scopedata
 
-import "fmt"
+import (
+	"fmt"
+	"regexp"
+)
 
 // CompiledScope represents one permutation of several scope types. It contains
 // attributes gained from each scope value along the way, with attribute valuess
@@ -28,6 +31,34 @@ func (cs *CompiledScope) Address() string {
 	return addr
 }
 
+func (cs *CompiledScope) Matches(types map[string]string) bool {
+	if len(types) != len(cs.ScopeTypes) {
+		return false
+	}
+	for matchKey, matchValue := range types {
+		scopeIdx := indexOf(matchKey, cs.ScopeTypes)
+		if scopeIdx == -1 {
+			// different set of scope types were passed in
+			return false
+		}
+		myValue := cs.ScopeValues[scopeIdx]
+		re := regexp.MustCompile(matchValue)
+		if !re.MatchString(myValue) {
+			return false
+		}
+	}
+	return true
+}
+
+func indexOf(item string, list []string) int {
+	for i, el := range list {
+		if el == item {
+			return i
+		}
+	}
+	return -1
+}
+
 type CompiledScopes []*CompiledScope
 
 func (css CompiledScopes) Len() int {
@@ -42,7 +73,7 @@ func (css CompiledScopes) Swap(i, j int) {
 	css[i], css[j] = css[j], css[i]
 }
 
-func (css CompiledScopes) Deduplicate() []*CompiledScope {
+func (css CompiledScopes) Deduplicate() CompiledScopes {
 	seen := make(map[string]bool)
 	j := 0
 	for _, scope := range css {
@@ -58,4 +89,14 @@ func (css CompiledScopes) Deduplicate() []*CompiledScope {
 	}
 	css = css[:j]
 	return css
+}
+
+func (css CompiledScopes) Matching(types map[string]string) CompiledScopes {
+	newCSS := make([]*CompiledScope, 0, len(css))
+	for _, scope := range css {
+		if scope.Matches(types) {
+			newCSS = append(newCSS, scope)
+		}
+	}
+	return newCSS
 }

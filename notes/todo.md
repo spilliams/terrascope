@@ -2,8 +2,11 @@
 
 ## Up Next
 
-- scope values need arbitrary attributes
-- read a root config
+- build a root module at all
+- build a root module for only a subset of scopes
+- build a root module with dependencies
+- build a root module with a dependency outside the current scope
+- build a root module in a scope with custom attributes
 - cli should be able to add to an existing scope data file
 
 unsorted shower thoughts:
@@ -14,20 +17,7 @@ unsorted shower thoughts:
       best file")
    2. if/when I introduce intelligent insertion, I can remove the requirement
       for the --filename flag. Backward compatibility!
-2. where is the best place to put the "this scope address gets these roots"
-   data?
-   1. could keep it in scope data file where it is now: it *feels* like an
-      extension of the scopes.
-   2. could put it in the root configs!
-      1. This could be especially powerful if we use regex to fill it out:
-         The `root` block could have any number of `scopeMatch` sub blocks,
-         that use an attribute named `addressPattern`. Example pattern:
-         `org.acme.platform.*.domain.*.environment.[dev|stage|prod]`
-      2. removing `roots` from the scope data means that we no longer have any
-         attributes in the scope blocks that are not user-defined! KISS
-      3. using a process that allows for regex means we can reduce the
-         copy-paste there too!
-3. along with `generate` for the backend and provider stuff, take another leaf
+2. along with `generate` for the backend and provider stuff, take another leaf
    out of Terragrunt's book: introduce a `terraform` block to use a module call.
    Then users can have their roots call on a versioned module.
    1. I wonder though, should this be a blue/green type of thing?
@@ -38,16 +28,17 @@ unsorted shower thoughts:
       replica), stable-candidate silver (prod release candidate), and
       candidate-stable silver (silver release candidate). Maybe I'm too far in
       the weeds here.
-4. `include(file, [scopeAddress], [attributesObj])` function for the root
+3. `include(file, [scopeAddress], [attributesObj])` function for the root
    configuration
-5. how should the CLI log?
+4. how should the CLI log?
    1. definitely to stdout, the way the user would like (e.g. verbose or quiet)
    2. definitely to a file in the build folder. How verbose?
    3. maybe also to a long-term cache in `~/.terraboots/logs/`. How verbose?
-6. how much should cli care about scope value attributes?
+5. how much should cli care about scope value attributes?
    1. should `scope gen` ask for "what attributes does each scope value get?"
    2. should that info be embedded in the scope type definition in the project
       config?
+6. for some commands, a `stat` subcommand might be nice. For `root`, it could show the number of scope matches it has.
 
 ## Feature
 

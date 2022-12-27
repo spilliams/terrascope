@@ -8,15 +8,18 @@ type RootConfig struct {
 
 type Root struct {
 	ID           string            `hcl:"id,label"`
-	Scopes       []RootScope       `hcl:"scopes"`
+	ScopeTypes   []string          `hcl:"scopeTypes"`
 	Dependencies []*RootDependency `hcl:"dependency,block"`
+	ScopeMatches []*ScopeMatch     `hcl:"scopeMatch,block"`
 }
 
-type RootScope string
-
 type RootDependency struct {
-	Root   string               `hcl:"root"`
-	Scopes map[RootScope]string `hcl:"scopes,optional"`
+	Root   string            `hcl:"root"`
+	Scopes map[string]string `hcl:"scopes,optional"`
+}
+
+type ScopeMatch struct {
+	ScopeTypes map[string]string `hcl:"scopeTypes"`
 }
 
 func ParseRoot(cfgFile string) (*Root, error) {
