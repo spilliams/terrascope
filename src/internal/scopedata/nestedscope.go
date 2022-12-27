@@ -10,7 +10,7 @@ type NestedScope struct {
 	Name     string `hcl:"name,label"`
 	Address  string
 	Children []*NestedScope `hcl:"scope,block"`
-	Attrs    hcl.Attributes `hcl:"attributes,remain"`
+	Attrs    hcl.Attributes `hcl:",remain"`
 
 	scopeTypeIndex int
 }
@@ -37,14 +37,24 @@ func (ns *NestedScope) CompiledScope(parent *CompiledScope) *CompiledScope {
 	scopeTypes := make([]string, 0)
 	scopeValues := make([]string, 0)
 	if parent != nil {
-		attrs = parent.Attributes
+		// TODO: scope value attributes; do a deep copy
+		for k, v := range parent.Attributes {
+			attrs[k] = v
+		}
 		scopeTypes = append(scopeTypes, parent.ScopeTypes...)
 		scopeValues = append(scopeValues, parent.ScopeValues...)
 	}
 
 	scopeTypes = append(scopeTypes, ns.Type)
 	scopeValues = append(scopeValues, ns.Name)
-	// TODO: scope value attributes
+
+	for k, v := range ns.Attrs {
+		// TODO: standard functions and variables?
+		// what do with _ here?
+		// is cty.Value ok to use as return type?
+		value, _ := v.Expr.Value(nil)
+		attrs[k] = value
+	}
 
 	return &CompiledScope{
 		Attributes:  attrs,

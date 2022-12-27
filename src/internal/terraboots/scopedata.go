@@ -9,6 +9,7 @@ import (
 	"path"
 	"sort"
 
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terraboots/internal/scopedata"
 )
@@ -94,7 +95,7 @@ func (p *Project) readScopeData() error {
 
 		cfg := &scopeDataConfig{}
 		err := hclsimple.DecodeFile(filename, nil, cfg)
-		if err != nil {
+		if err = handleDecodeNestedScopeError(err); err != nil {
 			p.Warnf("error decoding scope data file %s", filename)
 			return err
 		}
@@ -107,5 +108,32 @@ func (p *Project) readScopeData() error {
 	sort.Sort(scopedata.CompiledScopes(compiledScopes))
 
 	p.compiledScopes = compiledScopes
+	return nil
+}
+
+// handleDecodeNestedScopeError takes diagnostics returned from a call to decode
+// something into a NestedScope, and it removes the diagnostics that are false
+// alarms.
+// When dealing with the `remain` tag in a struct, gohcl will add a diagnostic
+// that "Blocks are not allowed here". It's ok to ignore this type of diagnostic
+// because the blocks are handled elsewhere in the gohcl Decode process.
+// Errors that are not hcl Diagnostics, or that are other types of Diagnostic
+// will be returned.
+func handleDecodeNestedScopeError(err error) error {
+	diags, typeOK := err.(hcl.Diagnostics)
+	if !typeOK {
+		return err
+	}
+
+	var newDiags hcl.Diagnostics
+	for _, diag := range diags {
+		if diag.Summary != "Unexpected \"scope\" block" {
+			newDiags = append(newDiags, diag)
+		}
+	}
+
+	if len(newDiags) > 0 {
+		return newDiags
+	}
 	return nil
 }
