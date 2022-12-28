@@ -39,6 +39,18 @@ unsorted shower thoughts:
    2. should that info be embedded in the scope type definition in the project
       config?
 6. for some commands, a `stat` subcommand might be nice. For `root`, it could show the number of scope matches it has.
+7. for building, should we have a flag that states "please bootstrap". In other
+   words, run all dependencies regardless of their last run time.
+8. terraboots will want to inspect the last runtime of the roots. If a
+   dependency has never been applied before, it should build it and apply it
+   before any of its actual tasks.
+9. using dependencies with custom attributes is a trap. The source of truth of
+   "what are all my built roots" lies in the root config. If there's another
+   root out there saying "actually add this flavor in too" it'll get hairy fast.
+   So: when a root has a dependency on another root, it CANNOT allow for custom
+   attribute values.
+10. Track the source of an attribute value along with the value, for user
+    debugging.
 
 ## Feature
 

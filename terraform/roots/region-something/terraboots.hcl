@@ -1,7 +1,7 @@
-root "aws-config-regional" {
+root "region-something" {
   scopeTypes = ["org", "platform", "domain", "environment", "region"]
 
   dependency {
-    root = "aws-config-global"
+    root = "account-something"
   }
 }

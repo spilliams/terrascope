@@ -94,8 +94,6 @@ func (p *Project) BuildRoot(rootName string) (*Root, error) {
 	}
 	p.Debugf("root: %+v", root)
 
-	// TODO: build the root's dependencies?
-
 	// what scopes to build for?
 	matchingScopes, err := p.determineMatchingScopes(root)
 	if err != nil {
@@ -103,7 +101,20 @@ func (p *Project) BuildRoot(rootName string) (*Root, error) {
 	}
 	p.Debugf("Root will be built for %d scopes", len(matchingScopes))
 	for _, scope := range matchingScopes {
-		p.Debug(scope.Address())
+		p.Trace(scope.Address())
+	}
+
+	builds := make([]*buildContext, len(matchingScopes))
+	for i, scope := range matchingScopes {
+		builds[i] = newBuildContext(root, scope, p.Entry.Logger)
+	}
+
+	// TODO: root dependencies. Do the buildContexts figure it out? Then we need
+	// to phase them and deduplicate them
+
+	// TODO: use a worker pool
+	for _, build := range builds {
+		build.Build()
 	}
 
 	return root, nil
