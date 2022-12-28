@@ -3,6 +3,7 @@ package scopedata
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 // CompiledScope represents one permutation of several scope types. It contains
@@ -29,6 +30,10 @@ func (cs *CompiledScope) Address() string {
 		}
 	}
 	return addr
+}
+
+func (cs *CompiledScope) Values() string {
+	return strings.Join(cs.ScopeValues, ".")
 }
 
 func (cs *CompiledScope) Matches(types map[string]string) bool {

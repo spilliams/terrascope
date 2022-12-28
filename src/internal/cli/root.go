@@ -24,12 +24,16 @@ func newRootCommand() *cobra.Command {
 
 func newRootBuildCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "build ROOT",
+		Use:     "build ROOT [SCOPE [SCOPE...]]",
 		Aliases: []string{"b"},
 		Short:   "Builds the given root and prints the location of the built root to stdout",
-		Args:    cobra.ExactArgs(1),
+		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, err := project.BuildRoot(args[0])
+			scopes := make([]string, len(args)-1)
+			for i := 1; i < len(args); i++ {
+				scopes[i-1] = args[i]
+			}
+			_, err := project.BuildRoot(args[0], scopes)
 			return err
 		},
 	}

@@ -6,12 +6,12 @@ import (
 )
 
 type buildContext struct {
-	root  *Root
+	root  *root
 	scope *scopedata.CompiledScope
 	*logrus.Entry
 }
 
-func newBuildContext(root *Root, scope *scopedata.CompiledScope, logger *logrus.Logger) *buildContext {
+func newBuildContext(root *root, scope *scopedata.CompiledScope, logger *logrus.Logger) *buildContext {
 	return &buildContext{
 		root:  root,
 		scope: scope,

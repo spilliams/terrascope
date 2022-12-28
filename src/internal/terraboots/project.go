@@ -29,7 +29,7 @@ type Project struct {
 	compiledScopes scopedata.CompiledScopes
 
 	RootsDir string `hcl:"rootsDir"`
-	Roots    map[string]*Root
+	Roots    map[string]*root
 
 	*logrus.Entry
 }
@@ -82,7 +82,7 @@ func (p *Project) projectDir() string {
 }
 
 // BuildRoot tells the receiver to build a root module
-func (p *Project) BuildRoot(rootName string) (*Root, error) {
+func (p *Project) BuildRoot(rootName string, scopes []string) (*root, error) {
 	// first, get the root
 	root, ok := p.Roots[rootName]
 	if !ok {
@@ -95,11 +95,11 @@ func (p *Project) BuildRoot(rootName string) (*Root, error) {
 	p.Debugf("root: %+v", root)
 
 	// what scopes to build for?
-	matchingScopes, err := p.determineMatchingScopes(root)
+	matchingScopes, err := p.determineMatchingScopes(root, scopes)
 	if err != nil {
 		return nil, err
 	}
-	p.Debugf("Root will be built for %d scopes", len(matchingScopes))
+	p.Debugf("Root will be built for %d %s", len(matchingScopes), pluralize("scope", "scopes", len(matchingScopes)))
 	for _, scope := range matchingScopes {
 		p.Trace(scope.Address())
 	}
@@ -122,7 +122,7 @@ func (p *Project) BuildRoot(rootName string) (*Root, error) {
 
 // AddRoot tells the receiver to add a root module to its internal records.
 // The `rootName` must be a directory name located in the receiver's `RootsDir`.
-func (p *Project) AddRoot(rootName string) (*Root, error) {
+func (p *Project) AddRoot(rootName string) (*root, error) {
 	// look for named root
 	rootDir := path.Join(p.RootsDir, rootName)
 	_, err := os.Stat(rootDir)
@@ -141,19 +141,25 @@ func (p *Project) AddRoot(rootName string) (*Root, error) {
 		return nil, err
 	}
 
-	root, err := ParseRoot(rootCfg)
+	r, err := ParseRoot(rootCfg)
 	if err != nil {
 		return nil, err
 	}
 
 	if p.Roots == nil {
-		p.Roots = make(map[string]*Root)
+		p.Roots = make(map[string]*root)
 	}
-	p.Roots[root.ID] = root
-	return root, nil
+	p.Roots[r.ID] = r
+	return r, nil
 }
 
-func (p *Project) determineMatchingScopes(root *Root) (scopedata.CompiledScopes, error) {
+// determineMatchingScopes takes in a root configuration and an optional list of
+// scopes. It returns a list of scopedata.CompiledScopes where each scope in the
+// list (a) matches at least one scopeMatch expression of the root, and
+// (b) matches at least one scope given.
+// Note that a root with no scopeMatch expressions will be treated as if all its
+// scope types allow all values (`.*`).
+func (p *Project) determineMatchingScopes(root *root, scopes []string) (scopedata.CompiledScopes, error) {
 	matchingScopes := scopedata.CompiledScopes{}
 	// if they don't specify any scope matches, assume .* for all
 	if root.ScopeMatches == nil || len(root.ScopeMatches) == 0 {
@@ -161,10 +167,11 @@ func (p *Project) determineMatchingScopes(root *Root) (scopedata.CompiledScopes,
 		for _, scope := range root.ScopeTypes {
 			allScopeMatchTypes[scope] = ".*"
 		}
-		root.ScopeMatches = []*ScopeMatch{
+		root.ScopeMatches = []*scopeMatch{
 			{ScopeTypes: allScopeMatchTypes},
 		}
 	}
+
 	for _, scopeMatch := range root.ScopeMatches {
 		matches := p.compiledScopes.Matching(scopeMatch.ScopeTypes)
 		matchingScopes = append(matchingScopes, matches...)
@@ -172,8 +179,37 @@ func (p *Project) determineMatchingScopes(root *Root) (scopedata.CompiledScopes,
 	matchingScopes = matchingScopes.Deduplicate()
 	sort.Sort(matchingScopes)
 
+	if len(scopes) > 0 {
+		// also abide by this list
+		filteredMatchingScopes := scopedata.CompiledScopes{}
+		scopeFilters := make(map[string]bool)
+		for _, scope := range scopes {
+			scopeFilters[scope] = true
+		}
+		p.Debugf("filters on the root's full list of scope values:\n%+v", scopeFilters)
+		for _, scope := range matchingScopes {
+			if scopeFilters[scope.Address()] || scopeFilters[scope.Values()] {
+				filteredMatchingScopes = append(filteredMatchingScopes, scope)
+			}
+		}
+		matchingScopes = filteredMatchingScopes
+	}
+
 	if len(matchingScopes) == 0 {
-		return nil, fmt.Errorf("No matching scope values found.\nRoot '%s' applies to the scope types %v.\nAll %d scopes in the project were searched, and none matched these types. Please provide\n\t- new scope data for the project,\n\t- different scope types in the root configuration file, or\n\t- new scope matches in the root configuration file.", root.ID, root.ScopeTypes, len(p.compiledScopes))
+		return nil, fmt.Errorf("No matching scope values found.\n"+
+			"Root '%s' applies to the scope types %v.\n"+
+			"All scopes in the project were searched (%d), and none matched these types. Please provide\n"+
+			"\t- new scope data for the project,\n"+
+			"\t- different scope types in the root configuration file, or\n"+
+			"\t- new scope matches in the root configuration file.",
+			root.ID, root.ScopeTypes, len(p.compiledScopes))
 	}
 	return matchingScopes, nil
+}
+
+func pluralize(single, plural string, count int) string {
+	if count == 1 {
+		return single
+	}
+	return plural
 }

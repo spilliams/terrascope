@@ -1,29 +1,47 @@
 package terraboots
 
-import "github.com/hashicorp/hcl/v2/hclsimple"
+import (
+	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/zclconf/go-cty/cty"
+)
 
-type RootConfig struct {
-	Root *Root `hcl:"root,block"`
+type rootConfig struct {
+	Root       *root        `hcl:"root,block"`
+	Generators []*generator `hcl:"generate,block"`
+	Includes   []*include   `hcl:"include,block"`
+	Inputs     *cty.Value   `hcl:"inputs,attr"`
 }
 
-type Root struct {
+type root struct {
 	ID           string            `hcl:"id,label"`
 	ScopeTypes   []string          `hcl:"scopeTypes"`
-	Dependencies []*RootDependency `hcl:"dependency,block"`
-	ScopeMatches []*ScopeMatch     `hcl:"scopeMatch,block"`
+	Dependencies []*rootDependency `hcl:"dependency,block"`
+	ScopeMatches []*scopeMatch     `hcl:"scopeMatch,block"`
 }
 
-type RootDependency struct {
+type rootDependency struct {
 	Root   string            `hcl:"root"`
 	Scopes map[string]string `hcl:"scopes,optional"`
 }
 
-type ScopeMatch struct {
+type scopeMatch struct {
 	ScopeTypes map[string]string `hcl:"scopeTypes"`
 }
 
-func ParseRoot(cfgFile string) (*Root, error) {
-	cfg := &RootConfig{}
+type generator struct {
+	ID       string `hcl:"id,label"`
+	Path     string `hcl:"path,attr"`
+	Contents string `hcl:"contents,attr"`
+}
+
+type include struct {
+	Path string `hcl:"path,attr"`
+}
+
+func ParseRoot(cfgFile string) (*root, error) {
+	cfg := &rootConfig{}
+	// TODO: build a root; we need a more advanced decode here, to allow for
+	// partial decoding and also Functions & Values
 	err := hclsimple.DecodeFile(cfgFile, nil, cfg)
 	if err != nil {
 		return nil, err
