@@ -99,7 +99,7 @@ func (p *Project) BuildRoot(rootName string, scopes []string) (*root, error) {
 	if err != nil {
 		return nil, err
 	}
-	p.Debugf("Root will be built for %d %s", len(matchingScopes), pluralize("scope", "scopes", len(matchingScopes)))
+	p.Infof("Root will be built for %d %s", len(matchingScopes), pluralize("scope", "scopes", len(matchingScopes)))
 	for _, scope := range matchingScopes {
 		p.Trace(scope.Address())
 	}
@@ -114,7 +114,10 @@ func (p *Project) BuildRoot(rootName string, scopes []string) (*root, error) {
 
 	// TODO: use a worker pool
 	for _, build := range builds {
-		build.Build()
+		err := build.Build()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return root, nil
@@ -142,7 +145,7 @@ func (p *Project) AddRoot(rootName string) (*root, error) {
 	}
 
 	r, err := ParseRoot(rootCfg)
-	if err != nil {
+	if r == nil && err != nil {
 		return nil, err
 	}
 

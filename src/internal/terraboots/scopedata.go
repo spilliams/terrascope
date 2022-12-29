@@ -9,8 +9,8 @@ import (
 	"path"
 	"sort"
 
-	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/spilliams/terraboots/internal/hclhelp"
 	"github.com/spilliams/terraboots/internal/scopedata"
 )
 
@@ -104,7 +104,7 @@ func (p *Project) readScopeData() error {
 			list = append(list, rootScope.CompiledScopes(nil)...)
 		}
 	}
-	
+
 	compiledScopes := scopedata.CompiledScopes(list)
 	compiledScopes = compiledScopes.Deduplicate()
 	sort.Sort(compiledScopes)
@@ -122,22 +122,7 @@ func (p *Project) readScopeData() error {
 // Errors that are not hcl Diagnostics, or that are other types of Diagnostic
 // will be returned.
 func handleDecodeNestedScopeError(err error) error {
-	diags, typeOK := err.(hcl.Diagnostics)
-	if !typeOK {
-		return err
-	}
-
-	var newDiags hcl.Diagnostics
-	for _, diag := range diags {
-		if diag.Summary != "Unexpected \"scope\" block" {
-			newDiags = append(newDiags, diag)
-		}
-	}
-
-	if len(newDiags) > 0 {
-		return newDiags
-	}
-	return nil
+	return hclhelp.DiagnosticsWithoutSummary(err, "Unexpected \"scope\" block")
 }
 
 func (p *Project) GetCompiledScope(address string) *scopedata.CompiledScope {

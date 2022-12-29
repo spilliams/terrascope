@@ -1,6 +1,9 @@
 package scopedata
 
-import "github.com/hashicorp/hcl/v2"
+import (
+	"github.com/hashicorp/hcl/v2"
+	"github.com/zclconf/go-cty/cty"
+)
 
 // NestedScope represents one value for a single scope type. Instances may have
 // children of the next scope type in the hierarchy.
@@ -33,7 +36,7 @@ func (ns *NestedScope) Count() int {
 // itself, without accounting for its children.
 // Optionally provide a parent scope to
 func (ns *NestedScope) CompiledScope(parent *CompiledScope) *CompiledScope {
-	attrs := make(map[string]interface{})
+	attrs := make(map[string]cty.Value)
 	scopeTypes := make([]string, 0)
 	scopeValues := make([]string, 0)
 	if parent != nil {
@@ -51,7 +54,6 @@ func (ns *NestedScope) CompiledScope(parent *CompiledScope) *CompiledScope {
 	for k, v := range ns.Attrs {
 		// TODO: standard functions and variables?
 		// what do with _ here?
-		// is cty.Value ok to use as return type?
 		value, _ := v.Expr.Value(nil)
 		attrs[k] = value
 	}

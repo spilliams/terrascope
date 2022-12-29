@@ -2,8 +2,21 @@ root "account-bucket" {
   scopeTypes = ["org", "platform", "domain", "environment"]
 }
 
-include {
-  path = "../partials/backend.hcl"
+generate "backend" {
+  path     = "backend.tf"
+  contents = <<-EOF
+  terraform {
+    backend "s3" {
+      profile = "${attributes.security_portal_profile}"
+      region  = "${attributes.security_portal_region}"
+
+      bucket         = "terraform-state"
+      dynamodb_table = "terraform-state-lock"
+      key            = "${scope.platform}/${scope.domain}/${scope.environment}/${root.id}/terraform.tfstate"
+      encrypt        = true
+    }
+  }
+  EOF
 }
 
 generate "provider" {

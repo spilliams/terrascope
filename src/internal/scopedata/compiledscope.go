@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/zclconf/go-cty/cty"
 )
 
 // CompiledScope represents one permutation of several scope types. It contains
 // attributes gained from each scope value along the way, with attribute valuess
 // from narrower scopes overriding those of broader scopes
 type CompiledScope struct {
-	Attributes map[string]interface{}
+	Attributes map[string]cty.Value
 
 	// can't do map of types to values because maps are unordered
 	ScopeTypes  []string
@@ -30,6 +32,14 @@ func (cs *CompiledScope) Address() string {
 		}
 	}
 	return addr
+}
+
+func (cs *CompiledScope) ToCtyValue() cty.Value {
+	kv := make(map[string]cty.Value)
+	for i, scopeType := range cs.ScopeTypes {
+		kv[scopeType] = cty.StringVal(cs.ScopeValues[i])
+	}
+	return cty.MapVal(kv)
 }
 
 func (cs *CompiledScope) Values() string {
