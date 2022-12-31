@@ -86,6 +86,9 @@ func (p *Project) readScopeData() error {
 	if len(p.ScopeTypes) == 0 {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
+	if len(p.compiledScopes) > 0 {
+		return nil
+	}
 
 	list := make([]*scopedata.CompiledScope, 0)
 
@@ -132,4 +135,19 @@ func (p *Project) GetCompiledScope(address string) *scopedata.CompiledScope {
 		}
 	}
 	return nil
+}
+
+// IsScopeValue checks the given address against the receiver's list of known
+// scope values. May return an error if the receiver can't read its scope
+// values.
+func (p *Project) IsScopeValue(address string) (bool, error) {
+	if err := p.readScopeData(); err != nil {
+		return false, err
+	}
+	for _, scope := range p.compiledScopes {
+		if scope.Address() == address || scope.Values() == address {
+			return true, nil
+		}
+	}
+	return false, nil
 }

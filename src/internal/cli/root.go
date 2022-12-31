@@ -24,7 +24,7 @@ func newRootCommand() *cobra.Command {
 
 func newRootBuildCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "build ROOT [SCOPE [SCOPE...]]",
+		Use:     "build ROOT [SCOPE]...",
 		Aliases: []string{"b"},
 		Short:   "Builds the given root and prints the location of the built root to stdout",
 		Args:    cobra.MinimumNArgs(1),

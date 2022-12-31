@@ -2,6 +2,8 @@
 
 ## Up Next
 
+- for SCOPE args, i should be allowed to use wildcards
+- `terraboots root clean` to delete temporary stuff
 - `dryRun` flags everywhere
 - cli should be able to plan, apply, and output a build
 - build a root module with dependencies

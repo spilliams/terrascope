@@ -55,12 +55,12 @@ func NewTerrabootsCmd() *cobra.Command {
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerraboots, Title: "Working with your terraboots project"})
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerraform, Title: "Terraform Commands"})
 
-	// cmd.AddCommand(newTerraformCommand("init"))
-	// cmd.AddCommand(newTerraformCommand("plan"))
-	// cmd.AddCommand(newTerraformCommand("apply"))
-	// cmd.AddCommand(newTerraformCommand("destroy"))
-	// cmd.AddCommand(newTerraformCommand("output"))
-	// cmd.AddCommand(newTerraformCommand("console"))
+	cmd.AddCommand(newTerraformCommand("init"))
+	cmd.AddCommand(newTerraformCommand("plan"))
+	cmd.AddCommand(newTerraformCommand("apply"))
+	cmd.AddCommand(newTerraformCommand("destroy"))
+	cmd.AddCommand(newTerraformCommand("output"))
+	cmd.AddCommand(newTerraformCommand("console"))
 
 	cmd.AddCommand(newScopeCommand())
 	cmd.AddCommand(newRootCommand())

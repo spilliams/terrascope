@@ -58,7 +58,7 @@ func newScopeGenerateCommand() *cobra.Command {
 
 func newScopeShowCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show",
+		Use:   "show SCOPE",
 		Short: "Display a single scope value and it associated attributes",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

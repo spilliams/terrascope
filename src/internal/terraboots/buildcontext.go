@@ -47,6 +47,16 @@ type generator struct {
 	Contents string `hcl:"contents,attr"`
 }
 
+func (bc *buildContext) rootDirectory() string {
+	return path.Dir(bc.root.filename)
+}
+
+func (bc *buildContext) destination() string {
+	parts := []string{bc.rootDirectory(), ".terraboots"}
+	parts = append(parts, bc.scope.ScopeValues...)
+	return path.Join(parts...)
+}
+
 func (bc *buildContext) Build() error {
 	rootVariable := cty.MapVal(map[string]cty.Value{
 		"id": cty.StringVal(bc.root.ID),
@@ -54,7 +64,7 @@ func (bc *buildContext) Build() error {
 	scopeVariable := bc.scope.ToCtyValue()
 	attributesVariable := cty.MapVal(bc.scope.Attributes)
 
-	bc.Info("Building root")
+	bc.Debug("Building root")
 	// first gotta reparse the config
 	ctx := hclhelp.DefaultContext()
 	ctx.Variables["root"] = rootVariable
@@ -68,17 +78,14 @@ func (bc *buildContext) Build() error {
 	}
 	bc.Debugf("  fully decoded root config: %+v", cfg)
 
-	rootDir := path.Dir(bc.root.filename)
-	parts := []string{rootDir, ".terraboots"}
-	parts = append(parts, bc.scope.ScopeValues...)
-	destination := path.Join(parts...)
+	destination := bc.destination()
 	err = os.MkdirAll(destination, 0755)
 	if err != nil {
 		return err
 	}
 
 	// TODO: empty the directory
-	err = bc.copyAllFiles(rootDir, destination)
+	err = bc.copyAllFiles(bc.rootDirectory(), destination)
 	if err != nil {
 		return err
 	}

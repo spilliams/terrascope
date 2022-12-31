@@ -81,8 +81,9 @@ func (p *Project) projectDir() string {
 	return path.Dir(p.configFile)
 }
 
-// BuildRoot tells the receiver to build a root module
-func (p *Project) BuildRoot(rootName string, scopes []string) (*root, error) {
+// BuildRoot tells the receiver to build a root module, and returns a list of
+// directories where the root was built to.
+func (p *Project) BuildRoot(rootName string, scopes []string) ([]string, error) {
 	// first, get the root
 	root, ok := p.Roots[rootName]
 	if !ok {
@@ -113,14 +114,17 @@ func (p *Project) BuildRoot(rootName string, scopes []string) (*root, error) {
 	// to phase them and deduplicate them
 
 	// TODO: use a worker pool
-	for _, build := range builds {
+	dirs := make([]string, len(builds))
+	for i, build := range builds {
 		err := build.Build()
 		if err != nil {
 			return nil, err
 		}
+
+		dirs[i] = build.destination()
 	}
 
-	return root, nil
+	return dirs, nil
 }
 
 // AddRoot tells the receiver to add a root module to its internal records.
