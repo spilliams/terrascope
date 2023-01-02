@@ -8,10 +8,58 @@ import (
 	"github.com/spilliams/terraboots/internal/shell"
 )
 
-func newTerraformCommand(name string) *cobra.Command {
+func newSpecificTerraformCommand(name string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     fmt.Sprintf("%s ROOT [SCOPE]... [-- TF_FLAG=VALUE]", name),
-		Short:   fmt.Sprintf("Runs `terraform %s` in the given root. Pass arguments to terraform after a `--` (for example `terraboots plan ROOT -- -lock=false`)", name),
+		Short:   fmt.Sprintf("Runs `terraform %s` in the given root. Pass arguments to terraform after a `--` (for example `terraboots %s ROOT -- -lock=false`)", name, name),
+		Args:    cobra.MinimumNArgs(1),
+		GroupID: commandGroupIDTerraform,
+
+		PersistentPreRunE: bootsbootsPreRunE,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// log.Infof("args: %+v", args)
+			scopes := make([]string, 0, len(args)-1)
+			tfargs := make([]string, 0, len(args)-1)
+			tfargs = append(tfargs, name)
+			i := 1
+			for i = 1; i < len(args); i++ {
+				ok, err := project.IsScopeValue(args[i])
+				if err != nil {
+					return err
+				}
+				if ok {
+					scopes = append(scopes, args[i])
+				} else {
+					break
+				}
+			}
+			tfargs = append(tfargs, args[i:]...)
+			log.Infof("found scopes: %+v (%d)", scopes, i)
+			log.Infof("remaining args: %+v", args[i:])
+			// get a list of locations to run in
+			dirs, err := project.BuildRoot(args[0], scopes)
+			if err != nil {
+				return err
+			}
+
+			// TODO: use a worker pool
+			for _, dir := range dirs {
+				err = runTerraform(dir, tfargs, log)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+	}
+	return cmd
+}
+
+func newGenericTerraformCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     fmt.Sprintf("tf ROOT [SCOPE]... -- COMMAND [TF_FLAG=VALUE]..."),
+		Aliases: []string{"terraform"},
+		Short:   fmt.Sprintf("Runs a given terraform command in the given root. Pass arguments to terraform after a `--` (for example `terraboots tf ROOT -- state list`)"),
 		Args:    cobra.MinimumNArgs(1),
 		GroupID: commandGroupIDTerraform,
 
@@ -31,8 +79,8 @@ func newTerraformCommand(name string) *cobra.Command {
 				} else {
 					break
 				}
-				tfargs = args[i+1:]
 			}
+			tfargs = args[i:]
 			// log.Infof("found scopes: %+v (%d)", scopes, i)
 			// log.Infof("remaining args: %+v", args[i:])
 			// get a list of locations to run in
@@ -43,7 +91,7 @@ func newTerraformCommand(name string) *cobra.Command {
 
 			// TODO: use a worker pool
 			for _, dir := range dirs {
-				err = runTerraform(name, dir, tfargs, log)
+				err = runTerraform(dir, tfargs, log)
 				if err != nil {
 					return err
 				}
@@ -54,10 +102,7 @@ func newTerraformCommand(name string) *cobra.Command {
 	return cmd
 }
 
-func runTerraform(command, cwd string, args []string, log *logrus.Entry) error {
-	log.Infof("terraform %s in %s with args %+v", command, cwd, args)
-	args = append([]string{command}, args...)
+func runTerraform(cwd string, args []string, log *logrus.Entry) error {
 	cmd := shell.NewCommand("terraform", args, cwd, log.Logger)
-
 	return cmd.Run()
 }

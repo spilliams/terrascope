@@ -64,7 +64,7 @@ func (bc *buildContext) Build() error {
 	scopeVariable := bc.scope.ToCtyValue()
 	attributesVariable := cty.MapVal(bc.scope.Attributes)
 
-	bc.Debug("Building root")
+	bc.Trace("Building root")
 	// first gotta reparse the config
 	ctx := hclhelp.DefaultContext()
 	ctx.Variables["root"] = rootVariable
@@ -76,7 +76,7 @@ func (bc *buildContext) Build() error {
 	if err != nil {
 		return err
 	}
-	bc.Debugf("  fully decoded root config: %+v", cfg)
+	bc.Tracef("  fully decoded root config: %+v", cfg)
 
 	destination := bc.destination()
 	err = os.MkdirAll(destination, 0755)
@@ -109,7 +109,7 @@ func (bc *buildContext) Build() error {
 }
 
 func (bc *buildContext) copyAllFiles(srcDir, destDir string) error {
-	bc.Debugf("Walking %s", srcDir)
+	bc.Tracef("Walking %s", srcDir)
 	return filepath.WalkDir(srcDir, func(filepath string, d fs.DirEntry, err error) error {
 		basename := path.Base(filepath)
 		if d.IsDir() {
@@ -129,7 +129,7 @@ func (bc *buildContext) copyAllFiles(srcDir, destDir string) error {
 		// TODO: handle folders inside the source
 		delta := strings.TrimPrefix(filepath, srcDir)
 		destPath := path.Join(destDir, delta)
-		bc.Debugf("  src: %s, dest: %s, file: %s, delta: %s, destPath: %s", srcDir, destDir, filepath, delta, destPath)
+		bc.Tracef("  src: %s, dest: %s, file: %s, delta: %s, destPath: %s", srcDir, destDir, filepath, delta, destPath)
 
 		srcFile, err := os.Open(filepath)
 		if err != nil {
@@ -149,7 +149,7 @@ func (bc *buildContext) copyAllFiles(srcDir, destDir string) error {
 }
 
 func (bc *buildContext) processGenerators(generators []*generator, destination string) error {
-	bc.Debug("Processing generators")
+	bc.Trace("Processing generators")
 	for _, gen := range generators {
 		err := bc.processGenerator(gen, destination)
 		if err != nil {
@@ -168,7 +168,7 @@ func (bc *buildContext) processGenerator(gen *generator, destination string) err
 	defer file.Close()
 
 	_, err = file.WriteString(gen.Contents)
-	bc.Debugf("contents: %s", gen.Contents)
+	bc.Tracef("contents: %s", gen.Contents)
 	return err
 }
 
