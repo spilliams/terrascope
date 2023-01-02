@@ -11,12 +11,13 @@ that it'll probably be more secure if you can put bulkheads between each teams'
 environments.
 
 You decide to use AWS Organizations to power your infrastructure. You also want
-to keep some bulkheads in place to help contain certain high-security elements
-from lower-security elements. With this in ind, you set up the following AWS
-accounts:
+to keep some bulkheads in place to help contain certain organization- or
+networking-related elements from application- or product-related elements. With
+this in ind, you set up the following AWS accounts:
 
 1. an Organization account. This will be your Consolidated Billing account for
-   the entirety of Acme Inc's engineering department.
+   the entirety of Acme Inc's engineering department. All other accounts will be
+   made inside of this account.
 2. a Security Portal account. This is where you'll manage the IAM users for your
    engineers, managers, third-party vendors, etc.
 3. a Networking account. This is where you'll set up a VPN that will connect all
@@ -37,33 +38,29 @@ and "Networking" are already taken. Time to introduce the first core concept of
 terraboots: scope.
 
 A "scope" here refers to a layer of infrastructure. You can define your own set
-of scopes for your own application, and `terraboots` will pick up on it, but for
+of scopes for your infrastructure, and `terraboots` will pick up on it, but for
 this hypothetical situation we want to define the following:
 
-- the "org" scope contains an Organization account and several platforms (e.g.
-  "Acme Inc")
-- the "platform" scope contains one Security Portal and one Networking
-  account, as well as several domains (e.g. "Gold", "Silver", "Bronze")
-- the "domain" scope contains three environments (e.g. "Product",
-  "DataScience", etc)
-- the "environment" scope contains the AWS accounts for our engineers ("Product
-  Dev" etc), and any regions within those environments (e.g. "Dev", "Stage",
-  "Prod")
-- the "region" scope contains regional resources in each environment account
-  (e.g. "us-west-1", "us-west-2")
+- an `org` (e.g. "Acme Inc") contains an Organization account and several
+  platforms.
+- a `platform` (e.g. "Gold", "Silver", or "Bronze") contains one Security Portal
+  and one Networking account, as well as several domains.
+- a `domain` (e.g. "Product", or "Red") contains three environments.
+- an `environment` (e.g. "Dev", "Stage", or "Prod") contains the AWS accounts
+  for our engineers ("Product Dev" etc), as well as any primary deployment
+  regions within those environments.
+- a `region` (e.g. "us-west-2") contains regional resources in an environment
+  account.
+
+The scope types for this hypothetical situation are: `org`, `platform`,
+`domain`, `environment`, and `region`.
 
 At every level of this infrastructure, we could have a terraform root
 configuration that says "build me these resources". At any level we could also
-want our roots to depend on the levels before it: say, at the environment scope
-we provision a single S3 bucket in every domain account, and at the region scope
-we provision prefixes inside that s3 bucket (something this example monorepo
-shows off with its aws-config modules and roots).
+want our roots to depend on the levels before it. For instance: at the
+`environment` scope we provision a single S3 bucket in every domain account, and
+at the `region` scope below it we provision prefixes inside that s3 bucket.
 
 The goal of `terraboots` is to be able to manage this kind of infrastructure
-without having 500 separate directories which are mostly copy-pasted from each
-other. Yes, there are several other projects out there that seek to DRY up a
-terraform system like this, but they each have their limitations. Terragrunt
-still wants you to maintain a whole tree of directories of `terragrunt.hcl`
-files, and only has one layer of inheritance. Terraspace has you writing a lot
-of ruby, and I don't like maintaining a set of dependencies just for
-development.
+without having 500 separate terraform root configurations which are mostly
+copy-pasted from each other.

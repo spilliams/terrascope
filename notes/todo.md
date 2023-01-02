@@ -4,7 +4,6 @@
 
 - for SCOPE args, i should be allowed to use wildcards
 - `dryRun` flags everywhere
-- cli should be able to plan, apply, and output a build
 - build a root module with dependencies
 - build a root module with a dependency outside the current scope
 - cli should be able to add to an existing scope data file
@@ -20,8 +19,6 @@
 
 ## CLI Commands
 
-- I want to run arbitrary terraform commands:
-  `terraboots tf my-root -- state mv 'module.a' 'module.b'`
 - Terraboots should be able to generate a new monorepo project
 - `terraboots root graph my-root` and/or `terraboots root graph`. With or
   without `--highlight-affected`.
