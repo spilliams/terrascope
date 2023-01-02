@@ -3,7 +3,9 @@ package cli
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spilliams/terraboots/internal/shell"
 )
 
 func newTerraformCommand(name string) *cobra.Command {
@@ -41,7 +43,7 @@ func newTerraformCommand(name string) *cobra.Command {
 
 			// TODO: use a worker pool
 			for _, dir := range dirs {
-				err = runTerraform(name, dir, tfargs)
+				err = runTerraform(name, dir, tfargs, log)
 				if err != nil {
 					return err
 				}
@@ -52,7 +54,10 @@ func newTerraformCommand(name string) *cobra.Command {
 	return cmd
 }
 
-func runTerraform(command, cwd string, args []string) error {
+func runTerraform(command, cwd string, args []string, log *logrus.Entry) error {
 	log.Infof("terraform %s in %s with args %+v", command, cwd, args)
-	return nil
+	args = append([]string{command}, args...)
+	cmd := shell.NewCommand("terraform", args, cwd, log.Logger)
+
+	return cmd.Run()
 }
