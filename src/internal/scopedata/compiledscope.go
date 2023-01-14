@@ -112,11 +112,11 @@ func (css CompiledScopes) Deduplicate() CompiledScopes {
 func (css CompiledScopes) Matching(types map[string]string) (CompiledScopes, error) {
 	newCSS := make([]*CompiledScope, 0, len(css))
 	for _, scope := range css {
-		matches, err := scope.Matches(types)
+		ok, err := scope.Matches(types)
 		if err != nil {
 			return nil, err
 		}
-		if matches {
+		if ok {
 			newCSS = append(newCSS, scope)
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spilliams/terraboots/internal/scopedata"
 )
 
 func newScopeCommand() *cobra.Command {
@@ -62,23 +63,40 @@ func newScopeShowCommand() *cobra.Command {
 		Short: "Display a single scope value and it associated attributes",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			scope := project.GetCompiledScope(args[0])
-			if scope == nil {
+			scopes, err := project.GetCompiledScopes(args[0])
+			if err != nil {
+				return err
+			}
+			if scopes == nil || len(scopes) == 0 {
 				log.Errorf("No scope with address %s found", args[0])
 				return nil
 			}
-			fmt.Println("Scope Details")
-			for i, _ := range scope.ScopeTypes {
-				fmt.Printf("%s: %s\n", scope.ScopeTypes[i], scope.ScopeValues[i])
-			}
-			fmt.Println()
-			fmt.Println("Scope Attributes")
-			for k, v := range scope.Attributes {
-				fmt.Printf("%s: %s\n", k, v.AsString())
+			log.Infof("%d %s found with the scope filter '%s'", len(scopes), pluralize("scope", "scopes", len(scopes)), args[0])
+			for _, scope := range scopes {
+				printScope(scope)
 			}
 			return nil
 		},
 	}
 
 	return cmd
+}
+
+func printScope(scope *scopedata.CompiledScope) {
+	fmt.Println("Scope Details")
+	for i := range scope.ScopeTypes {
+		fmt.Printf("\t%s: %s\n", scope.ScopeTypes[i], scope.ScopeValues[i])
+	}
+	fmt.Println()
+	fmt.Println("\tAttributes")
+	for k, v := range scope.Attributes {
+		fmt.Printf("\t%s: %s\n", k, v.AsString())
+	}
+}
+
+func pluralize(single, plural string, count int) string {
+	if count == 1 {
+		return single
+	}
+	return plural
 }

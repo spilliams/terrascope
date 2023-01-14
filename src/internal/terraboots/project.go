@@ -207,11 +207,11 @@ func (p *Project) determineMatchingScopes(root *root, scopes []string) (scopedat
 		p.Debugf("filters on the root's full list of scope values:\n%+v", scopeFilters)
 		for _, scope := range matchingScopes {
 			for _, filter := range scopeFilters {
-				matches, err := scope.Matches(filter)
+				ok, err := scope.Matches(filter)
 				if err != nil {
 					return nil, err
 				}
-				if matches {
+				if ok {
 					filteredMatchingScopes = append(filteredMatchingScopes, scope)
 				}
 			}

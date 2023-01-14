@@ -129,13 +129,22 @@ func handleDecodeNestedScopeError(err error) error {
 	return hclhelp.DiagnosticsWithoutSummary(err, "Unexpected \"scope\" block")
 }
 
-func (p *Project) GetCompiledScope(address string) *scopedata.CompiledScope {
+func (p *Project) GetCompiledScopes(address string) (scopedata.CompiledScopes, error) {
+	scopes := scopedata.CompiledScopes{}
+	filter, err := p.makeScopeFilter(address)
+	if err != nil {
+		return nil, err
+	}
 	for _, scope := range p.compiledScopes {
-		if scope.Address() == address {
-			return scope
+		ok, err := scope.Matches(filter)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			scopes = append(scopes, scope)
 		}
 	}
-	return nil
+	return scopes, nil
 }
 
 // IsScopeValue checks the given address against the receiver's list of known

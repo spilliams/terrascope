@@ -2,7 +2,6 @@
 
 ## Up Next
 
-- for `scope show ...` I should be able to pass in a type and get a list of possible values
 - `dryRun` flags everywhere
 - build a root module with dependencies
 - build a root module with a dependency outside the current scope
