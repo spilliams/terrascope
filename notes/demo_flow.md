@@ -17,35 +17,12 @@
    3. [ ] checks for name collisions
       1. [ ] resolves by offering to replace the current module
       2. [ ] offers to replace or keep existing terraboots.hcl (if applicable)
-4. [ ] Building a root. Generally this should print out one or more folder names at
+4. [x] Building a root. Generally this should print out one or more folder names at
    the end.
-   1. [ ] `terraboots root build foo`
-      builds a root named "foo", prompting along the way for what scope values
-      to use (and offering a "press enter to leave blank and build for all
-      subscopes).
-   2. [ ] `terraboots root build foo --scopes "[acme.]gold.product.dev"`
-      builds a root without prompting for scope values.
-      The tree after running this build could be:
-
-      ```txt
-      └── terraform/roots/foo/
-          ├── .terraboots/
-          │   └── acme/gold/product/dev/
-          │       ├── .terraboots.hcl
-          │       ├── backend.tf
-          │       ├── inputs.auto.tfvars
-          │       ├── main.tf
-          │       └── provider.tf
-          ├── main.tf
-          └── terraboots.hcl
-      ```
-
-      `.terraboots/` holds all the builds for the `foo` module.
-      `.terraboots.hcl` contains all the scope data available to the module (for
-      debugging)
-      `backend.tf`, `provider.tf` and `inputs.auto.tfvars` will be generated
-      from the module's `terraboots.hcl` configuration.
-
-   3. [ ] `terraboots root build foo -a|--all`
-      builds a root for all scope values, no prompting
+   1. [x] `terraboots root build foo`
+      builds a root named "foo", for all scopes
+   2. [x] `terraboots root build foo "acme.gold.product.dev"`
+      builds a root for a certain scope
+   3. [x] `terraboots root build foo "acme.gold.*.*"`
+      builds a root for scopes matching a given filter
 5. [ ] Adding a new scope value to the existing data file

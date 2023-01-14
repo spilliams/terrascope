@@ -32,7 +32,11 @@ func newScopeListCommand() *cobra.Command {
 		Short:   "Lists all scope types in this project",
 		RunE: func(cmd *cobra.Command, args []string) error {
 
-			log.Infof("There are %d scopes in the project %s:", len(project.ScopeTypes), project.ID)
+			log.Infof("There %s %d scope %s in the project %s:",
+				pluralize("is", "are", len(project.ScopeTypes)),
+				len(project.ScopeTypes),
+				pluralize("type", "types", len(project.ScopeTypes)),
+				project.ID)
 			for _, scope := range project.ScopeTypes {
 				fmt.Println(scope.Name)
 			}
@@ -83,12 +87,11 @@ func newScopeShowCommand() *cobra.Command {
 }
 
 func printScope(scope *scopedata.CompiledScope) {
-	fmt.Println("Scope Details")
+	fmt.Printf("%s:\n", scope.Address())
 	for i := range scope.ScopeTypes {
 		fmt.Printf("\t%s: %s\n", scope.ScopeTypes[i], scope.ScopeValues[i])
 	}
 	fmt.Println()
-	fmt.Println("\tAttributes")
 	for k, v := range scope.Attributes {
 		fmt.Printf("\t%s: %s\n", k, v.AsString())
 	}

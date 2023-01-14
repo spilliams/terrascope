@@ -2,6 +2,14 @@
 
 ## Up Next
 
+- `scope show` output looks weird. I feel like we should at least provide a
+  `--json` option?
+- graphing!
+  - `scope graph` should build a graph of all compiled scopes
+  - `scope graph FILTER` should build a graph of all filtered compiled scopes
+    and their descendants. This could get weird for something like
+    `acme.*.networking.*`, but cross that bridge later
+  - `root graph` should build a graph of all the roots and their dependencies
 - build a root module with dependencies
 - build a root module with a dependency outside the current scope
 - cli should be able to add to an existing scope data file
@@ -14,6 +22,7 @@
   `dependency` blocks).
 - Scope validation (e.g. "for the 'env' scope, values can only be 'dev',
   'stage', or 'prod'). See `notes/scope-validation.md`.
+- migrations?
 
 ## CLI Commands
 

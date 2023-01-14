@@ -68,7 +68,7 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 		if len(scanner.Text()) != 0 {
 			p.Debug("scanner returned text")
 			if scanner.Text() != "y" && scanner.Text() != "Y" {
-				p.Debugf("User does not want to overwrite, printing and exiting.")
+				p.Infof("Not overwriting the existing file. Here is the generated data.hcl:")
 				output.Write(bytes)
 				return nil
 			}
