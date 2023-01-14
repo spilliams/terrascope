@@ -2,6 +2,7 @@
 
 ## Up Next
 
+- `root list`
 - `scope show` output looks weird. I feel like we should at least provide a
   `--json` option?
 - graphing!
@@ -54,25 +55,15 @@
       replica), stable-candidate silver (prod release candidate), and
       candidate-stable silver (silver release candidate). Maybe I'm too far in
       the weeds here.
-3. how should the CLI log?
-   1. definitely to stdout, the way the user would like (e.g. verbose or quiet)
-   2. definitely to a file in the build folder. How verbose? Also, how much to
-      include? just the logs from buildContext or also get retroactive logs from
-      main and project?
-   3. maybe also to a long-term cache in `~/.terraboots/logs/`. How verbose?
-4. how much should the cli care about scope value attributes?
-   1. should `scope gen` ask for "what attributes does each scope value get?"
-   2. should that info be embedded in the scope type definition in the project
-      config?
-5. for building, should we have a flag that states "please bootstrap". In other
+3. for building, should we have a flag that states "please bootstrap". In other
    words, run all dependencies regardless of their last run time.
-6. If a dependency has never been applied before, it should build it and apply
+4. If a dependency has never been applied before, it should build it and apply
    it before any of its actual tasks.
-7. Track the source of an attribute value along with the value, for user
+5. Track the source of an attribute value along with the value, for user
    debugging.
-8. project parser should make sure scopes have unique names with no special
+6. project parser should make sure scopes have unique names with no special
    characters
-9. how to get an exhaustive `affected` list?
+7. how to get an exhaustive `affected` list?
    1. if a root module's source code changes (the `.tf` files), the whole root
       is affected. But maybe only the scopes that adopt the latest version?
    2. if a root module's config changes (`terraboots.hcl`), it depends
@@ -105,9 +96,9 @@
          are the input values and the configuration itself. If the configuration
          changes (`.tf` files), the whole root is affected. If the input values
          change, certain scopes of the root are affected.
-10. that brings up a new topic: what does it look like to destroy a scope?
-    if we have to rename a domain, for instance, what does that entail?
-    1. can we say "build all the roots for this scope and its children, and
-       print out the list of build dirs" and then we can sequester those built
-       directories for manual destruction? That seems plausible.
-       1. that means we need a `terraboots scope build` command!
+8. that brings up a new topic: what does it look like to destroy a scope?
+   if we have to rename a domain, for instance, what does that entail?
+   1. can we say "build all the roots for this scope and its children, and
+      print out the list of build dirs" and then we can sequester those built
+      directories for manual destruction? That seems plausible.
+      1. that means we need a `terraboots scope build` command!

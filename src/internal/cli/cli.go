@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"os"
 	"path"
 	"path/filepath"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/spilliams/terraboots/pkg/logformatter"
 )
 
+var quiet bool
 var verbose bool
 var vertrace bool
 var configFile string
@@ -31,6 +33,10 @@ func initLogger() {
 	if vertrace {
 		logger.SetLevel(logrus.TraceLevel)
 	}
+	if quiet {
+		logger.SetLevel(logrus.ErrorLevel)
+		logger.SetOutput(os.Stderr)
+	}
 	log = logger.WithField("prefix", "main")
 }
 
@@ -47,6 +53,8 @@ func NewTerrabootsCmd() *cobra.Command {
 
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase log output")
 	cmd.PersistentFlags().BoolVar(&vertrace, "vvv", false, "increase log output even more")
+	cmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "silences all logs but the errors (and prints those to stderr). Still prints command output to stdout. Overrides verbose and vvv")
+
 	cmd.PersistentFlags().StringVarP(&configFile, "config-file", "c", "terraboots.hcl", "the filename of the project configuration")
 
 	// TODO: version command
