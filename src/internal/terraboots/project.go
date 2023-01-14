@@ -42,6 +42,10 @@ type ScopeType struct {
 	// Validations  []*ProjectScopeValidation `hcl:"validation,block"`
 }
 
+func (sc *ScopeType) String() string {
+	return sc.Name
+}
+
 // ProjectScopeValidation
 // type ProjectScopeValidation struct {
 // 	Condition    bool   `hcl:"condition"`
@@ -180,23 +184,36 @@ func (p *Project) determineMatchingScopes(root *root, scopes []string) (scopedat
 	}
 
 	for _, scopeMatch := range root.ScopeMatches {
-		matches := p.compiledScopes.Matching(scopeMatch.ScopeTypes)
+		matches, err := p.compiledScopes.Matching(scopeMatch.ScopeTypes)
+		if err != nil {
+			return nil, err
+		}
 		matchingScopes = append(matchingScopes, matches...)
 	}
 	matchingScopes = matchingScopes.Deduplicate()
 	sort.Sort(matchingScopes)
 
+	// also abide by this list
 	if len(scopes) > 0 {
-		// also abide by this list
 		filteredMatchingScopes := scopedata.CompiledScopes{}
-		scopeFilters := make(map[string]bool)
-		for _, scope := range scopes {
-			scopeFilters[scope] = true
+		scopeFilters := make([]map[string]string, len(scopes))
+		for i, scope := range scopes {
+			scopeFilter, err := p.makeScopeFilter(scope)
+			if err != nil {
+				return nil, err
+			}
+			scopeFilters[i] = scopeFilter
 		}
 		p.Debugf("filters on the root's full list of scope values:\n%+v", scopeFilters)
 		for _, scope := range matchingScopes {
-			if scopeFilters[scope.Address()] || scopeFilters[scope.Values()] {
-				filteredMatchingScopes = append(filteredMatchingScopes, scope)
+			for _, filter := range scopeFilters {
+				matches, err := scope.Matches(filter)
+				if err != nil {
+					return nil, err
+				}
+				if matches {
+					filteredMatchingScopes = append(filteredMatchingScopes, scope)
+				}
 			}
 		}
 		matchingScopes = filteredMatchingScopes

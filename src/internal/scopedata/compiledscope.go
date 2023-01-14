@@ -46,23 +46,26 @@ func (cs *CompiledScope) Values() string {
 	return strings.Join(cs.ScopeValues, ".")
 }
 
-func (cs *CompiledScope) Matches(types map[string]string) bool {
+func (cs *CompiledScope) Matches(types map[string]string) (bool, error) {
 	if len(types) != len(cs.ScopeTypes) {
-		return false
+		return false, nil
 	}
 	for matchKey, matchValue := range types {
 		scopeIdx := indexOf(matchKey, cs.ScopeTypes)
 		if scopeIdx == -1 {
 			// different set of scope types were passed in
-			return false
+			return false, nil
 		}
 		myValue := cs.ScopeValues[scopeIdx]
-		re := regexp.MustCompile(matchValue)
+		re, err := regexp.Compile(matchValue)
+		if err != nil {
+			return false, err
+		}
 		if !re.MatchString(myValue) {
-			return false
+			return false, nil
 		}
 	}
-	return true
+	return true, nil
 }
 
 func indexOf(item string, list []string) int {
@@ -106,12 +109,16 @@ func (css CompiledScopes) Deduplicate() CompiledScopes {
 	return css
 }
 
-func (css CompiledScopes) Matching(types map[string]string) CompiledScopes {
+func (css CompiledScopes) Matching(types map[string]string) (CompiledScopes, error) {
 	newCSS := make([]*CompiledScope, 0, len(css))
 	for _, scope := range css {
-		if scope.Matches(types) {
+		matches, err := scope.Matches(types)
+		if err != nil {
+			return nil, err
+		}
+		if matches {
 			newCSS = append(newCSS, scope)
 		}
 	}
-	return newCSS
+	return newCSS, nil
 }

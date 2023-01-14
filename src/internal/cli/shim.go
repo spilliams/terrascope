@@ -34,7 +34,7 @@ func newSpecificTerraformCommand(name string) *cobra.Command {
 				}
 			}
 			tfargs = append(tfargs, args[i:]...)
-			log.Infof("found scopes: %+v (%d)", scopes, i)
+			log.Infof("found scopes: %+v", scopes)
 			log.Infof("remaining args: %+v", args[i:])
 			// get a list of locations to run in
 			dirs, err := project.BuildRoot(args[0], scopes)
@@ -81,8 +81,8 @@ func newGenericTerraformCommand() *cobra.Command {
 				}
 			}
 			tfargs = args[i:]
-			// log.Infof("found scopes: %+v (%d)", scopes, i)
-			// log.Infof("remaining args: %+v", args[i:])
+			log.Infof("found scopes: %+v", scopes)
+			log.Infof("remaining args: %+v", args[i:])
 			// get a list of locations to run in
 			dirs, err := project.BuildRoot(args[0], scopes)
 			if err != nil {

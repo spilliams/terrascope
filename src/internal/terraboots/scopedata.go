@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terraboots/internal/hclhelp"
@@ -144,10 +145,63 @@ func (p *Project) IsScopeValue(address string) (bool, error) {
 	if err := p.readScopeData(); err != nil {
 		return false, err
 	}
+
+	filter, err := p.makeScopeFilter(address)
+	if err != nil {
+		return false, err
+	}
+
 	for _, scope := range p.compiledScopes {
-		if scope.Address() == address || scope.Values() == address {
+		matches, err := scope.Matches(filter)
+		if err != nil {
+			return false, err
+		}
+		p.Tracef("%s matches? %v", scope, matches)
+		if matches {
 			return true, nil
 		}
 	}
 	return false, nil
+}
+
+// address could be types & values interleaved, or just values
+func (p *Project) makeScopeFilter(address string) (map[string]string, error) {
+	p.Debugf("makeScopeFilter %s", address)
+
+	m := make(map[string]string)
+	parts := strings.Split(address, ".")
+
+	if len(parts)%2 == 0 {
+		isCollated := true
+		i := 0
+		for i*2 < len(parts) {
+			if parts[i*2] != p.ScopeTypes[i].Name {
+				isCollated = false
+				break
+			}
+			i++
+		}
+
+		if isCollated {
+			newParts := make([]string, 0)
+			for i := 1; i < len(parts); i += 2 {
+				newParts = append(newParts, parts[i])
+			}
+			parts = newParts
+		}
+	}
+	p.Debugf("  parts after decollation: %v", parts)
+
+	if len(parts) > len(p.ScopeTypes) {
+		return nil, fmt.Errorf("scope address %s is too long to be mapped to scope types %v", address, p.ScopeTypes)
+	}
+	for i, v := range parts {
+		// some special regex translating
+		if v == "*" {
+			v = ".*"
+		}
+		m[p.ScopeTypes[i].Name] = v
+	}
+	p.Debugf("  mapping %+v", m)
+	return m, nil
 }
