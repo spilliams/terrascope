@@ -64,7 +64,7 @@ func newScopeShowCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			scope := project.GetCompiledScope(args[0])
 			if scope == nil {
-				log.Error("No scope with address %s found", args[0])
+				log.Errorf("No scope with address %s found", args[0])
 				return nil
 			}
 			fmt.Println("Scope Details")
@@ -74,7 +74,7 @@ func newScopeShowCommand() *cobra.Command {
 			fmt.Println()
 			fmt.Println("Scope Attributes")
 			for k, v := range scope.Attributes {
-				fmt.Printf("%s: %v\n", k, v)
+				fmt.Printf("%s: %s\n", k, v.AsString())
 			}
 			return nil
 		},
