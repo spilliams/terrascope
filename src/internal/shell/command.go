@@ -9,38 +9,40 @@ import (
 )
 
 type Command struct {
-	command    string
-	args       []string
-	workingDir string
+	shellCmd *exec.Cmd
+
 	*logrus.Entry
 }
 
 func NewCommand(command string, args []string, workingDir string, logger *logrus.Logger) *Command {
+	shellCmd := exec.Command(command, args...)
+	shellCmd.Dir = workingDir
+	shellCmd.Stdin = os.Stdin
+
 	return &Command{
-		command:    command,
-		args:       args,
-		workingDir: workingDir,
-		Entry:      logger.WithField("prefix", fmt.Sprintf("tf %s %s", args[0], workingDir)),
+		shellCmd: shellCmd,
+		Entry:    logger.WithField("prefix", fmt.Sprintf("tf %s %s", args[0], workingDir)),
 	}
 }
 
+func (c *Command) String() string {
+	return fmt.Sprintf("cd %s && %s", c.shellCmd.Dir, c.shellCmd.String())
+}
+
 func (c *Command) Run() error {
-	shellCmd := exec.Command(c.command, c.args...)
-	shellCmd.Dir = c.workingDir
-	shellCmd.Stdin = os.Stdin
-	c.Debugf(shellCmd.String())
+	c.Debugf(c.shellCmd.String())
 
-	stdout, err := shellCmd.StdoutPipe()
+	stdout, err := c.shellCmd.StdoutPipe()
 	if err != nil {
 		return err
 	}
 
-	stderr, err := shellCmd.StderrPipe()
+	stderr, err := c.shellCmd.StderrPipe()
 	if err != nil {
 		return err
 	}
 
-	err = shellCmd.Start()
+	err = c.shellCmd.Start()
 	if err != nil {
 		return err
 	}
@@ -50,5 +52,5 @@ func (c *Command) Run() error {
 		return err
 	}
 
-	return shellCmd.Wait()
+	return c.shellCmd.Wait()
 }

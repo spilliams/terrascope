@@ -2,7 +2,6 @@
 
 ## Up Next
 
-- `dryRun` flags everywhere
 - build a root module with dependencies
 - build a root module with a dependency outside the current scope
 - cli should be able to add to an existing scope data file

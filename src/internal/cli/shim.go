@@ -8,6 +8,8 @@ import (
 	"github.com/spilliams/terraboots/internal/shell"
 )
 
+var dryRun bool
+
 func newSpecificTerraformCommand(name string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     fmt.Sprintf("%s ROOT [SCOPE]... [-- TF_FLAG=VALUE]", name),
@@ -52,6 +54,9 @@ func newSpecificTerraformCommand(name string) *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "don't actually run the terraform command, just print it out")
+
 	return cmd
 }
 
@@ -99,10 +104,17 @@ func newGenericTerraformCommand() *cobra.Command {
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "don't actually run the terraform command, just print it out")
+
 	return cmd
 }
 
 func runTerraform(cwd string, args []string, log *logrus.Entry) error {
 	cmd := shell.NewCommand("terraform", args, cwd, log.Logger)
+	if dryRun {
+		fmt.Printf("%s\n", cmd.String())
+		return nil
+	}
 	return cmd.Run()
 }
