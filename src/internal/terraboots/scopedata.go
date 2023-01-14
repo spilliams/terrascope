@@ -130,6 +130,10 @@ func handleDecodeNestedScopeError(err error) error {
 }
 
 func (p *Project) GetCompiledScopes(address string) (scopedata.CompiledScopes, error) {
+	if err := p.readScopeData(); err != nil {
+		return nil, err
+	}
+
 	scopes := scopedata.CompiledScopes{}
 	filter, err := p.makeScopeFilter(address)
 	if err != nil {

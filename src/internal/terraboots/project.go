@@ -3,6 +3,7 @@ package terraboots
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -85,6 +86,22 @@ func (p *Project) projectDir() string {
 	return path.Dir(p.configFile)
 }
 
+func (p *Project) AddAllRoots() error {
+	files, err := ioutil.ReadDir(p.RootsDir)
+	if err != nil {
+		return err
+	}
+	for _, file := range files {
+		if file.IsDir() {
+			err := p.AddRoot(file.Name())
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // BuildRoot tells the receiver to build a root module, and returns a list of
 // directories where the root was built to.
 func (p *Project) BuildRoot(rootName string, scopes []string) ([]string, error) {
@@ -92,11 +109,12 @@ func (p *Project) BuildRoot(rootName string, scopes []string) ([]string, error) 
 	root, ok := p.Roots[rootName]
 	if !ok {
 		var err error
-		root, err = p.AddRoot(rootName)
+		err = p.AddRoot(rootName)
 		if err != nil {
 			return nil, err
 		}
 	}
+	root = p.Roots[rootName]
 	p.Debugf("root: %+v", root)
 
 	// what scopes to build for?
@@ -133,35 +151,36 @@ func (p *Project) BuildRoot(rootName string, scopes []string) ([]string, error) 
 
 // AddRoot tells the receiver to add a root module to its internal records.
 // The `rootName` must be a directory name located in the receiver's `RootsDir`.
-func (p *Project) AddRoot(rootName string) (*root, error) {
+func (p *Project) AddRoot(rootName string) error {
 	// look for named root
 	rootDir := path.Join(p.RootsDir, rootName)
 	_, err := os.Stat(rootDir)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("could not locate a root named '%s' in the roots directory '%s'", rootName, p.RootsDir)
+		return fmt.Errorf("could not locate a root named '%s' in the roots directory '%s'", rootName, p.RootsDir)
 	} else if err != nil {
-		return nil, err
+		return err
 	}
+	p.Debugf("Adding root %s", rootDir)
 
 	// look for terraboots file
 	rootCfg := path.Join(rootDir, "terraboots.hcl")
 	_, err = os.Stat(rootCfg)
 	if errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("found a root named '%s' in the roots directory '%s', but it does not contain a terraboots.hcl configuration", rootName, p.RootsDir)
+		return fmt.Errorf("found a root named '%s' in the roots directory '%s', but it does not contain a terraboots.hcl configuration", rootName, p.RootsDir)
 	} else if err != nil {
-		return nil, err
+		return err
 	}
 
 	r, err := ParseRoot(rootCfg)
 	if r == nil && err != nil {
-		return nil, err
+		return err
 	}
 
 	if p.Roots == nil {
 		p.Roots = make(map[string]*root)
 	}
 	p.Roots[r.ID] = r
-	return r, nil
+	return nil
 }
 
 // determineMatchingScopes takes in a root configuration and an optional list of

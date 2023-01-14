@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/spf13/cobra"
 )
@@ -19,7 +20,7 @@ func newRootCommand() *cobra.Command {
 	cmd.AddCommand(newRootBuildCommand())
 	// cmd.AddCommand(newRootGenerateCommand())
 	// cmd.AddCommand(newRootGraphCommand())
-	// cmd.AddCommand(newRootListCommand())
+	cmd.AddCommand(newRootListCommand())
 
 	return cmd
 }
@@ -71,14 +72,35 @@ func newRootBuildCommand() *cobra.Command {
 // 	return cmd
 // }
 
-// func newRootListCommand() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "list",
-// 		Short: "",
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logger.Warn("not yet implemented")
-// 			return nil
-// 		},
-// 	}
-// 	return cmd
-// }
+func newRootListCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List all roots in the project",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
+			log.Infof("There %s %d %s in the project %s:",
+				pluralize("is", "are", len(project.Roots)),
+				len(project.Roots),
+				pluralize("root", "roots", len(project.Roots)),
+				project.ID)
+			names := make([]string, len(project.Roots))
+			i := 0
+			for name := range project.Roots {
+				names[i] = name
+				i++
+			}
+			sort.Strings(names)
+
+			for _, name := range names {
+				fmt.Println(name)
+			}
+
+			return nil
+		},
+	}
+	return cmd
+}

@@ -2,7 +2,7 @@
 
 ## Up Next
 
-- `root list`
+- Track the source of an attribute value along with the value, for user debugging.
 - `scope show` output looks weird. I feel like we should at least provide a
   `--json` option?
 - graphing!
@@ -59,11 +59,7 @@
    words, run all dependencies regardless of their last run time.
 4. If a dependency has never been applied before, it should build it and apply
    it before any of its actual tasks.
-5. Track the source of an attribute value along with the value, for user
-   debugging.
-6. project parser should make sure scopes have unique names with no special
-   characters
-7. how to get an exhaustive `affected` list?
+5. how to get an exhaustive `affected` list?
    1. if a root module's source code changes (the `.tf` files), the whole root
       is affected. But maybe only the scopes that adopt the latest version?
    2. if a root module's config changes (`terraboots.hcl`), it depends
@@ -96,7 +92,7 @@
          are the input values and the configuration itself. If the configuration
          changes (`.tf` files), the whole root is affected. If the input values
          change, certain scopes of the root are affected.
-8. that brings up a new topic: what does it look like to destroy a scope?
+6. that brings up a new topic: what does it look like to destroy a scope?
    if we have to rename a domain, for instance, what does that entail?
    1. can we say "build all the roots for this scope and its children, and
       print out the list of build dirs" and then we can sequester those built
