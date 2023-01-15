@@ -12,7 +12,7 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terraboots/internal/hclhelp"
-	"github.com/spilliams/terraboots/internal/scopedata"
+	"github.com/spilliams/terraboots/pkg/scopedata"
 )
 
 // GenerateScopeData builds a generator for new scope data, then executes it,

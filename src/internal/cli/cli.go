@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spilliams/terraboots/internal/logformatter"
-	"github.com/spilliams/terraboots/internal/terraboots"
+	"github.com/spilliams/terraboots/pkg/terraboots"
 )
 
 var quiet bool

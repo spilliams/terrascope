@@ -11,7 +11,7 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/terraboots/internal/scopedata"
+	"github.com/spilliams/terraboots/pkg/scopedata"
 )
 
 // ProjectConfig represents the configuration file of a Terraboots project

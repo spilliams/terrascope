@@ -7,7 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spilliams/terraboots/internal/logformatter"
-	"github.com/spilliams/terraboots/internal/terraboots"
+	"github.com/spilliams/terraboots/pkg/terraboots"
 )
 
 var log *logrus.Entry

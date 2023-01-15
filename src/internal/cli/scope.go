@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spilliams/terraboots/internal/scopedata"
+	"github.com/spilliams/terraboots/pkg/scopedata"
 )
 
 func newScopeCommand() *cobra.Command {
