@@ -1,23 +1,20 @@
 package terraboots
 
 import (
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"sort"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/spilliams/terraboots/internal/generate"
 	"github.com/spilliams/terraboots/internal/hclhelp"
-	"github.com/spilliams/terraboots/pkg/scopedata"
 )
 
 // GenerateScopeData builds a generator for new scope data, then executes it,
 // saving the results in a file
-func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
+func (p *Project) GenerateScopeData() error {
 	if len(p.ScopeTypes) == 0 {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
 	}
@@ -25,12 +22,6 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 	scopeTypes := make([]string, len(p.ScopeTypes))
 	for i, el := range p.ScopeTypes {
 		scopeTypes[i] = el.Name
-	}
-
-	gen := scopedata.NewGenerator(scopeTypes, p.Logger)
-	bytes, err := gen.Run()
-	if err != nil {
-		return err
 	}
 
 	// this file doesn't have to exist yet
@@ -41,40 +32,11 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 	}
 	dataFilename = path.Join(p.projectDir(), dataFilename)
 
-	file, err := os.OpenFile(dataFilename, os.O_WRONLY, 0644)
-	defer file.Close()
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			p.Debug("file open errored, is ErrNotExist, creating file")
-			file, err = os.Create(dataFilename)
-			if err != nil {
-				p.Debug("file create failed")
-				return err
-			}
-		} else {
-			p.Debug("file open errored, is not ErrNotExist, throwing")
-			return err
-		}
-	} else {
-		// err == nil means file was found
-		p.Warnf("A file '%s' already exists!", dataFilename)
-		var yes bool
-		survey.AskOne(&survey.Confirm{
-			Message: fmt.Sprintf("A file '%s' already exists! Overwrite?", dataFilename),
-			Default: false,
-		}, &yes)
-		if !yes {
-			p.Infof("Not overwriting the existing file. Here is the generated scope data hcl:")
-			output.Write(bytes)
-			return nil
-		}
-	}
-	_, err = file.Write(bytes)
-	return err
+	return generate.Scope(scopeTypes, dataFilename, p.Logger)
 }
 
 type scopeDataConfig struct {
-	RootScopes []*scopedata.NestedScope `hcl:"scope,block"`
+	RootScopes []*NestedScope `hcl:"scope,block"`
 }
 
 // readScopeData reads all of the scope data known to the receiver
@@ -86,7 +48,7 @@ func (p *Project) readScopeData() error {
 		return nil
 	}
 
-	list := make([]*scopedata.CompiledScope, 0)
+	list := make([]*CompiledScope, 0)
 
 	for _, filename := range p.ScopeDataFiles {
 		filename := path.Join(p.projectDir(), filename)
@@ -107,7 +69,7 @@ func (p *Project) readScopeData() error {
 		}
 	}
 
-	compiledScopes := scopedata.CompiledScopes(list)
+	compiledScopes := CompiledScopes(list)
 	compiledScopes = compiledScopes.Deduplicate()
 	sort.Sort(compiledScopes)
 
@@ -132,12 +94,12 @@ func handleDecodeNestedScopeError(err error) error {
 	return hclhelp.DiagnosticsWithoutSummary(err, "Unexpected \"scope\" block")
 }
 
-func (p *Project) GetCompiledScopes(address string) (scopedata.CompiledScopes, error) {
+func (p *Project) GetCompiledScopes(address string) (CompiledScopes, error) {
 	if err := p.readScopeData(); err != nil {
 		return nil, err
 	}
 
-	scopes := scopedata.CompiledScopes{}
+	scopes := CompiledScopes{}
 	filter, err := p.makeScopeFilter(address)
 	if err != nil {
 		return nil, err

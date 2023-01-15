@@ -1,4 +1,4 @@
-package scopedata
+package terraboots
 
 import (
 	"fmt"

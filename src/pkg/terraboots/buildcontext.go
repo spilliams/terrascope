@@ -12,17 +12,16 @@ import (
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/sirupsen/logrus"
 	"github.com/spilliams/terraboots/internal/hclhelp"
-	"github.com/spilliams/terraboots/pkg/scopedata"
 	"github.com/zclconf/go-cty/cty"
 )
 
 type buildContext struct {
 	root  *root
-	scope *scopedata.CompiledScope
+	scope *CompiledScope
 	*logrus.Entry
 }
 
-func newBuildContext(root *root, scope *scopedata.CompiledScope, logger *logrus.Logger) *buildContext {
+func newBuildContext(root *root, scope *CompiledScope, logger *logrus.Logger) *buildContext {
 	return &buildContext{
 		root:  root,
 		scope: scope,

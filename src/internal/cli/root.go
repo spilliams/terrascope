@@ -18,7 +18,7 @@ func newRootCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(newRootBuildCommand())
-	// cmd.AddCommand(newRootGenerateCommand())
+	cmd.AddCommand(newRootGenerateCommand())
 	// cmd.AddCommand(newRootGraphCommand())
 	cmd.AddCommand(newRootListCommand())
 
@@ -45,6 +45,21 @@ func newRootBuildCommand() *cobra.Command {
 		},
 	}
 
+	return cmd
+}
+
+func newRootGenerateCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "generate [NAME]",
+		Short: "",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var rootName string
+			if len(args) > 0 {
+				rootName = args[0]
+			}
+			return project.GenerateRoot(rootName)
+		},
+	}
 	return cmd
 }
 
@@ -80,18 +95,6 @@ func newRootListCommand() *cobra.Command {
 	}
 	return cmd
 }
-
-// func newRootGenerateCommand() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "generate",
-// 		Short: "",
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logger.Warn("not yet implemented")
-// 			return nil
-// 		},
-// 	}
-// 	return cmd
-// }
 
 // func newRootGraphCommand() *cobra.Command {
 // 	cmd := &cobra.Command{

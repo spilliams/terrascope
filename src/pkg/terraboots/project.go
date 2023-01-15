@@ -11,7 +11,6 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/terraboots/pkg/scopedata"
 )
 
 // ProjectConfig represents the configuration file of a Terraboots project
@@ -27,7 +26,7 @@ type Project struct {
 
 	ScopeTypes     []*ScopeType `hcl:"scope,block"`
 	ScopeDataFiles []string     `hcl:"scopeData"`
-	compiledScopes scopedata.CompiledScopes
+	compiledScopes CompiledScopes
 
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*root
@@ -184,13 +183,13 @@ func (p *Project) AddRoot(rootName string) error {
 }
 
 // determineMatchingScopes takes in a root configuration and an optional list of
-// scopes. It returns a list of scopedata.CompiledScopes where each scope in the
+// scopes. It returns a list of `CompiledScopes` where each scope in the
 // list (a) matches at least one scopeMatch expression of the root, and
 // (b) matches at least one scope given.
 // Note that a root with no scopeMatch expressions will be treated as if all its
 // scope types allow all values (`.*`).
-func (p *Project) determineMatchingScopes(root *root, scopes []string) (scopedata.CompiledScopes, error) {
-	matchingScopes := scopedata.CompiledScopes{}
+func (p *Project) determineMatchingScopes(root *root, scopes []string) (CompiledScopes, error) {
+	matchingScopes := CompiledScopes{}
 	// if they don't specify any scope matches, assume .* for all
 	if root.ScopeMatches == nil || len(root.ScopeMatches) == 0 {
 		allScopeMatchTypes := make(map[string]string)
@@ -214,7 +213,7 @@ func (p *Project) determineMatchingScopes(root *root, scopes []string) (scopedat
 
 	// also abide by this list
 	if len(scopes) > 0 {
-		filteredMatchingScopes := scopedata.CompiledScopes{}
+		filteredMatchingScopes := CompiledScopes{}
 		scopeFilters := make([]map[string]string, len(scopes))
 		for i, scope := range scopes {
 			scopeFilter, err := p.makeScopeFilter(scope)

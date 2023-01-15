@@ -1,52 +1,52 @@
-package scopedata
+package generate
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/sirupsen/logrus"
 	"github.com/spilliams/terraboots/internal/hclhelp"
 )
 
-// Generator objects can work with scope data, taking input from the user and
-// saving the data to files.
-type Generator interface {
-	Run() ([]byte, error)
+// Scope builds a new scope value generator with the given scope types
+func Scope(scopeTypes []string, filename string, logger *logrus.Logger) error {
+	sg := &scopeGenerator{
+		filename:   filename,
+		scopeTypes: scopeTypes,
+		Entry:      logger.WithField("prefix", "scopegen"),
+	}
+	return sg.Run()
 }
 
-// generator stores an ordered list of scope types, a filename to store data to,
+// scopeGenerator stores an ordered list of scope types, a filename to store data to,
 // and composes a Logger for debugging
-type generator struct {
+type scopeGenerator struct {
+	filename   string
 	scopeTypes []string
 	*logrus.Entry
 }
 
-// NewGenerator builds a new Generator with the given scope types, destination
-// filename, and logger.
-func NewGenerator(scopeTypes []string, logger *logrus.Logger) Generator {
-	return &generator{
-		scopeTypes: scopeTypes,
-		Entry:      logger.WithField("prefix", "scopedata"),
-	}
-}
-
 // Run surveys the user about their scope value, and returns bytes representing
 // an hcl file
-func (g *generator) Run() ([]byte, error) {
-	rootScopes, err := g.surveyForScopeValues()
+func (sg *scopeGenerator) Run() error {
+	rootScopes, err := sg.surveyForScopeValues()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if len(rootScopes) == 0 {
-		g.Warn("No scopes were generated, exiting.")
-		return nil, nil
+		sg.Warn("No scopes were generated, exiting.")
+		return nil
 	}
 
-	hclfile := g.generateScopeDataFile(rootScopes)
-	return hclfile.Bytes(), nil
+	hclfile := generateScopeDataFile(rootScopes)
+
+	return sg.writeScopeDataFile(hclfile.Bytes())
 }
 
 const answerRE = "[0-9a-zA-Z-_]"
@@ -55,36 +55,46 @@ var helpText = fmt.Sprintf("Answers must be space-separated, and may consist of 
 	"Leave any answer blank to mark the current scope as complete with no children.\n"+
 	"Press Ctrl+C at any time to cancel.", answerRE)
 
+type nestedScope struct {
+	Type     string `hcl:"type,label"`
+	Name     string `hcl:"name,label"`
+	Address  string
+	Children []*nestedScope `hcl:"scope,block"`
+	Attrs    hcl.Attributes `hcl:",remain"`
+
+	scopeTypeIndex int
+}
+
 // surveyForScopeValues uses the receiver's scopeTypes to ask the user for all
 // the different values of the scopes.
 // Returns a list of the top-level scope values (the scope values for the first
 // scope type)
-func (g *generator) surveyForScopeValues() ([]*NestedScope, error) {
-	g.Infof("Scope types in this projct, in order, are: %s", strings.Join(g.scopeTypes, ", "))
+func (sg *scopeGenerator) surveyForScopeValues() ([]*nestedScope, error) {
+	sg.Infof("Scope types in this projct, in order, are: %s", strings.Join(sg.scopeTypes, ", "))
 
 	// First one's free
-	firstValues, err := ask("What are the allowable scope values for `%s`?\n", g.scopeTypes[0])
+	firstValues, err := askScope("What are the allowable scope values for `%s`?\n", sg.scopeTypes[0])
 	if err != nil {
 		return nil, err
 	}
 	if len(firstValues) == 0 {
-		g.Debugf("empty value, exiting")
+		sg.Debugf("empty value, exiting")
 		return nil, nil
 	}
-	if err := validate(firstValues); err != nil {
+	if err := validateScope(firstValues); err != nil {
 		return nil, err
 	}
-	g.Debugf("read new scope values %v", firstValues)
+	sg.Debugf("read new scope values %v", firstValues)
 
-	roots := make([]*NestedScope, len(firstValues))
-	prompts := make([]*NestedScope, len(firstValues))
+	roots := make([]*nestedScope, len(firstValues))
+	prompts := make([]*nestedScope, len(firstValues))
 
 	for i, el := range firstValues {
-		value := &NestedScope{
+		value := &nestedScope{
 			Name:           el,
-			Type:           g.scopeTypes[0],
+			Type:           sg.scopeTypes[0],
 			scopeTypeIndex: 0,
-			Children:       make([]*NestedScope, 0),
+			Children:       make([]*nestedScope, 0),
 		}
 		value.Address = fmt.Sprintf("%s.%s", value.Type, value.Name)
 		roots[i] = value
@@ -95,33 +105,33 @@ func (g *generator) surveyForScopeValues() ([]*NestedScope, error) {
 		prompt := prompts[0]
 		prompts = prompts[1:]
 
-		if prompt.scopeTypeIndex+1 == len(g.scopeTypes) {
+		if prompt.scopeTypeIndex+1 == len(sg.scopeTypes) {
 			// this scope value cannot have children
 			continue
 		}
 
-		values, err := ask("Within %s, what are the allowable scope values for `%s`?\n", prompt.Address, g.scopeTypes[prompt.scopeTypeIndex+1])
+		values, err := askScope("Within %s, what are the allowable scope values for `%s`?\n", prompt.Address, sg.scopeTypes[prompt.scopeTypeIndex+1])
 		if err != nil {
 			return nil, err
 		}
 
 		if len(values) == 0 {
-			g.Debugf("user entered no scope values for prompt, closing this scope")
+			sg.Debugf("user entered no scope values for prompt, closing this scope")
 			continue
 		}
 
-		if err := validate(values); err != nil {
+		if err := validateScope(values); err != nil {
 			return nil, err
 		}
 
-		g.Debugf("read new scope values %v", values)
+		sg.Debugf("read new scope values %v", values)
 
 		for _, el := range values {
-			value := &NestedScope{
+			value := &nestedScope{
 				Name:           el,
-				Type:           g.scopeTypes[prompt.scopeTypeIndex+1],
+				Type:           sg.scopeTypes[prompt.scopeTypeIndex+1],
 				scopeTypeIndex: prompt.scopeTypeIndex + 1,
-				Children:       make([]*NestedScope, 0),
+				Children:       make([]*nestedScope, 0),
 			}
 			value.Address = strings.Join([]string{prompt.Address, string(value.Type), value.Name}, ".")
 			prompt.Children = append(prompt.Children, value)
@@ -129,12 +139,12 @@ func (g *generator) surveyForScopeValues() ([]*NestedScope, error) {
 		}
 	}
 
-	g.Debugf("%+v", roots)
+	sg.Debugf("%+v", roots)
 
 	return roots, nil
 }
 
-func ask(format string, a ...any) ([]string, error) {
+func askScope(format string, a ...any) ([]string, error) {
 	var value string
 	err := survey.AskOne(&survey.Input{
 		Message: fmt.Sprintf(format, a...),
@@ -146,7 +156,7 @@ func ask(format string, a ...any) ([]string, error) {
 	return strings.Split(value, " "), err
 }
 
-func validate(answers []string) error {
+func validateScope(answers []string) error {
 	seen := make(map[string]bool)
 	for _, answer := range answers {
 		if len(answer) == 0 {
@@ -166,7 +176,7 @@ func validate(answers []string) error {
 
 // generateScopeDataFile reads the given scopes and produces an `hclwrite.File`
 // object that is ready to be written to disk.
-func (g *generator) generateScopeDataFile(rootScopes []*NestedScope) *hclwrite.File {
+func generateScopeDataFile(rootScopes []*nestedScope) *hclwrite.File {
 	// TODO: now that Scopes are gohcl structs, can we write the file more simply?
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
@@ -183,11 +193,44 @@ func (g *generator) generateScopeDataFile(rootScopes []*NestedScope) *hclwrite.F
 
 // addScopeValueToBody writes a new block representing the scope value to the
 // given body. This is especially useful for writing nested scope values.
-func addScopeValueToBody(scope *NestedScope, body *hclwrite.Body) *hclwrite.Body {
+func addScopeValueToBody(scope *nestedScope, body *hclwrite.Body) *hclwrite.Body {
 	childBlock := body.AppendNewBlock("scope", []string{string(scope.Type), scope.Name})
 	childBody := childBlock.Body()
 	for _, grandchild := range scope.Children {
 		childBody = addScopeValueToBody(grandchild, childBody)
 	}
 	return body
+}
+
+func (sg *scopeGenerator) writeScopeDataFile(b []byte) error {
+	file, err := os.OpenFile(sg.filename, os.O_WRONLY, 0644)
+	defer file.Close()
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			sg.Debug("file open errored, is ErrNotExist, creating file")
+			file, err = os.Create(sg.filename)
+			if err != nil {
+				sg.Debug("file create failed")
+				return err
+			}
+		} else {
+			sg.Debug("file open errored, is not ErrNotExist, throwing")
+			return err
+		}
+	} else {
+		// err == nil means file was found
+		sg.Warnf("A file '%s' already exists!", sg.filename)
+		var yes bool
+		survey.AskOne(&survey.Confirm{
+			Message: fmt.Sprintf("A file '%s' already exists! Overwrite?", sg.filename),
+			Default: false,
+		}, &yes)
+		if !yes {
+			sg.Infof("Not overwriting the existing file. Here is the generated scope data hcl:")
+			fmt.Println(b)
+			return nil
+		}
+	}
+	_, err = file.Write(b)
+	return err
 }

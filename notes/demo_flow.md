@@ -8,9 +8,9 @@
    3. [x] prompts for some sample scope values (this can also be its own command,
       something like `terraboots scope generate`)
    4. [x] generates a data.hcl
-2. [ ] create a new root from nothing.
-   1. [ ] prompts for root name, included scopes
-   2. [ ] generates a folder in the roots directory with `main.tf` and `terraboots.hcl`
+2. [x] create a new root from nothing.
+   1. [x] prompts for root name, included scopes
+   2. [x] generates a folder in the roots directory with `main.tf` and `terraboots.hcl`
 3. [x] Building a root. Generally this should print out one or more folder names at
    the end.
    1. [x] `terraboots root build foo`

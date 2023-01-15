@@ -1,4 +1,4 @@
-package projectgen
+package generate
 
 import (
 	"os"
@@ -18,18 +18,34 @@ type projectConfiguration struct {
 	ScopeTypes  []string
 }
 
-func GenerateProject(logger *logrus.Logger) error {
-	g := &generator{
-		Entry: logger.WithField("prefix", "projectgen"),
-	}
-	return g.run()
-}
-
-type generator struct {
+type projectGenerator struct {
 	*logrus.Entry
 }
 
-func (g *generator) run() error {
+func Project(logger *logrus.Logger) error {
+	g := &projectGenerator{
+		Entry: logger.WithField("prefix", "projectgen"),
+	}
+	return g.Run()
+}
+
+func (pg *projectGenerator) Run() error {
+	answers, err := surveyForProjectConfiguration()
+	if err != nil {
+		return err
+	}
+	pg.Debugf("Answers: %+v", answers)
+
+	hclfile := generateProjectConfigurationFile(answers)
+
+	if err := pg.writeProjectTerrabootsFile(hclfile.Bytes()); err != nil {
+		return err
+	}
+
+	return pg.createRootsDirectory(answers.RootDir)
+}
+
+func surveyForProjectConfiguration() (*projectConfiguration, error) {
 	questions := []*survey.Question{
 		{
 			Name:     "projectName",
@@ -64,20 +80,10 @@ func (g *generator) run() error {
 
 	answers := projectConfiguration{}
 	err := survey.Ask(questions, &answers)
-	if err != nil {
-		return err
-	}
-
-	g.Debugf("Answers: %+v", answers)
-	if err := g.writeProjectTerrabootsFile(answers); err != nil {
-		return err
-	}
-
-	return g.createRootsDirectory(answers.RootDir)
-
+	return &answers, err
 }
 
-func (g *generator) writeProjectTerrabootsFile(cfg projectConfiguration) error {
+func generateProjectConfigurationFile(cfg *projectConfiguration) *hclwrite.File {
 	f := hclwrite.NewEmptyFile()
 	projectBody := f.Body()
 
@@ -92,20 +98,24 @@ func (g *generator) writeProjectTerrabootsFile(cfg projectConfiguration) error {
 		scopeBody.SetAttributeRaw("name", hclwrite.TokensForValue(cty.StringVal(scope)))
 	}
 
+	return f
+}
+
+func (pg *projectGenerator) writeProjectTerrabootsFile(b []byte) error {
 	filename := "terraboots.hcl"
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
-	_, err = file.Write(f.Bytes())
+	_, err = file.Write(b)
 	if err != nil {
 		return err
 	}
-	g.Infof("New project configuration file %s created.", filename)
+	pg.Infof("New project configuration file %s created.", filename)
 	return nil
 }
 
-func (g *generator) createRootsDirectory(dir string) error {
+func (pg *projectGenerator) createRootsDirectory(dir string) error {
 	err := os.MkdirAll(dir, 0755)
 	if err != nil {
 		return err
@@ -115,6 +125,6 @@ func (g *generator) createRootsDirectory(dir string) error {
 	if err != nil {
 		return err
 	}
-	g.Infof("New root module directory %s created.", dir)
+	pg.Infof("New root module directory %s created.", dir)
 	return nil
 }

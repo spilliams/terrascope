@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spilliams/terraboots/internal/ctyhelp"
-	"github.com/spilliams/terraboots/pkg/scopedata"
+	"github.com/spilliams/terraboots/pkg/terraboots"
 )
 
 func newScopeCommand() *cobra.Command {
@@ -77,7 +77,7 @@ func newScopeShowCommand() *cobra.Command {
 	return cmd
 }
 
-func printScope(scope *scopedata.CompiledScope) {
+func printScope(scope *terraboots.CompiledScope) {
 	fmt.Printf("%s:\n", scope.Address())
 	for k, v := range scope.Attributes {
 		vPrint := ctyhelp.String(v)

@@ -1,10 +1,8 @@
 package cli
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
-	"github.com/spilliams/terraboots/internal/projectgen"
+	"github.com/spilliams/terraboots/internal/generate"
 )
 
 func newProjectCommand() *cobra.Command {
@@ -26,7 +24,7 @@ func newProjectGenerateCommand() *cobra.Command {
 		Use:   "generate",
 		Short: "Generates a new project in the current directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return projectgen.GenerateProject(log.Logger)
+			return generate.Project(log.Logger)
 			// TODO: do you want to generate scope values now? [Y/n]
 		},
 	}
@@ -40,7 +38,7 @@ func newProjectGenerateScopesCommand() *cobra.Command {
 		Short:             "Generates a new scope data file in this project",
 		PersistentPreRunE: bootsbootsPreRunE,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return project.GenerateScopeData(os.Stdin, os.Stdout)
+			return project.GenerateScopeData()
 		},
 	}
 

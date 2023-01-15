@@ -1,4 +1,4 @@
-package scopedata
+package terraboots
 
 import (
 	"fmt"
@@ -16,8 +16,6 @@ type NestedScope struct {
 	Address  string
 	Children []*NestedScope `hcl:"scope,block"`
 	Attrs    hcl.Attributes `hcl:",remain"`
-
-	scopeTypeIndex int
 }
 
 func (ns *NestedScope) String() string {

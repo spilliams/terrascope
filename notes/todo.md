@@ -2,10 +2,10 @@
 
 ## Up Next
 
-- see `demo_flow` for bugs to sort out
-- `terraboots root generate` to survey for and write a root's `terraboots.hcl`
-  file
 - look for `TODO`s
+- see `demo_flow` for bugs to sort out
+- run the demo and figure out what's missing
+
 - Track the source of an attribute value along with the value, for user debugging.
 - `scope show` output looks weird. I feel like we should at least provide a
   `--json` option?
@@ -32,11 +32,10 @@
   `dependency` blocks).
 - Scope validation (e.g. "for the 'env' scope, values can only be 'dev',
   'stage', or 'prod'). See `notes/scope-validation.md`.
-- migrations?
+- state migrations?
 
 ## CLI Commands
 
-- Terraboots should be able to generate a new monorepo project
 - `terraboots root graph my-root` and/or `terraboots root graph`. With or
   without `--highlight-affected`.
 - `terraboots scope build SCOPE [-r|--recursive]` for building all roots for a
@@ -69,40 +68,7 @@
    words, run all dependencies regardless of their last run time.
 4. If a dependency has never been applied before, it should build it and apply
    it before any of its actual tasks.
-5. how to get an exhaustive `affected` list?
-   1. if a root module's source code changes (the `.tf` files), the whole root
-      is affected. But maybe only the scopes that adopt the latest version?
-   2. if a root module's config changes (`terraboots.hcl`), it depends
-      1. if it's in a scope match, where some scopes are getting new attributes
-         (which is something I haven't fully decided is a good idea yet), those
-         scopes are affected.
-   3. y'know what, for now lets keep it a little broad and say, if any files in
-      the root (but not in `.terraboots/`) have changed, the whole root is
-      affected for all matching scopes.
-   4. scope data can change.
-      1. If scope data changes, the whole scope could be affected. or maybe
-         not, maybe only one sub-sub-sub scope uses a specific attribute.
-      2. That, again, is oversolving. For now, we should hash each scope value,
-         and save all the hashes in a file that's checked in. Then, when we're
-         determining `affected` we compute a new hash, and figure out which
-         scopes have changed.
-      3. things to hash: all attributes in the scope
-      4. also, detect if a scope is created or destroyed.
-      5. if you don't want to check a hashfile into git, maybe the `affected`
-         command clones the repo in a temp dir, runs a function to hash the
-         clone, and runs the same function to hash the currect repo (or second
-         clone).
-      6. The other thing that can change (again, unimplemented) is wired outputs
-         from root dependencies. Maybe what I need is a hash of the generated
-         `.tfvars` file, and a matrix of scope and root.
-         `map[scope][root]hash` turns into `map[scope][root]affected`?
-         This would also solve the issue above, with parent scope attributes
-         that are not used by all the child scopes.
-      7. Yes, I'm more convinced now: the two things that can change in a root
-         are the input values and the configuration itself. If the configuration
-         changes (`.tf` files), the whole root is affected. If the input values
-         change, certain scopes of the root are affected.
-6. that brings up a new topic: what does it look like to destroy a scope?
+5. what does it look like to destroy a scope?
    if we have to rename a domain, for instance, what does that entail?
    1. can we say "build all the roots for this scope and its children, and
       print out the list of build dirs" and then we can sequester those built

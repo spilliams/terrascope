@@ -1,7 +1,10 @@
 package terraboots
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/spilliams/terraboots/internal/generate"
 	"github.com/spilliams/terraboots/internal/hclhelp"
 )
 
@@ -33,4 +36,17 @@ func ParseRoot(cfgFile string) (*root, error) {
 	r := cfg.Root
 	r.filename = cfgFile
 	return r, err
+}
+
+func (p *Project) GenerateRoot(name string) error {
+	if len(p.ScopeTypes) == 0 {
+		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
+	}
+
+	scopeTypes := make([]string, len(p.ScopeTypes))
+	for i, el := range p.ScopeTypes {
+		scopeTypes[i] = el.Name
+	}
+
+	return generate.Root(name, p.RootsDir, scopeTypes, p.Logger)
 }
