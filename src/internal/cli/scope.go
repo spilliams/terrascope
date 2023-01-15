@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spilliams/terraboots/internal/scopedata"
@@ -19,7 +18,7 @@ func newScopeCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(newScopeListCommand())
-	cmd.AddCommand(newScopeGenerateCommand())
+	// cmd.AddCommand(newScopeGenerateCommand())
 	cmd.AddCommand(newScopeShowCommand())
 
 	return cmd
@@ -48,18 +47,9 @@ func newScopeListCommand() *cobra.Command {
 	return cmd
 }
 
-func newScopeGenerateCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "generate",
-		Aliases: []string{"g", "gen"},
-		Short:   "Generates a new scope data file in this project",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return project.GenerateScopeData(os.Stdin, os.Stdout)
-		},
-	}
-
-	return cmd
-}
+// func newScopeGenerateCommand() *cobra.Command {
+// 	(reserved for generating a single new scope)
+// }
 
 func newScopeShowCommand() *cobra.Command {
 	cmd := &cobra.Command{

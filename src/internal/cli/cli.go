@@ -71,6 +71,7 @@ func NewTerrabootsCmd() *cobra.Command {
 	cmd.AddCommand(newSpecificTerraformCommand("console"))
 	cmd.AddCommand(newGenericTerraformCommand())
 
+	cmd.AddCommand(newProjectCommand())
 	cmd.AddCommand(newScopeCommand())
 	cmd.AddCommand(newRootCommand())
 

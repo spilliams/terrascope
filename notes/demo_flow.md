@@ -2,9 +2,9 @@
 
 (checkboxes indicate the feature is built)
 
-1. [ ] create a new project from nothing.
-   1. [ ] prompts for top directory, project name, scope names, roots directory, scope data file name
-   2. [ ] generates a project-level terraboots.hcl
+1. [x] create a new project from nothing.
+   1. [x] prompts for top directory, project name, scope names, roots directory, scope data file name
+   2. [x] generates a project-level terraboots.hcl
    3. [x] prompts for some sample scope values (this can also be its own command,
       something like `terraboots scope generate`)
    4. [x] generates a data.hcl

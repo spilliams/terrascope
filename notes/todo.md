@@ -2,6 +2,7 @@
 
 ## Up Next
 
+- look for `TODO`
 - Track the source of an attribute value along with the value, for user debugging.
 - `scope show` output looks weird. I feel like we should at least provide a
   `--json` option?
