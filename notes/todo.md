@@ -22,6 +22,8 @@
     `acme.*.networking.*`, but cross that bridge later
   - `root graph` should build a graph of all the roots and their dependencies
 - `affected`
+- pipeline for deploying `terraboots`. Version command, changelog, releases, etc.
+- docs docs docs
 
 ## Feature
 
