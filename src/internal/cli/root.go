@@ -48,30 +48,6 @@ func newRootBuildCommand() *cobra.Command {
 	return cmd
 }
 
-// func newRootGenerateCommand() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "generate",
-// 		Short: "",
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logger.Warn("not yet implemented")
-// 			return nil
-// 		},
-// 	}
-// 	return cmd
-// }
-
-// func newRootGraphCommand() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "graph",
-// 		Short: "",
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logger.Warn("not yet implemented")
-// 			return nil
-// 		},
-// 	}
-// 	return cmd
-// }
-
 func newRootListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -104,3 +80,27 @@ func newRootListCommand() *cobra.Command {
 	}
 	return cmd
 }
+
+// func newRootGenerateCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "generate",
+// 		Short: "",
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			logger.Warn("not yet implemented")
+// 			return nil
+// 		},
+// 	}
+// 	return cmd
+// }
+
+// func newRootGraphCommand() *cobra.Command {
+// 	cmd := &cobra.Command{
+// 		Use:   "graph",
+// 		Short: "",
+// 		RunE: func(cmd *cobra.Command, args []string) error {
+// 			logger.Warn("not yet implemented")
+// 			return nil
+// 		},
+// 	}
+// 	return cmd
+// }
