@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/spilliams/terraboots/internal/ctyhelp"
 	"github.com/spilliams/terraboots/pkg/scopedata"
 )
 
@@ -78,12 +79,9 @@ func newScopeShowCommand() *cobra.Command {
 
 func printScope(scope *scopedata.CompiledScope) {
 	fmt.Printf("%s:\n", scope.Address())
-	for i := range scope.ScopeTypes {
-		fmt.Printf("\t%s: %s\n", scope.ScopeTypes[i], scope.ScopeValues[i])
-	}
-	fmt.Println()
 	for k, v := range scope.Attributes {
-		fmt.Printf("\t%s: %s\n", k, v.AsString())
+		vPrint := ctyhelp.String(v)
+		fmt.Printf("\t%s: %s\n", k, vPrint)
 	}
 }
 
