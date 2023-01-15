@@ -2,19 +2,25 @@
 
 ## Up Next
 
-- look for `TODO`
+- see `demo_flow` for bugs to sort out
+- `terraboots root generate` to survey for and write a root's `terraboots.hcl`
+  file
+- look for `TODO`s
 - Track the source of an attribute value along with the value, for user debugging.
 - `scope show` output looks weird. I feel like we should at least provide a
   `--json` option?
+- root dependencies!
+  - think real hard about it
+  - build a root module with dependencies
+  - build multiple root modules with the same dependency outside their current
+    scope (e.g `acme.gold.commerce.dev`, `...stage` and `...prod` each depend on
+    `acme.gold.networking.global`)
 - graphing!
   - `scope graph` should build a graph of all compiled scopes
   - `scope graph FILTER` should build a graph of all filtered compiled scopes
     and their descendants. This could get weird for something like
     `acme.*.networking.*`, but cross that bridge later
   - `root graph` should build a graph of all the roots and their dependencies
-- build a root module with dependencies
-- build a root module with a dependency outside the current scope
-- cli should be able to add to an existing scope data file
 - `affected`
 
 ## Feature
@@ -36,6 +42,7 @@
   gathering all the build directories of a whole domain
 - `terraboots root clean ROOT` to delete temporary stuff
 - `terraboots root show ROOT` to show root information
+- `terraboots scope generate` to add to an existing scope data file
 
 ## unsorted shower thoughts
 

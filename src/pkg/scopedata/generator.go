@@ -52,7 +52,7 @@ func (g *generator) Run() ([]byte, error) {
 const answerRE = "[0-9a-zA-Z-_]"
 
 var helpText = fmt.Sprintf("Answers must be space-separated, and may consist of the characters %s\n"+
-	"Leave any answer blank to mark the current scope as complete with no children\n"+
+	"Leave any answer blank to mark the current scope as complete with no children.\n"+
 	"Press Ctrl+C at any time to cancel.", answerRE)
 
 // surveyForScopeValues uses the receiver's scopeTypes to ask the user for all

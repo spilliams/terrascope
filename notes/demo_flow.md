@@ -11,13 +11,7 @@
 2. [ ] create a new root from nothing.
    1. [ ] prompts for root name, included scopes
    2. [ ] generates a folder in the roots directory with `main.tf` and `terraboots.hcl`
-3. [ ] create a root by importing one
-   1. [ ] prompts for module address (e.g. GitHub URL), and included scopes
-   2. [ ] infers module name from external source
-   3. [ ] checks for name collisions
-      1. [ ] resolves by offering to replace the current module
-      2. [ ] offers to replace or keep existing terraboots.hcl (if applicable)
-4. [x] Building a root. Generally this should print out one or more folder names at
+3. [x] Building a root. Generally this should print out one or more folder names at
    the end.
    1. [x] `terraboots root build foo`
       builds a root named "foo", for all scopes
@@ -25,4 +19,18 @@
       builds a root for a certain scope
    3. [x] `terraboots root build foo "acme.gold.*.*"`
       builds a root for scopes matching a given filter
-5. [ ] Adding a new scope value to the existing data file
+4. [ ] Adding a new scope value to the existing data file
+
+## Reactions
+
+### Hello, world!
+
+I'm running this by myself, on 14 Jan (commit dc96f3f7).
+
+- `project generate` "What scope types does your project use" could maybe use help text? At least pointing to a doc...
+- `project generate` should say something in the end, like "terraboots.hcl file created"
+- `project generate-scopes` straight up bugged. It didn't like that the file didn't exist yet? Maybe we should ignore a "file not found" error in `readScopeData:97`
+- `scope show` panicked when i had an attribute in data.hcl that wasn't a string
+- demo broke down after scope show and list, because I don't have a root generator yet
+
+This was a great start I think! I have some bugs to iron out and 
