@@ -27,10 +27,10 @@
 
 I'm running this by myself, on 14 Jan (commit dc96f3f7).
 
-- `project generate` "What scope types does your project use" could maybe use help text? At least pointing to a doc...
-- `project generate` should say something in the end, like "terraboots.hcl file created"
-- `project generate-scopes` straight up bugged. It didn't like that the file didn't exist yet? Maybe we should ignore a "file not found" error in `readScopeData:97`
-- `scope show` panicked when i had an attribute in data.hcl that wasn't a string
-- demo broke down after scope show and list, because I don't have a root generator yet
+- [x] `project generate` "What scope types does your project use" could maybe use help text? At least pointing to a doc...nah, this will be on the Readme
+- [x] `project generate` should say something in the end, like "terraboots.hcl file created"
+- [x] `project generate-scopes` straight up bugged. It didn't like that the file didn't exist yet? Maybe we should ignore a "file not found" error in `readScopeData:97`
+- [ ] `scope show` panicked when i had an attribute in data.hcl that wasn't a string
+- [ ] demo broke down after scope show and list, because I don't have a root generator yet
 
 This was a great start I think! I have some bugs to iron out and 

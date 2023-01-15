@@ -92,12 +92,17 @@ func (g *generator) writeProjectTerrabootsFile(cfg projectConfiguration) error {
 		scopeBody.SetAttributeRaw("name", hclwrite.TokensForValue(cty.StringVal(scope)))
 	}
 
-	file, err := os.Create("terraboots.hcl")
+	filename := "terraboots.hcl"
+	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	_, err = file.Write(f.Bytes())
-	return err
+	if err != nil {
+		return err
+	}
+	g.Infof("New project configuration file %s created.", filename)
+	return nil
 }
 
 func (g *generator) createRootsDirectory(dir string) error {
@@ -107,5 +112,9 @@ func (g *generator) createRootsDirectory(dir string) error {
 	}
 	file, err := os.Create(path.Join(dir, ".gitkeep"))
 	defer file.Close()
-	return err
+	if err != nil {
+		return err
+	}
+	g.Infof("New root module directory %s created.", dir)
+	return nil
 }

@@ -91,6 +91,9 @@ func (p *Project) readScopeData() error {
 	for _, filename := range p.ScopeDataFiles {
 		filename := path.Join(p.projectDir(), filename)
 		p.Debugf("Reading scope data file %s", filename)
+		if !fileExists(filename) {
+			continue
+		}
 
 		cfg := &scopeDataConfig{}
 		err := hclsimple.DecodeFile(filename, nil, cfg)
@@ -110,6 +113,11 @@ func (p *Project) readScopeData() error {
 
 	p.compiledScopes = compiledScopes
 	return nil
+}
+
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
 }
 
 // handleDecodeNestedScopeError takes diagnostics returned from a call to decode
