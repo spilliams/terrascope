@@ -1,11 +1,11 @@
 package scopedata
 
 import (
-	"bufio"
 	"fmt"
-	"io"
+	"regexp"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/sirupsen/logrus"
 	"github.com/spilliams/terraboots/internal/hclhelp"
@@ -14,7 +14,7 @@ import (
 // Generator objects can work with scope data, taking input from the user and
 // saving the data to files.
 type Generator interface {
-	Create(io.Reader, io.Writer) ([]byte, error)
+	Run() ([]byte, error)
 }
 
 // generator stores an ordered list of scope types, a filename to store data to,
@@ -33,10 +33,10 @@ func NewGenerator(scopeTypes []string, logger *logrus.Logger) Generator {
 	}
 }
 
-// Create prompts the user for input using `input` and `output`, and returns
-// bytes representing an hcl file
-func (g *generator) Create(input io.Reader, output io.Writer) ([]byte, error) {
-	rootScopes, err := g.promptForScopeValues(input, output)
+// Run surveys the user about their scope value, and returns bytes representing
+// an hcl file
+func (g *generator) Run() ([]byte, error) {
+	rootScopes, err := g.surveyForScopeValues()
 	if err != nil {
 		return nil, err
 	}
@@ -49,48 +49,36 @@ func (g *generator) Create(input io.Reader, output io.Writer) ([]byte, error) {
 	return hclfile.Bytes(), nil
 }
 
-// promptForScopeValues uses the receiver's scopeTypes to ask the user for all
+const answerRE = "[0-9a-zA-Z-_]"
+
+var helpText = fmt.Sprintf("Answers must be space-separated, and may consist of the characters %s\n"+
+	"Leave any answer blank to mark the current scope as complete with no children\n"+
+	"Press Ctrl+C at any time to cancel.", answerRE)
+
+// surveyForScopeValues uses the receiver's scopeTypes to ask the user for all
 // the different values of the scopes.
 // Returns a list of the top-level scope values (the scope values for the first
 // scope type)
-func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]*NestedScope, error) {
-	// TODO: adopt survey instead of doing it myself
-	fmt.Fprintln(output, "Scope types in this projct, in order, are:")
-	fmt.Fprintln(output, strings.Join(g.scopeTypes, ", "))
-	fmt.Fprintln(output, "")
-
-	fmt.Fprintln(output, "Answers must be space-separated, and may consist of the characters")
-	// TODO: use this charset to validate the input...
-	answerCharacterSet := "0-9a-zA-Z-_"
-	fmt.Fprintln(output, answerCharacterSet)
-	fmt.Fprintln(output, "")
-
-	fmt.Fprintln(output, "Leave any answer blank to mark the current scope as complete with no children")
-	fmt.Fprintln(output, "")
-
-	fmt.Fprintln(output, "Press Ctrl+C at any time to cancel.")
-	fmt.Fprintln(output, "")
-
-	scanner := bufio.NewScanner(input)
+func (g *generator) surveyForScopeValues() ([]*NestedScope, error) {
+	g.Infof("Scope types in this projct, in order, are: %s", strings.Join(g.scopeTypes, ", "))
 
 	// First one's free
-	fmt.Fprintf(output, "What are the allowable values for `%s`?\n", g.scopeTypes[0])
-	scanner.Scan()
-	err := scanner.Err()
+	firstValues, err := ask("What are the allowable scope values for `%s`?\n", g.scopeTypes[0])
 	if err != nil {
 		return nil, err
 	}
-	if len(scanner.Text()) == 0 {
-		g.Debugf("user entered blank line, exiting")
+	if len(firstValues) == 0 {
+		g.Debugf("empty value, exiting")
 		return nil, nil
 	}
-	// TODO: validate input against list of blocklisted words, and the above
-	// charset, and each other (no dupes)...
-	firstValues := strings.Split(scanner.Text(), " ")
+	if err := validate(firstValues); err != nil {
+		return nil, err
+	}
 	g.Debugf("read new scope values %v", firstValues)
 
 	roots := make([]*NestedScope, len(firstValues))
 	prompts := make([]*NestedScope, len(firstValues))
+
 	for i, el := range firstValues {
 		value := &NestedScope{
 			Name:           el,
@@ -112,23 +100,22 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]*
 			continue
 		}
 
-		fmt.Fprintf(output, "Within %s, what are the allowable values for `%s`?\n", prompt.Address, g.scopeTypes[prompt.scopeTypeIndex+1])
-
-		scanner.Scan()
-		err := scanner.Err()
+		values, err := ask("Within %s, what are the allowable scope values for `%s`?\n", prompt.Address, g.scopeTypes[prompt.scopeTypeIndex+1])
 		if err != nil {
 			return nil, err
 		}
-		if len(scanner.Text()) == 0 {
-			// user entered none
-			g.Debugf("user entered no values for prompt, closing this scope")
+
+		if len(values) == 0 {
+			g.Debugf("user entered no scope values for prompt, closing this scope")
 			continue
 		}
-		// TODO: validate input against list of blocklisted words, and the above
-		// charset, and each other (no dupes)...
 
-		values := strings.Split(scanner.Text(), " ")
+		if err := validate(values); err != nil {
+			return nil, err
+		}
+
 		g.Debugf("read new scope values %v", values)
+
 		for _, el := range values {
 			value := &NestedScope{
 				Name:           el,
@@ -145,6 +132,36 @@ func (g *generator) promptForScopeValues(input io.Reader, output io.Writer) ([]*
 	g.Debugf("%+v", roots)
 
 	return roots, nil
+}
+
+func ask(format string, a ...any) ([]string, error) {
+	var value string
+	err := survey.AskOne(&survey.Input{
+		Message: fmt.Sprintf(format, a...),
+		Help:    helpText,
+	}, &value)
+	if len(value) == 0 {
+		return []string{}, err
+	}
+	return strings.Split(value, " "), err
+}
+
+func validate(answers []string) error {
+	seen := make(map[string]bool)
+	for _, answer := range answers {
+		if len(answer) == 0 {
+			return fmt.Errorf("Values cannot be blank (did you press space twice?)")
+		}
+		if _, ok := seen[answer]; ok {
+			return fmt.Errorf("Cannot use the same scope value (%s) more than once for a single scope type", answer)
+		}
+		seen[answer] = true
+		re := regexp.MustCompile(fmt.Sprintf("^%s+$", answerRE))
+		if !re.MatchString(answer) {
+			return fmt.Errorf("Scope value '%s' does not match valid character set %s", answer, answerRE)
+		}
+	}
+	return nil
 }
 
 // generateScopeDataFile reads the given scopes and produces an `hclwrite.File`

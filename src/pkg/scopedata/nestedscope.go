@@ -1,6 +1,8 @@
 package scopedata
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -16,6 +18,10 @@ type NestedScope struct {
 	Attrs    hcl.Attributes `hcl:",remain"`
 
 	scopeTypeIndex int
+}
+
+func (ns *NestedScope) String() string {
+	return fmt.Sprintf("%s(%d)", ns.Address, len(ns.Children))
 }
 
 // Count returns the number of NestedScopes known to the receiver, including

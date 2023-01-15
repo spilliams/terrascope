@@ -1,7 +1,6 @@
 package terraboots
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -10,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terraboots/internal/hclhelp"
 	"github.com/spilliams/terraboots/pkg/scopedata"
@@ -28,7 +28,7 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 	}
 
 	gen := scopedata.NewGenerator(scopeTypes, p.Logger)
-	bytes, err := gen.Create(input, output)
+	bytes, err := gen.Run()
 	if err != nil {
 		return err
 	}
@@ -57,21 +57,16 @@ func (p *Project) GenerateScopeData(input io.Reader, output io.Writer) error {
 		}
 	} else {
 		// err == nil means file was found
-		p.Warnf("A file '%s' already exists! Overwrite? [Y/n]", dataFilename)
-		scanner := bufio.NewScanner(input)
-		scanner.Scan()
-		err := scanner.Err()
-		if err != nil {
-			p.Debug("scanner errored")
-			return err
-		}
-		if len(scanner.Text()) != 0 {
-			p.Debug("scanner returned text")
-			if scanner.Text() != "y" && scanner.Text() != "Y" {
-				p.Infof("Not overwriting the existing file. Here is the generated data.hcl:")
-				output.Write(bytes)
-				return nil
-			}
+		p.Warnf("A file '%s' already exists!", dataFilename)
+		var yes bool
+		survey.AskOne(&survey.Confirm{
+			Message: fmt.Sprintf("A file '%s' already exists! Overwrite?", dataFilename),
+			Default: false,
+		}, &yes)
+		if !yes {
+			p.Infof("Not overwriting the existing file. Here is the generated scope data hcl:")
+			output.Write(bytes)
+			return nil
 		}
 	}
 	_, err = file.Write(bytes)
