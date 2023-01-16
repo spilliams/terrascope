@@ -177,7 +177,6 @@ func validateScope(answers []string) error {
 // generateScopeDataFile reads the given scopes and produces an `hclwrite.File`
 // object that is ready to be written to disk.
 func generateScopeDataFile(rootScopes []*nestedScope) *hclwrite.File {
-	// TODO: now that Scopes are gohcl structs, can we write the file more simply?
 	f := hclwrite.NewEmptyFile()
 	rootBody := f.Body()
 

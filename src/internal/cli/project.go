@@ -25,7 +25,6 @@ func newProjectGenerateCommand() *cobra.Command {
 		Short: "Generates a new project in the current directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return generate.Project(log.Logger)
-			// TODO: do you want to generate scope values now? [Y/n]
 		},
 	}
 

@@ -56,8 +56,6 @@ func (ns *NestedScope) CompiledScope(parent *CompiledScope) *CompiledScope {
 	scopeValues = append(scopeValues, ns.Name)
 
 	for k, v := range ns.Attrs {
-		// TODO: standard functions and variables?
-		// what do with _ here?
 		value, _ := v.Expr.Value(nil)
 		attrs[k] = value
 	}
