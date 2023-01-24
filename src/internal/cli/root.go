@@ -19,7 +19,7 @@ func newRootCommand() *cobra.Command {
 
 	cmd.AddCommand(newRootBuildCommand())
 	cmd.AddCommand(newRootGenerateCommand())
-	// cmd.AddCommand(newRootGraphCommand())
+	cmd.AddCommand(newRootGraphCommand())
 	cmd.AddCommand(newRootListCommand())
 
 	return cmd
@@ -64,6 +64,28 @@ func newRootGenerateCommand() *cobra.Command {
 	return cmd
 }
 
+func newRootGraphCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "graph",
+		Short: "",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
+			//	TODO: g := new graph
+			//	for root in project.Roots
+			//		add node to g
+			//		for dep in root.Dependencies
+			//			add edge to g
+
+			return nil
+		},
+	}
+	return cmd
+}
+
 func newRootListCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -96,15 +118,3 @@ func newRootListCommand() *cobra.Command {
 	}
 	return cmd
 }
-
-// func newRootGraphCommand() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "graph",
-// 		Short: "",
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			logger.Warn("not yet implemented")
-// 			return nil
-// 		},
-// 	}
-// 	return cmd
-// }
