@@ -25,7 +25,7 @@ type scopeMatch struct {
 	ScopeTypes map[string]string `hcl:"scopeTypes"`
 }
 
-func ParseRoot(cfgFile string) (*root, error) {
+func (p *Project) ParseRoot(cfgFile string) (*root, error) {
 	// partial decode first, because we don't know what scope or attributes
 	// this config will use. We're just looking for the `root` block here.
 	cfg := &struct {
@@ -34,6 +34,10 @@ func ParseRoot(cfgFile string) (*root, error) {
 
 	err := hclsimple.DecodeFile(cfgFile, hclhelp.DefaultContext(), cfg)
 	r := cfg.Root
+	if r == nil {
+		p.Warnf("Root detected at %s failed to decode. Does it have a complete terraboots.hcl file?", cfgFile)
+		return nil, nil
+	}
 	r.filename = cfgFile
 	return r, err
 }

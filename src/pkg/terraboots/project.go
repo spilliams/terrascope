@@ -170,7 +170,7 @@ func (p *Project) AddRoot(rootName string) error {
 		return err
 	}
 
-	r, err := ParseRoot(rootCfg)
+	r, err := p.ParseRoot(rootCfg)
 	if r == nil && err != nil {
 		return err
 	}
@@ -178,7 +178,9 @@ func (p *Project) AddRoot(rootName string) error {
 	if p.Roots == nil {
 		p.Roots = make(map[string]*root)
 	}
-	p.Roots[r.ID] = r
+	if r != nil {
+		p.Roots[r.ID] = r
+	}
 	return nil
 }
 
