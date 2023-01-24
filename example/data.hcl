@@ -21,6 +21,10 @@ scope "org" "acme-inc" {
         aws_account_id = 12345678
         scope "region" "us-west-2" {}
       }
+      scope "environment" "stage" {
+        aws_account_id = 12345678
+        scope "region" "us-west-2" {}
+      }
       scope "environment" "prod" {
         aws_account_id = 12345678
         scope "region" "us-west-2" {}

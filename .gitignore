@@ -1,5 +1,3 @@
-# Normally you would want to check-in your scope data file
-data.hcl
 # these folders and files are for debug only
 .terraboots
 .terraboots.hcl

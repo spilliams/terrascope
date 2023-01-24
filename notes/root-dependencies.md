@@ -30,3 +30,17 @@ root named B", this example is more like "root tagged consumer:foo depends on
 root tagged producer:foo". Building this into terraboots looks like a way to set
 in the main repo config that "all roots tagged `consumer:` will depend on their
 corresponding `producer:` roots".
+
+## implementation
+
+1. list of roots
+2. sort the list by dependency
+3. make a map from root name to batch number
+4. make a map from batch number to root name
+5. for each root in the list
+6. put the root in the maps based on its dependencies
+
+
+7. for each root in the map[num]string 
+8. generate the set of buildContexts [rename buildContext to rootContext?]
+9. print it out
