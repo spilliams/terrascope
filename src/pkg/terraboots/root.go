@@ -34,10 +34,12 @@ func (p *Project) ParseRoot(cfgFile string) (*root, error) {
 
 	err := hclsimple.DecodeFile(cfgFile, hclhelp.DefaultContext(), cfg)
 	r := cfg.Root
+	// we purposefully ignore err until the end
 	if r == nil {
 		p.Warnf("Root detected at %s failed to decode. Does it have a complete terraboots.hcl file?", cfgFile)
 		return nil, nil
 	}
+
 	r.filename = cfgFile
 	return r, err
 }

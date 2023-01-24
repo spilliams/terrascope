@@ -50,8 +50,9 @@ func newRootBuildCommand() *cobra.Command {
 
 func newRootGenerateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "generate [NAME]",
-		Short: "",
+		Use:     "generate [NAME]",
+		Aliases: []string{"gen", "g"},
+		Short:   "Generates a new root module",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var rootName string
 			if len(args) > 0 {

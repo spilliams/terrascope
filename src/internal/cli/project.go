@@ -21,8 +21,9 @@ func newProjectCommand() *cobra.Command {
 
 func newProjectGenerateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "generate",
-		Short: "Generates a new project in the current directory",
+		Use:     "generate",
+		Aliases: []string{"gen", "g"},
+		Short:   "Generates a new project in the current directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return generate.Project(log.Logger)
 		},
