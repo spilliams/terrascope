@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/awalterschulze/gographviz"
 	"github.com/spf13/cobra"
 )
 
@@ -74,11 +75,31 @@ func newRootGraphCommand() *cobra.Command {
 				return err
 			}
 
-			//	TODO: g := new graph
-			//	for root in project.Roots
-			//		add node to g
-			//		for dep in root.Dependencies
-			//			add edge to g
+			graphAst, _ := gographviz.ParseString(`digraph G {}`)
+			graph := gographviz.NewGraph()
+			if err := gographviz.Analyse(graphAst, graph); err != nil {
+				return err
+			}
+			if err := graph.SetDir(true); err != nil {
+				return err
+			}
+
+			for name := range project.Roots {
+				if err := graph.AddNode("G", fmt.Sprintf("\"%s\"", name), nil); err != nil {
+					return err
+				}
+			}
+
+			for name, root := range project.Roots {
+				for _, dep := range root.Dependencies {
+					src := fmt.Sprintf("\"%s\"", dep.Root)
+					dst := fmt.Sprintf("\"%s\"", name)
+					if err := graph.AddEdge(src, dst, true, nil); err != nil {
+						return err
+					}
+				}
+			}
+			fmt.Println(graph.String())
 
 			return nil
 		},
