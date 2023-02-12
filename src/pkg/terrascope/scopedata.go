@@ -1,4 +1,4 @@
-package terraboots
+package terrascope
 
 import (
 	"fmt"
@@ -8,15 +8,15 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
-	"github.com/spilliams/terraboots/internal/generate"
-	"github.com/spilliams/terraboots/internal/hclhelp"
+	"github.com/spilliams/terrascope/internal/generate"
+	"github.com/spilliams/terrascope/internal/hclhelp"
 )
 
 // GenerateScopeData builds a generator for new scope data, then executes it,
 // saving the results in a file
 func (p *Project) GenerateScopeData() error {
 	if len(p.ScopeTypes) == 0 {
-		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
+		return fmt.Errorf("this project has no scope types! Please define them in %s with the terrascope `scope` block, then try this again", p.configFile)
 	}
 
 	scopeTypes := make([]string, len(p.ScopeTypes))
@@ -42,7 +42,7 @@ type scopeDataConfig struct {
 // readScopeData reads all of the scope data known to the receiver
 func (p *Project) readScopeData() error {
 	if len(p.ScopeTypes) == 0 {
-		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
+		return fmt.Errorf("this project has no scope types! Please define them in %s with the terrascope `scope` block, then try this again", p.configFile)
 	}
 	if len(p.compiledScopes) > 0 {
 		return nil

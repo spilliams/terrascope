@@ -1,11 +1,11 @@
-package terraboots
+package terrascope
 
 import (
 	"fmt"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
-	"github.com/spilliams/terraboots/internal/generate"
-	"github.com/spilliams/terraboots/internal/hclhelp"
+	"github.com/spilliams/terrascope/internal/generate"
+	"github.com/spilliams/terrascope/internal/hclhelp"
 )
 
 type root struct {
@@ -36,7 +36,7 @@ func (p *Project) ParseRoot(cfgFile string) (*root, error) {
 	r := cfg.Root
 	// we purposefully ignore err until the end
 	if r == nil {
-		p.Warnf("Root detected at %s failed to decode. Does it have a complete terraboots.hcl file?", cfgFile)
+		p.Warnf("Root detected at %s failed to decode. Does it have a complete terrascope.hcl file?", cfgFile)
 		return nil, nil
 	}
 
@@ -46,7 +46,7 @@ func (p *Project) ParseRoot(cfgFile string) (*root, error) {
 
 func (p *Project) GenerateRoot(name string) error {
 	if len(p.ScopeTypes) == 0 {
-		return fmt.Errorf("this project has no scope types! Please define them in %s with the terraboots `scope` block, then try this again", p.configFile)
+		return fmt.Errorf("this project has no scope types! Please define them in %s with the terrascope `scope` block, then try this again", p.configFile)
 	}
 
 	scopeTypes := make([]string, len(p.ScopeTypes))

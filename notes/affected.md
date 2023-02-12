@@ -11,12 +11,12 @@ How to get an exhaustive `affected` list?
 
 1. if a root module's source code changes (the `.tf` files), the whole root
    is affected. But maybe only the scopes that adopt the latest version?
-2. if a root module's config changes (`terraboots.hcl`), it depends
+2. if a root module's config changes (`terrascope.hcl`), it depends
    1. if it's in a scope match, where some scopes are getting new attributes
       (which is something I haven't fully decided is a good idea yet), those
       scopes are affected.
 3. y'know what, for now lets keep it a little broad and say, if any files in
-   the root (but not in `.terraboots/`) have changed, the whole root is
+   the root (but not in `.terrascope/`) have changed, the whole root is
    affected for all matching scopes.
 4. scope data can change.
    1. If scope data changes, the whole scope could be affected. or maybe

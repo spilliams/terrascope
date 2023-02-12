@@ -7,7 +7,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/terraboots/internal/surveyhelp"
+	"github.com/spilliams/terrascope/internal/surveyhelp"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -38,7 +38,7 @@ func (pg *projectGenerator) Run() error {
 
 	hclfile := generateProjectConfigurationFile(answers)
 
-	if err := pg.writeProjectTerrabootsFile(hclfile.Bytes()); err != nil {
+	if err := pg.writeProjectTerrascopeFile(hclfile.Bytes()); err != nil {
 		return err
 	}
 
@@ -87,7 +87,7 @@ func generateProjectConfigurationFile(cfg *projectConfiguration) *hclwrite.File 
 	f := hclwrite.NewEmptyFile()
 	projectBody := f.Body()
 
-	tbBlock := projectBody.AppendNewBlock("terraboots", []string{cfg.ProjectName})
+	tbBlock := projectBody.AppendNewBlock("terrascope", []string{cfg.ProjectName})
 	tbBody := tbBlock.Body()
 	tbBody.SetAttributeRaw("rootsDir", hclwrite.TokensForValue(cty.StringVal(cfg.RootDir)))
 	tbBody.SetAttributeRaw("scopeData", hclwrite.TokensForValue(cty.ListVal([]cty.Value{cty.StringVal(cfg.ScopeData)})))
@@ -101,8 +101,8 @@ func generateProjectConfigurationFile(cfg *projectConfiguration) *hclwrite.File 
 	return f
 }
 
-func (pg *projectGenerator) writeProjectTerrabootsFile(b []byte) error {
-	filename := "terraboots.hcl"
+func (pg *projectGenerator) writeProjectTerrascopeFile(b []byte) error {
+	filename := "terrascope.hcl"
 	file, err := os.Create(filename)
 	if err != nil {
 		return err

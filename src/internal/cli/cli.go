@@ -7,8 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spilliams/terraboots/internal/logformatter"
-	"github.com/spilliams/terraboots/pkg/terraboots"
+	"github.com/spilliams/terrascope/internal/logformatter"
+	"github.com/spilliams/terrascope/pkg/terrascope"
 )
 
 var quiet bool
@@ -41,13 +41,13 @@ func initLogger() {
 }
 
 const commandGroupIDTerraform = "terraform"
-const commandGroupIDTerraboots = "terraboots"
+const commandGroupIDTerrascope = "terrascope"
 
-var project *terraboots.Project
+var project *terrascope.Project
 
-func NewTerrabootsCmd() *cobra.Command {
+func NewTerrascopeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "terraboots",
+		Use:   "terrascope",
 		Short: "A build orchestrator for terraform monorepos",
 	}
 
@@ -55,12 +55,12 @@ func NewTerrabootsCmd() *cobra.Command {
 	cmd.PersistentFlags().BoolVar(&vertrace, "vvv", false, "increase log output even more")
 	cmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "silences all logs but the errors (and prints those to stderr). Still prints command output to stdout. Overrides verbose and vvv")
 
-	cmd.PersistentFlags().StringVarP(&configFile, "config-file", "c", "terraboots.hcl", "the filename of the project configuration")
+	cmd.PersistentFlags().StringVarP(&configFile, "config-file", "c", "terrascope.hcl", "the filename of the project configuration")
 
 	// TODO: version command
 	cmd.CompletionOptions.DisableDefaultCmd = true
 
-	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerraboots, Title: "Working with your terraboots project"})
+	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerrascope, Title: "Working with your terrascope project"})
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerraform, Title: "Terraform Commands"})
 
 	cmd.AddCommand(newSpecificTerraformCommand("init"))
@@ -78,10 +78,10 @@ func NewTerrabootsCmd() *cobra.Command {
 	return cmd
 }
 
-func bootsbootsPreRunE(cmd *cobra.Command, args []string) error {
+func parseProject(cmd *cobra.Command, args []string) error {
 	log.Debugf("Using project configuration file: %s", configFile)
 	var err error
-	project, err = terraboots.ParseProject(configFile, log.Logger)
+	project, err = terrascope.ParseProject(configFile, log.Logger)
 	if err != nil {
 		return err
 	}

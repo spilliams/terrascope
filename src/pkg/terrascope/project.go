@@ -1,4 +1,4 @@
-package terraboots
+package terrascope
 
 import (
 	"errors"
@@ -13,12 +13,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ProjectConfig represents the configuration file of a Terraboots project
+// ProjectConfig represents the configuration file of a Terrascope project
 type ProjectConfig struct {
-	Project *Project `hcl:"terraboots,block"`
+	Project *Project `hcl:"terrascope,block"`
 }
 
-// Project represents a single Terraboots project, complete with scope types,
+// Project represents a single Terrascope project, complete with scope types,
 // scope data, and root configurations.
 type Project struct {
 	configFile string
@@ -53,7 +53,7 @@ func (sc *ScopeType) String() string {
 // }
 
 // ParseProject reads the given configuration file and parses it as a new
-// Terraboots project
+// Terrascope project
 func ParseProject(cfgFile string, logger *logrus.Logger) (*Project, error) {
 	cfg := &ProjectConfig{}
 	cfgFile, err := filepath.Abs(cfgFile)
@@ -161,11 +161,11 @@ func (p *Project) AddRoot(rootName string) error {
 	}
 	p.Debugf("Adding root %s", rootDir)
 
-	// look for terraboots file
-	rootCfg := path.Join(rootDir, "terraboots.hcl")
+	// look for terrascope file
+	rootCfg := path.Join(rootDir, "terrascope.hcl")
 	_, err = os.Stat(rootCfg)
 	if errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("found a root named '%s' in the roots directory '%s', but it does not contain a terraboots.hcl configuration", rootName, p.RootsDir)
+		return fmt.Errorf("found a root named '%s' in the roots directory '%s', but it does not contain a terrascope.hcl configuration", rootName, p.RootsDir)
 	} else if err != nil {
 		return err
 	}

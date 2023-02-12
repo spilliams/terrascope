@@ -27,7 +27,7 @@ root "account-networking" {
 I'm not sure how much to build the parameter pattern into it. I can get away
 with tagging dependencies. Where the example above is "root named A depends on
 root named B", this example is more like "root tagged consumer:foo depends on
-root tagged producer:foo". Building this into terraboots looks like a way to set
+root tagged producer:foo". Building this into terrascope looks like a way to set
 in the main repo config that "all roots tagged `consumer:` will depend on their
 corresponding `producer:` roots".
 

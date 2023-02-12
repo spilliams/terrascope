@@ -1,4 +1,4 @@
-module github.com/spilliams/terraboots
+module github.com/spilliams/terrascope
 
 go 1.19
 

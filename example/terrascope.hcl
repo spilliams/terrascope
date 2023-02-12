@@ -1,4 +1,4 @@
-terraboots "AcmeInc" {
+terrascope "AcmeInc" {
   rootsDir  = "terraform/roots"
   scopeData = ["data.hcl"]
 

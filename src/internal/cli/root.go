@@ -13,9 +13,9 @@ func newRootCommand() *cobra.Command {
 		Use:     "root",
 		Aliases: []string{"r"},
 		Short:   "Commands relating to root modules",
-		GroupID: commandGroupIDTerraboots,
+		GroupID: commandGroupIDTerrascope,
 
-		PersistentPreRunE: bootsbootsPreRunE,
+		PersistentPreRunE: parseProject,
 	}
 
 	cmd.AddCommand(newRootBuildCommand())

@@ -1,3 +1,3 @@
-# Terraboots
+# Terrascope
 
-This is the source directory for the CLI tool `terraboots`.
+This is the source directory for the CLI tool `terrascope`.
