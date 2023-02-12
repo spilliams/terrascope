@@ -5,7 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spilliams/terraboots/internal/shell"
+	"github.com/spilliams/terrascope/internal/shell"
 )
 
 var dryRun bool
@@ -14,11 +14,11 @@ func newSpecificTerraformCommand(name string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     fmt.Sprintf("%s ROOT [SCOPE]... [-- TF_FLAG=VALUE]", name),
 		Short:   fmt.Sprintf("Runs `terraform %s` in the given root", name),
-		Long:    fmt.Sprintf("Runs `terraform %s` in the given root. Pass arguments to terraform after a `--` (for example `terraboots %s ROOT -- -lock=false`)", name, name),
+		Long:    fmt.Sprintf("Runs `terraform %s` in the given root. Pass arguments to terraform after a `--` (for example `terrascope %s ROOT -- -lock=false`)", name, name),
 		Args:    cobra.MinimumNArgs(1),
 		GroupID: commandGroupIDTerraform,
 
-		PersistentPreRunE: bootsbootsPreRunE,
+		PersistentPreRunE: parseProject,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// log.Infof("args: %+v", args)
 			scopes := make([]string, 0, len(args)-1)
@@ -66,11 +66,11 @@ func newGenericTerraformCommand() *cobra.Command {
 		Use:     fmt.Sprintf("tf ROOT [SCOPE]... -- COMMAND [TF_FLAG=VALUE]..."),
 		Aliases: []string{"terraform"},
 		Short:   "Runs a given terraform command in the given root",
-		Long:    fmt.Sprintf("Runs a given terraform command in the given root. Pass arguments to terraform after a `--` (for example `terraboots tf ROOT -- state list`)"),
+		Long:    fmt.Sprintf("Runs a given terraform command in the given root. Pass arguments to terraform after a `--` (for example `terrascope tf ROOT -- state list`)"),
 		Args:    cobra.MinimumNArgs(1),
 		GroupID: commandGroupIDTerraform,
 
-		PersistentPreRunE: bootsbootsPreRunE,
+		PersistentPreRunE: parseProject,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// log.Infof("args: %+v", args)
 			scopes := make([]string, 0, len(args)-1)

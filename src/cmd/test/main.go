@@ -6,16 +6,16 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/terraboots/internal/logformatter"
-	"github.com/spilliams/terraboots/pkg/terraboots"
+	"github.com/spilliams/terrascope/internal/logformatter"
+	"github.com/spilliams/terrascope/pkg/terrascope"
 )
 
 var log *logrus.Entry
-var project *terraboots.Project
+var project *terrascope.Project
 
 func init() {
 	initLogger()
-	if err := bootsbootsPreRunE(); err != nil {
+	if err := parseConfigAndProject(); err != nil {
 		log.Panic(err)
 	}
 }
@@ -30,11 +30,11 @@ func initLogger() {
 	log = logger.WithField("prefix", "main")
 }
 
-func bootsbootsPreRunE() error {
-	configFile := "../../../terraboots.hcl"
+func parseConfigAndProject() error {
+	configFile := "../../../terrascope.hcl"
 	log.Debugf("Using project configuration file: %s", configFile)
 	var err error
-	project, err = terraboots.ParseProject(configFile, log.Logger)
+	project, err = terrascope.ParseProject(configFile, log.Logger)
 	if err != nil {
 		return err
 	}

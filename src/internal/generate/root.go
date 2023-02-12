@@ -212,7 +212,7 @@ func (rg *rootGenerator) writeRootConfigurationFile(b []byte) error {
 	if err != nil {
 		return err
 	}
-	rootFile := path.Join(rootDir, "terraboots.hcl")
+	rootFile := path.Join(rootDir, "terrascope.hcl")
 	file, err := os.Create(rootFile)
 	defer file.Close()
 	if err != nil {

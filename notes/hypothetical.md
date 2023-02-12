@@ -35,10 +35,10 @@ Because you also need a sandbox for your own team to develop changes to your
 infrastructure, you need a second Security Portal, Networking and set of Domain
 accounts. So this is 5 more accounts to manage, and the names "Security Portal"
 and "Networking" are already taken. Time to introduce the first core concept of
-terraboots: scope.
+terrascope: scope.
 
 A "scope" here refers to a layer of infrastructure. You can define your own set
-of scopes for your infrastructure, and `terraboots` will pick up on it, but for
+of scopes for your infrastructure, and `terrascope` will pick up on it, but for
 this hypothetical situation we want to define the following:
 
 - an `org` (e.g. "Acme Inc") contains an Organization account and several
@@ -61,6 +61,6 @@ want our roots to depend on the levels before it. For instance: at the
 `environment` scope we provision a single S3 bucket in every domain account, and
 at the `region` scope below it we provision prefixes inside that s3 bucket.
 
-The goal of `terraboots` is to be able to manage this kind of infrastructure
+The goal of `terrascope` is to be able to manage this kind of infrastructure
 without having 500 separate terraform root configurations which are mostly
 copy-pasted from each other.

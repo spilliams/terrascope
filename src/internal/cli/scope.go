@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spilliams/terraboots/internal/ctyhelp"
-	"github.com/spilliams/terraboots/pkg/terraboots"
+	"github.com/spilliams/terrascope/internal/ctyhelp"
+	"github.com/spilliams/terrascope/pkg/terrascope"
 )
 
 func newScopeCommand() *cobra.Command {
@@ -13,9 +13,9 @@ func newScopeCommand() *cobra.Command {
 		Use:     "scope",
 		Aliases: []string{"s"},
 		Short:   "Commands relating to scopes",
-		GroupID: commandGroupIDTerraboots,
+		GroupID: commandGroupIDTerrascope,
 
-		PersistentPreRunE: bootsbootsPreRunE,
+		PersistentPreRunE: parseProject,
 	}
 
 	cmd.AddCommand(newScopeListCommand())
@@ -77,7 +77,7 @@ func newScopeShowCommand() *cobra.Command {
 	return cmd
 }
 
-func printScope(scope *terraboots.CompiledScope) {
+func printScope(scope *terrascope.CompiledScope) {
 	fmt.Printf("%s:\n", scope.Address())
 	for k, v := range scope.Attributes {
 		vPrint := ctyhelp.String(v)

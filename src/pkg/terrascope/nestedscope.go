@@ -1,4 +1,4 @@
-package terraboots
+package terrascope
 
 import (
 	"fmt"

@@ -2,7 +2,7 @@ package cli
 
 import (
 	"github.com/spf13/cobra"
-	"github.com/spilliams/terraboots/internal/generate"
+	"github.com/spilliams/terrascope/internal/generate"
 )
 
 func newProjectCommand() *cobra.Command {
@@ -10,7 +10,7 @@ func newProjectCommand() *cobra.Command {
 		Use:     "project",
 		Aliases: []string{"p"},
 		Short:   "Commands relating to a project",
-		GroupID: commandGroupIDTerraboots,
+		GroupID: commandGroupIDTerrascope,
 	}
 
 	cmd.AddCommand(newProjectGenerateCommand())
@@ -21,8 +21,9 @@ func newProjectCommand() *cobra.Command {
 
 func newProjectGenerateCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "generate",
-		Short: "Generates a new project in the current directory",
+		Use:     "generate",
+		Aliases: []string{"gen", "g"},
+		Short:   "Generates a new project in the current directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return generate.Project(log.Logger)
 		},
@@ -35,7 +36,7 @@ func newProjectGenerateScopesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "generate-scopes",
 		Short:             "Generates a new scope data file in this project",
-		PersistentPreRunE: bootsbootsPreRunE,
+		PersistentPreRunE: parseProject,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return project.GenerateScopeData()
 		},

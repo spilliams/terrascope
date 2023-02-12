@@ -1,4 +1,4 @@
-package terraboots
+package terrascope
 
 import (
 	"io"
@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/terraboots/internal/hclhelp"
+	"github.com/spilliams/terrascope/internal/hclhelp"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -51,7 +51,7 @@ func (bc *buildContext) rootDirectory() string {
 }
 
 func (bc *buildContext) destination() string {
-	parts := []string{bc.rootDirectory(), ".terraboots"}
+	parts := []string{bc.rootDirectory(), ".terrascope"}
 	parts = append(parts, bc.scope.ScopeValues...)
 	return path.Join(parts...)
 }
@@ -117,11 +117,11 @@ func (bc *buildContext) copyAllFiles(srcDir, destDir string) error {
 				// need to do anything with it
 				return nil
 			}
-			if basename == ".terraboots" {
+			if basename == ".terrascope" {
 				return fs.SkipDir
 			}
 		}
-		if basename == "terraboots.hcl" {
+		if basename == "terrascope.hcl" {
 			return nil
 		}
 
@@ -179,7 +179,7 @@ func (bc *buildContext) processInputs(inputs map[string]*cty.Value, destination 
 		body.SetAttributeValue(k, *v)
 	}
 
-	file, err := os.Create(path.Join(destination, "terraboots.auto.tfvars"))
+	file, err := os.Create(path.Join(destination, "terrascope.auto.tfvars"))
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func (bc *buildContext) generateDebugFile(destination string, rootVar, scopeVar,
 	body.SetAttributeValue("scope", scopeVar)
 	body.SetAttributeValue("attributes", attrVar)
 
-	file, err := os.Create(path.Join(destination, ".terraboots.context.hcl"))
+	file, err := os.Create(path.Join(destination, ".terrascope.context.hcl"))
 	if err != nil {
 		return err
 	}

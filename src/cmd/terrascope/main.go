@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/spilliams/terraboots/internal/cli"
+	"github.com/spilliams/terrascope/internal/cli"
 )
 
 func main() {
-	err := cli.NewTerrabootsCmd().Execute()
+	err := cli.NewTerrascopeCmd().Execute()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
