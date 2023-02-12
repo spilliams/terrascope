@@ -8,6 +8,8 @@ import (
 	"github.com/zclconf/go-cty/cty/function/stdlib"
 )
 
+// DefaultContext returns an `*hcl.EvalContext` that contains many of HCL's
+// standard library of functions.
 func DefaultContext() *hcl.EvalContext {
 	return &hcl.EvalContext{
 		Variables: map[string]cty.Value{},

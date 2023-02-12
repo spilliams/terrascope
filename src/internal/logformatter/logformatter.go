@@ -1,3 +1,5 @@
+// Package logformatter provides some helpers for use with
+// github.com/sirupsen/logrus.
 package logformatter
 
 import (
@@ -21,6 +23,8 @@ type PrefixedTextFormatter struct {
 
 const miniTimestampFormat = "15:04:05.0000"
 
+// Format follows the logrus Formatter interface, to format an entry into a list
+// of bytes.
 func (ptf *PrefixedTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	b := &bytes.Buffer{}
 	if entry.Buffer != nil {

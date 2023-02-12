@@ -1,3 +1,5 @@
+// Package ctyhelp provides some helper functions for use with
+// github.com/zclconf/go-cty/cty.
 package ctyhelp
 
 import (
@@ -6,6 +8,9 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+// String converts the given value to a string. For primitive types (numbers,
+// strings, bools) it does a conversion. For lists and maps, relies on
+// `cty.GoString`
 func String(v cty.Value) string {
 	var vPrint string
 	switch v.Type() {

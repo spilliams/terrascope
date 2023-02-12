@@ -56,6 +56,9 @@ func (bc *buildContext) destination() string {
 	return path.Join(parts...)
 }
 
+// Build tells the receiver to run all its operations related to building its
+// root. This may delete and/or create files on your filesystem, inside the
+// root's directory.
 func (bc *buildContext) Build() error {
 	rootVariable := cty.MapVal(map[string]cty.Value{
 		"id": cty.StringVal(bc.root.ID),

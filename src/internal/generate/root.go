@@ -13,6 +13,9 @@ import (
 	"github.com/zclconf/go-cty/cty"
 )
 
+// Root generates a root configuration file, applicable to the given scope
+// types. This function will survey the user for some necessary information, via
+// stdin.
 func Root(name string, dir string, scopeTypes []string, logger *logrus.Logger) error {
 	rg := &rootGenerator{
 		name:       name,
@@ -30,6 +33,7 @@ type rootGenerator struct {
 	*logrus.Entry
 }
 
+// Run runs the receiver
 func (rg *rootGenerator) Run() error {
 	root, err := rg.surveyForRootConfiguration()
 	if err != nil {
@@ -52,6 +56,8 @@ type scopeMatch struct {
 	ScopeTypes map[string]string
 }
 
+// WriteAnswer follows the Settable interface from
+// github.com/AlecAivazis/survey/v2/core.
 func (sm *scopeMatch) WriteAnswer(field string, value interface{}) error {
 	if sm.ScopeTypes == nil {
 		sm.ScopeTypes = make(map[string]string)

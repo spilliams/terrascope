@@ -1,3 +1,5 @@
+// Package cli provides fucntions relating to running terrascope as a command-
+// line interface.
 package cli
 
 import (
@@ -46,6 +48,7 @@ const commandGroupIDTunnelvision = "tunnelvision"
 
 var project *terrascope.Project
 
+// NewTerrascopeCmd returns a new CLI command representing Terrascope.
 func NewTerrascopeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "terrascope",

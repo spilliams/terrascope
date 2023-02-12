@@ -94,6 +94,9 @@ func handleDecodeNestedScopeError(err error) error {
 	return hclhelp.DiagnosticsWithoutSummary(err, "Unexpected \"scope\" block")
 }
 
+// GetCompiledScopes returns a list of the receiver's compiled scopes that match
+// a given address. For more information on how a scope matches an address
+// string, see `CompiledScope.Matches`.
 func (p *Project) GetCompiledScopes(address string) (CompiledScopes, error) {
 	if err := p.readScopeData(); err != nil {
 		return nil, err

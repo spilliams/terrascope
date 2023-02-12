@@ -25,6 +25,8 @@ type scopeMatch struct {
 	ScopeTypes map[string]string `hcl:"scopeTypes"`
 }
 
+// ParseRoot tells the receiver to parse a root module configuration file at the
+// given path.
 func (p *Project) ParseRoot(cfgFile string) (*root, error) {
 	// partial decode first, because we don't know what scope or attributes
 	// this config will use. We're just looking for the `root` block here.
@@ -44,6 +46,8 @@ func (p *Project) ParseRoot(cfgFile string) (*root, error) {
 	return r, err
 }
 
+// GenerateRoot creates and runs a new root generator, using the receiver's
+// scope types.
 func (p *Project) GenerateRoot(name string) error {
 	if len(p.ScopeTypes) == 0 {
 		return fmt.Errorf("this project has no scope types! Please define them in %s with the terrascope `scope` block, then try this again", p.configFile)
