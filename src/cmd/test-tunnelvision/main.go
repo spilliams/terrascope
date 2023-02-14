@@ -12,7 +12,7 @@ import (
 func main() {
 	logrus.SetLevel(logrus.DebugLevel)
 
-	rootDir := "/Users/spencer/spilliams/tunnelvision/fixtures/examples/simple-graph"
+	rootDir := "/Users/spencer/spilliams/terrascope/src/fixtures/examples/simple-graph"
 	logrus.Infof("reading configuration at %s", rootDir)
 	// logrus.Infof("outputting graph in file %s", outFilename)
 

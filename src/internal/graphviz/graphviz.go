@@ -6,7 +6,7 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/tunnelvision/pkg"
+	"github.com/spilliams/terrascope/pkg"
 )
 
 type reader struct {

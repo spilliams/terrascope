@@ -12,7 +12,6 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
-	github.com/spilliams/tunnelvision v0.0.0-20230214205727-013c8c31c0ca
 	github.com/zclconf/go-cty v1.12.1
 	gotest.tools v2.2.0+incompatible
 )

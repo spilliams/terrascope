@@ -4,9 +4,9 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/tunnelvision/internal/graphviz"
-	"github.com/spilliams/tunnelvision/pkg"
-	"github.com/spilliams/tunnelvision/pkg/grapher"
+	"github.com/spilliams/terrascope/internal/graphviz"
+	"github.com/spilliams/terrascope/pkg"
+	"github.com/spilliams/terrascope/pkg/grapher"
 )
 
 func New(inFile string, logger *logrus.Logger, outFile string) error {

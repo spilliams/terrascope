@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/tunnelvision/pkg"
+	"github.com/spilliams/terrascope/pkg"
 )
 
 func NewGrapher() pkg.Grapher {

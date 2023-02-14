@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/awalterschulze/gographviz"
-	"github.com/spilliams/tunnelvision/pkg"
+	"github.com/spilliams/terrascope/pkg"
 )
 
 type node struct {
