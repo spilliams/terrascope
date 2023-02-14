@@ -1,4 +1,4 @@
-package hclhelp
+package hcl
 
 import (
 	"github.com/hashicorp/hcl/v2"

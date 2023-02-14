@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terrascope/internal/generate"
-	"github.com/spilliams/terrascope/internal/hclhelp"
+	hclhelp "github.com/spilliams/terrascope/internal/hcl"
 )
 
 // GenerateScopeData builds a generator for new scope data, then executes it,
