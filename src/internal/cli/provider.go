@@ -128,7 +128,7 @@ func newCacheCmd() *cobra.Command {
 					}
 				}
 			}
-			logrus.Infof("Found %d provider versions")
+			logrus.Infof("Found %d required providers", len(requiredProviders))
 			if verbose {
 				for _, v := range requiredProviders {
 					logrus.Debug(v)
@@ -148,7 +148,7 @@ func newCacheCmd() *cobra.Command {
 				for filename, lf := range lockfiles {
 					providers := lf.CompactProviders()
 					missingProviders := setIntersect(missingProviders, providers)
-					logrus.Debug("    %v would apply %d providers (%v)", filename, len(missingProviders), missingProviders)
+					logrus.Debugf("    %s would apply %d providers (%v)", filename, len(missingProviders), missingProviders)
 					if len(missingProviders) > maxMissingProviderCount {
 						maxMissingProviderCount = len(missingProviders)
 						maxProviderFilename = filename
