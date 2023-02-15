@@ -62,7 +62,6 @@ func NewTerrascopeCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&configFile, "config-file", "c", "terrascope.hcl", "the filename of the project configuration")
 
 	// TODO: version command
-	cmd.CompletionOptions.DisableDefaultCmd = true
 
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerrascope, Title: "Working with your terrascope project"})
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerraform, Title: "Terraform Commands"})
