@@ -85,6 +85,8 @@ func (p *Project) projectDir() string {
 	return path.Dir(p.configFile)
 }
 
+// AddAllRoots searches the receiver's `RootsDir` for directories, and calls
+// `AddRoot` for each subdirectory.
 func (p *Project) AddAllRoots() error {
 	files, err := ioutil.ReadDir(p.RootsDir)
 	if err != nil {

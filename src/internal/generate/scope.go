@@ -14,7 +14,8 @@ import (
 	hclhelp "github.com/spilliams/terrascope/internal/hcl"
 )
 
-// Scope builds a new scope value generator with the given scope types
+// Scope generates a new scope data file with the given scope types. This
+// function will survey the user for some necessary information, via stdin.
 func Scope(scopeTypes []string, filename string, logger *logrus.Logger) error {
 	sg := &scopeGenerator{
 		filename:   filename,

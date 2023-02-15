@@ -1,3 +1,5 @@
+// Package surveyhelp provides helper functions for use with the package
+// github.com/AlecAivazis/survey/v2.
 package surveyhelp
 
 import (
@@ -5,17 +7,21 @@ import (
 	"strings"
 )
 
-func SplitTransformer(ans interface{}) interface{} {
-	if isZero(reflect.ValueOf(ans)) {
-		return []string{}
-	}
+// SplitTransformer returns a transform function that takes the survey answer
+// and splits it on a given character.
+func SplitTransformer(char string) func(ans interface{}) interface{} {
+	return func(ans interface{}) interface{} {
+		if isZero(reflect.ValueOf(ans)) {
+			return []string{}
+		}
 
-	s, ok := ans.(string)
-	if !ok {
-		return []string{}
-	}
+		s, ok := ans.(string)
+		if !ok {
+			return []string{}
+		}
 
-	return strings.Split(s, " ")
+		return strings.Split(s, char)
+	}
 }
 
 // isZero returns true if the passed value is the zero object

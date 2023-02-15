@@ -22,6 +22,8 @@ type projectGenerator struct {
 	*logrus.Entry
 }
 
+// Project generates a project configuration file.
+// This function will survey the user for some necessary information, via stdin.
 func Project(logger *logrus.Logger) error {
 	g := &projectGenerator{
 		Entry: logger.WithField("prefix", "projectgen"),
@@ -29,6 +31,7 @@ func Project(logger *logrus.Logger) error {
 	return g.Run()
 }
 
+// Run runs the receiver.
 func (pg *projectGenerator) Run() error {
 	answers, err := surveyForProjectConfiguration()
 	if err != nil {
@@ -74,7 +77,7 @@ func surveyForProjectConfiguration() (*projectConfiguration, error) {
 		{
 			Name:      "scopeTypes",
 			Prompt:    &survey.Input{Message: "What scope types does the project use? (in order, space-delimited)"},
-			Transform: surveyhelp.SplitTransformer,
+			Transform: surveyhelp.SplitTransformer(" "),
 		},
 	}
 
