@@ -11,4 +11,4 @@ Top-level blocks:
 
 ## `terrascope` block
 
-[can i generate this doc from go source?]
+[TODO: can i generate this doc from go source?]
