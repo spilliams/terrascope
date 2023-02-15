@@ -2,6 +2,7 @@ package hcl
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/gohcl"
@@ -27,6 +28,7 @@ type LockfileProvider struct {
 
 // Lockfile represents a Terraform lockfile
 type Lockfile struct {
+	Path      string
 	Providers []*LockfileProvider `hcl:"provider,block"`
 }
 
@@ -56,7 +58,9 @@ func ParseLockfile(filename string) (*Lockfile, error) {
 		return nil, err
 	}
 
-	lockfile := &Lockfile{}
+	lockfile := &Lockfile{
+		Path: path.Clean(filename),
+	}
 	lockfile.Providers = make([]*LockfileProvider, 0)
 	content, diags := f.Body.Content(lockfileSchema)
 	if err := handleDiags(diags, parser.Files(), nil); err != nil {

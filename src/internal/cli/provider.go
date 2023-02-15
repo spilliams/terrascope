@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -20,7 +21,7 @@ var defaultIgnoreNames = []string{".terraform/"}
 
 func newProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "providers COMMAND",
+		Use:     "provider COMMAND",
 		Short:   "a toolbox for working with Terraform providers",
 		GroupID: commandGroupIDTunnelvision,
 	}
@@ -28,9 +29,175 @@ func newProviderCommand() *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&topDir, "dir", "d", ".", "the directory to search")
 	cmd.PersistentFlags().StringArrayVarP(&ignoreNames, "ignore", "i", []string{}, "names to ignore. `.terraform/` is appended to this list internally.")
 
-	cmd.AddCommand(newVersionsCmd())
 	cmd.AddCommand(newCacheCmd())
+	cmd.AddCommand(newHashesCmd())
+	cmd.AddCommand(newVersionsCmd())
 	cmd.AddCommand(newWhyCmd())
+
+	return cmd
+}
+
+func newCacheCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cache",
+		Short: "identifies a small set of terraform roots in the top directory " + "that, when applied, will cache the full set of providers required " + "by any root under the top directory",
+		Long:  "Identifies a small[1] set of terraform roots in the top directory\n" + "that use the full range of provider versions present in any root\n" + "under the top directory.\n\n" + "[1]: not very optimized right now, so it's not _the smallest_ set,\n" + "just _a small_ set.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ignore := append(ignoreNames, defaultIgnoreNames...)
+			lockfilenames, err := findAll(".terraform.lock.hcl", topDir, ignore)
+			if err != nil {
+				return err
+			}
+			lockfiles := make(map[string]*hcl.Lockfile, 0)
+			logrus.Infof("Found %d %s", len(lockfilenames), pluralize("lockfile", "lockfiles", len(lockfilenames)))
+			for _, filename := range lockfilenames {
+				lf, err := hcl.ParseLockfile(filename)
+				if err != nil {
+					return err
+				}
+				logrus.Debugf("%s (%d %s)", filename, len(lf.Providers), pluralize("provider", "providers", len(lf.Providers)))
+				lockfiles[filename] = lf
+			}
+			requiredProviders := make([]string, 0)
+			for _, lf := range lockfiles {
+				for _, p := range lf.Providers {
+					version := fmt.Sprintf("%s@%s", p.ID, p.Version)
+					if !contains(requiredProviders, version) {
+						requiredProviders = append(requiredProviders, version)
+					}
+				}
+			}
+			logrus.Infof("Found %d required %s", len(requiredProviders), pluralize("provider", "providers", len(requiredProviders)))
+			if verbose {
+				for _, v := range requiredProviders {
+					logrus.Debug(v)
+				}
+			}
+			rootsToApply := make([]string, 0)
+			appliedProviders := make([]string, 0)
+			for len(appliedProviders) < len(requiredProviders) {
+				logrus.Debugf("round %d. %d %s already applied: %v",
+					len(rootsToApply)+1,
+					len(appliedProviders),
+					pluralize("provider", "providers", len(appliedProviders)),
+					appliedProviders)
+				missingProviders := setSubtract(requiredProviders, appliedProviders)
+				logrus.Debugf("  %d missing %s: %v",
+					len(missingProviders),
+					pluralize("provider", "providers", len(missingProviders)),
+					missingProviders)
+				maxMissingProviderCount := 0
+				var maxProviderFilename string
+				for filename, lf := range lockfiles {
+					providers := lf.CompactProviders()
+					missingProviders := setIntersect(missingProviders, providers)
+					logrus.Debugf("    %s would apply %d %s (%v)",
+						filename,
+						len(missingProviders),
+						pluralize("provider", "providers", len(missingProviders)),
+						missingProviders)
+					if len(missingProviders) > maxMissingProviderCount {
+						maxMissingProviderCount = len(missingProviders)
+						maxProviderFilename = filename
+					}
+				}
+				rootsToApply = append(rootsToApply, path.Dir(maxProviderFilename))
+				rootProviders := lockfiles[maxProviderFilename].CompactProviders()
+				logrus.Debugf("  applying %s", maxProviderFilename)
+				logrus.Debugf("  because it has %d %s that are still missing. Its full set of providers: %v",
+					maxMissingProviderCount,
+					pluralize("provider", "providers", maxMissingProviderCount),
+					rootProviders)
+				for _, p := range rootProviders {
+					if contains(appliedProviders, p) {
+						continue
+					}
+					appliedProviders = append(appliedProviders, p)
+				}
+			}
+			logrus.Infof("You can apply these providers with %d %s: %v",
+				len(rootsToApply),
+				pluralize("root", "roots", len(rootsToApply)),
+				rootsToApply)
+			for _, root := range rootsToApply {
+				fmt.Println(root)
+			}
+			return nil
+		},
+	}
+
+	return cmd
+}
+
+func newHashesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "hashes",
+		Short: "Inspects all provider version hashes and notes exceptions",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ignore := append(ignoreNames, defaultIgnoreNames...)
+
+			// 1. find all the lockfiles in the topDir
+			lockfilenames, err := findAll(".terraform.lock.hcl", topDir, ignore)
+			if err != nil {
+				return err
+			}
+
+			// 2. parse every lock file
+			lockfiles := make([]*hcl.Lockfile, 0)
+			logrus.Infof("Found %d %s", len(lockfilenames), pluralize("lockfile", "lockfiles", len(lockfilenames)))
+			for _, filename := range lockfilenames {
+				lf, err := hcl.ParseLockfile(filename)
+				if err != nil {
+					return err
+				}
+
+				logrus.Debugf("%s (%d %s)", filename, len(lf.Providers), pluralize("provider", "providers", len(lf.Providers)))
+
+				lockfiles = append(lockfiles, lf)
+			}
+
+			// map from provider name to version to hashes-hash to file list
+			// ex: hashes["registry.terraform.io/hashicorp/aws"]["4.50.0"]["abcd...1234"] = ["terraform/roots/gold/500-regions/core/dev/us-west-1/lacework-integration/.terraform.lock.hcl"]
+			hashes := make(map[string]map[string]map[string][]string)
+			// lol maybe we need a custom data structure!
+
+			for _, lf := range lockfiles {
+				for _, p := range lf.Providers {
+					if _, ok := hashes[p.ID]; !ok {
+						hashes[p.ID] = make(map[string]map[string][]string)
+					}
+					if _, ok := hashes[p.ID][p.Version]; !ok {
+						hashes[p.ID][p.Version] = make(map[string][]string)
+					}
+					hashOfHashes := fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(p.Hashes, "\n"))))
+					if _, ok := hashes[p.ID][p.Version][hashOfHashes]; !ok {
+						hashes[p.ID][p.Version][hashOfHashes] = make([]string, 0)
+					}
+					hashes[p.ID][p.Version][hashOfHashes] = append(hashes[p.ID][p.Version][hashOfHashes], lf.Path)
+				}
+			}
+
+			// print em out!
+			// fmt.Printf("%+v\n", hashes)
+			for providerID, versions := range hashes {
+				fmt.Println(providerID)
+				for version, hashes := range versions {
+					fmt.Printf("\t%s\n", version)
+					for hash, filenames := range hashes {
+						fmt.Printf("\t\t%s: %d %s\n", hash, len(filenames), pluralize("file", "files", len(filenames)))
+						if len(hashes) == 1 && !verbose && !vertrace {
+							continue
+						}
+						for _, filename := range filenames {
+							fmt.Printf("\t\t\t%s\n", filename)
+						}
+					}
+				}
+			}
+
+			return nil
+		},
+	}
 
 	return cmd
 }
@@ -48,14 +215,14 @@ func newVersionsCmd() *cobra.Command {
 			}
 
 			lockfiles := make([]*hcl.Lockfile, 0)
-			logrus.Infof("Found %d lockfiles", len(lockfilenames))
+			logrus.Infof("Found %d %s", len(lockfilenames), pluralize("lockfile", "lockfiles", len(lockfilenames)))
 			for _, filename := range lockfilenames {
 				lf, err := hcl.ParseLockfile(filename)
 				if err != nil {
 					return err
 				}
 
-				logrus.Debugf("%s (%d providers)", filename, len(lf.Providers))
+				logrus.Debugf("%s (%d %s)", filename, len(lf.Providers), pluralize("provider", "providers", len(lf.Providers)))
 
 				lockfiles = append(lockfiles, lf)
 			}
@@ -77,101 +244,8 @@ func newVersionsCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			logrus.Infof("Found %d provider versions", versionCount)
+			logrus.Infof("Found %d provider %s", versionCount, pluralize("version", "versions", versionCount))
 			fmt.Println(string(versionJSON))
-
-			return nil
-		},
-	}
-
-	return cmd
-}
-
-func newCacheCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use: "cache",
-		Short: "identifies a small set of terraform roots in the top directory " +
-			"that, when applied, will cache the full set of providers required " +
-			"by any root under the top directory",
-		Long: "Identifies a small[1] set of terraform roots in the top directory\n" +
-			"that use the full range of provider versions present in any root\n" +
-			"under the top directory.\n\n" +
-			"[1]: not very optimized right now, so it's not _the smallest_ set,\n" +
-			"just _a small_ set.",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			ignore := append(ignoreNames, defaultIgnoreNames...)
-
-			lockfilenames, err := findAll(".terraform.lock.hcl", topDir, ignore)
-			if err != nil {
-				return err
-			}
-
-			lockfiles := make(map[string]*hcl.Lockfile, 0)
-			logrus.Infof("Found %d lockfiles", len(lockfilenames))
-			for _, filename := range lockfilenames {
-				lf, err := hcl.ParseLockfile(filename)
-				if err != nil {
-					return err
-				}
-
-				logrus.Debugf("%s (%d providers)", filename, len(lf.Providers))
-
-				lockfiles[filename] = lf
-			}
-
-			requiredProviders := make([]string, 0)
-			for _, lf := range lockfiles {
-				for _, p := range lf.Providers {
-					version := fmt.Sprintf("%s@%s", p.ID, p.Version)
-					if !contains(requiredProviders, version) {
-						requiredProviders = append(requiredProviders, version)
-					}
-				}
-			}
-			logrus.Infof("Found %d required providers", len(requiredProviders))
-			if verbose {
-				for _, v := range requiredProviders {
-					logrus.Debug(v)
-				}
-			}
-
-			rootsToApply := make([]string, 0)
-			appliedProviders := make([]string, 0)
-			for len(appliedProviders) < len(requiredProviders) {
-				logrus.Debugf("round %d. %d providers already applied: %v", len(rootsToApply)+1, len(appliedProviders), appliedProviders)
-
-				missingProviders := setSubtract(requiredProviders, appliedProviders)
-				logrus.Debugf("  %d missing providers: %v", len(missingProviders), missingProviders)
-
-				maxMissingProviderCount := 0
-				var maxProviderFilename string
-				for filename, lf := range lockfiles {
-					providers := lf.CompactProviders()
-					missingProviders := setIntersect(missingProviders, providers)
-					logrus.Debugf("    %s would apply %d providers (%v)", filename, len(missingProviders), missingProviders)
-					if len(missingProviders) > maxMissingProviderCount {
-						maxMissingProviderCount = len(missingProviders)
-						maxProviderFilename = filename
-					}
-				}
-
-				rootsToApply = append(rootsToApply, path.Dir(maxProviderFilename))
-				rootProviders := lockfiles[maxProviderFilename].CompactProviders()
-				logrus.Debugf("  applying %s", maxProviderFilename)
-				logrus.Debugf("  because it has %d providers that are still missing. Its full setof providers: %v", maxMissingProviderCount, rootProviders)
-				for _, p := range rootProviders {
-					if contains(appliedProviders, p) {
-						continue
-					}
-					appliedProviders = append(appliedProviders, p)
-				}
-			}
-
-			logrus.Infof("You can apply these providers with %d roots: %v", len(rootsToApply), rootsToApply)
-
-			for _, root := range rootsToApply {
-				fmt.Println(root)
-			}
 
 			return nil
 		},
@@ -202,7 +276,7 @@ func newWhyCmd() *cobra.Command {
 				return err
 			}
 
-			logrus.Infof("Found %d lockfiles", len(lockfilenames))
+			logrus.Infof("Found %d %s", len(lockfilenames), pluralize("lockfile", "lockfiles", len(lockfilenames)))
 			matches := make([]string, 0)
 			for _, filename := range lockfilenames {
 				lf, err := hcl.ParseLockfile(filename)
@@ -220,7 +294,7 @@ func newWhyCmd() *cobra.Command {
 				}
 			}
 
-			logrus.Infof("%d roots found with the provider %s", len(matches), target)
+			logrus.Infof("%d %s found with the provider %s", len(matches), pluralize("root", "roots", len(matches)), target)
 
 			for _, root := range matches {
 				fmt.Println(root)
