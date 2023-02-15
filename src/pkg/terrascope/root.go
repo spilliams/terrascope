@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terrascope/internal/generate"
-	"github.com/spilliams/terrascope/internal/hclhelp"
+	hclhelp "github.com/spilliams/terrascope/internal/hcl"
 )
 
 type root struct {

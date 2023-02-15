@@ -42,6 +42,7 @@ func initLogger() {
 
 const commandGroupIDTerraform = "terraform"
 const commandGroupIDTerrascope = "terrascope"
+const commandGroupIDTunnelvision = "tunnelvision"
 
 var project *terrascope.Project
 
@@ -62,6 +63,7 @@ func NewTerrascopeCmd() *cobra.Command {
 
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerrascope, Title: "Working with your terrascope project"})
 	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTerraform, Title: "Terraform Commands"})
+	cmd.AddGroup(&cobra.Group{ID: commandGroupIDTunnelvision, Title: "Inspecting your infrastructure"})
 
 	cmd.AddCommand(newSpecificTerraformCommand("init"))
 	cmd.AddCommand(newSpecificTerraformCommand("plan"))
@@ -74,6 +76,8 @@ func NewTerrascopeCmd() *cobra.Command {
 	cmd.AddCommand(newProjectCommand())
 	cmd.AddCommand(newScopeCommand())
 	cmd.AddCommand(newRootCommand())
+
+	cmd.AddCommand(newProviderCommand())
 
 	return cmd
 }

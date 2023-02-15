@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/terrascope/internal/hclhelp"
+	hclhelp "github.com/spilliams/terrascope/internal/hcl"
 )
 
 // Scope builds a new scope value generator with the given scope types
