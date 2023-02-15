@@ -20,7 +20,7 @@ func newRootCommand() *cobra.Command {
 
 	cmd.AddCommand(newRootBuildCommand())
 	cmd.AddCommand(newRootGenerateCommand())
-	cmd.AddCommand(newRootGraphCommand())
+	cmd.AddCommand(newRootGraphDependenciesCommand())
 	cmd.AddCommand(newRootListCommand())
 
 	return cmd
@@ -65,10 +65,10 @@ func newRootGenerateCommand() *cobra.Command {
 	return cmd
 }
 
-func newRootGraphCommand() *cobra.Command {
+func newRootGraphDependenciesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "graph",
-		Short: "",
+		Use:   "graph-dependencies",
+		Short: "Prints out a DOT-format graph of the roots in this Terrascope project and their dependencies",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := project.AddAllRoots()
 			if err != nil {
