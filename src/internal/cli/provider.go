@@ -43,21 +43,11 @@ func newCacheCmd() *cobra.Command {
 		Short: "identifies a small set of terraform roots in the top directory " + "that, when applied, will cache the full set of providers required " + "by any root under the top directory",
 		Long:  "Identifies a small[1] set of terraform roots in the top directory\n" + "that use the full range of provider versions present in any root\n" + "under the top directory.\n\n" + "[1]: not very optimized right now, so it's not _the smallest_ set,\n" + "just _a small_ set.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ignore := append(ignoreNames, defaultIgnoreNames...)
-			lockfilenames, err := findAll(".terraform.lock.hcl", topDir, ignore)
+			lockfiles, err := getLockfiles()
 			if err != nil {
 				return err
 			}
-			lockfiles := make(map[string]*hcl.Lockfile, 0)
-			logrus.Infof("Found %d %s", len(lockfilenames), pluralize("lockfile", "lockfiles", len(lockfilenames)))
-			for _, filename := range lockfilenames {
-				lf, err := hcl.ParseLockfile(filename)
-				if err != nil {
-					return err
-				}
-				logrus.Debugf("%s (%d %s)", filename, len(lf.Providers), pluralize("provider", "providers", len(lf.Providers)))
-				lockfiles[filename] = lf
-			}
+
 			requiredProviders := make([]string, 0)
 			for _, lf := range lockfiles {
 				for _, p := range lf.Providers {
@@ -134,26 +124,9 @@ func newHashesCmd() *cobra.Command {
 		Use:   "hashes",
 		Short: "Inspects all provider version hashes and notes exceptions",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ignore := append(ignoreNames, defaultIgnoreNames...)
-
-			// 1. find all the lockfiles in the topDir
-			lockfilenames, err := findAll(".terraform.lock.hcl", topDir, ignore)
+			lockfiles, err := getLockfiles()
 			if err != nil {
 				return err
-			}
-
-			// 2. parse every lock file
-			lockfiles := make([]*hcl.Lockfile, 0)
-			logrus.Infof("Found %d %s", len(lockfilenames), pluralize("lockfile", "lockfiles", len(lockfilenames)))
-			for _, filename := range lockfilenames {
-				lf, err := hcl.ParseLockfile(filename)
-				if err != nil {
-					return err
-				}
-
-				logrus.Debugf("%s (%d %s)", filename, len(lf.Providers), pluralize("provider", "providers", len(lf.Providers)))
-
-				lockfiles = append(lockfiles, lf)
 			}
 
 			// map from provider name to version to hashes-hash to file list
@@ -207,24 +180,9 @@ func newVersionsCmd() *cobra.Command {
 		Use:   "versions",
 		Short: "prints out all the versions required by lockfiles in or under the top directory",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ignore := append(ignoreNames, defaultIgnoreNames...)
-
-			lockfilenames, err := findAll(".terraform.lock.hcl", topDir, ignore)
+			lockfiles, err := getLockfiles()
 			if err != nil {
 				return err
-			}
-
-			lockfiles := make([]*hcl.Lockfile, 0)
-			logrus.Infof("Found %d %s", len(lockfilenames), pluralize("lockfile", "lockfiles", len(lockfilenames)))
-			for _, filename := range lockfilenames {
-				lf, err := hcl.ParseLockfile(filename)
-				if err != nil {
-					return err
-				}
-
-				logrus.Debugf("%s (%d %s)", filename, len(lf.Providers), pluralize("provider", "providers", len(lf.Providers)))
-
-				lockfiles = append(lockfiles, lf)
 			}
 
 			versions := make(map[string][]string, 0)
@@ -261,7 +219,10 @@ func newWhyCmd() *cobra.Command {
 			"require the given provider",
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ignore := append(ignoreNames, defaultIgnoreNames...)
+			lockfileNames, err := getLockfileNames()
+			if err != nil {
+				return err
+			}
 
 			target := args[0]
 			targetParts := strings.Split(target, "@")
@@ -271,14 +232,8 @@ func newWhyCmd() *cobra.Command {
 				targetVersion = targetParts[1]
 			}
 
-			lockfilenames, err := findAll(".terraform.lock.hcl", topDir, ignore)
-			if err != nil {
-				return err
-			}
-
-			logrus.Infof("Found %d %s", len(lockfilenames), pluralize("lockfile", "lockfiles", len(lockfilenames)))
 			matches := make([]string, 0)
-			for _, filename := range lockfilenames {
+			for _, filename := range lockfileNames {
 				lf, err := hcl.ParseLockfile(filename)
 				if err != nil {
 					return err
@@ -330,6 +285,36 @@ func findAll(target, dir string, ignoreNames []string) ([]string, error) {
 		return nil, err
 	}
 	return found, nil
+}
+
+func getLockfileNames() ([]string, error) {
+	ignore := append(ignoreNames, defaultIgnoreNames...)
+	lockfileNames, err := findAll(".terraform.lock.hcl", topDir, ignore)
+	if err != nil {
+		return nil, err
+	}
+	logrus.Infof("Found %d %s", len(lockfileNames), pluralize("lockfile", "lockfiles", len(lockfileNames)))
+	return lockfileNames, nil
+}
+
+func getLockfiles() (map[string]*hcl.Lockfile, error) {
+	lockfileNames, err := getLockfileNames()
+	if err != nil {
+		return nil, err
+	}
+
+	lockfiles := make(map[string]*hcl.Lockfile, 0)
+	for _, filename := range lockfileNames {
+		lf, err := hcl.ParseLockfile(filename)
+		if err != nil {
+			return nil, err
+		}
+
+		logrus.Debugf("%s (%d %s)", filename, len(lf.Providers), pluralize("provider", "providers", len(lf.Providers)))
+
+		lockfiles[filename] = lf
+	}
+	return lockfiles, nil
 }
 
 func contains[T comparable](elems []T, v T) bool {
