@@ -34,10 +34,9 @@ func newBuildContext(root *root, scope *CompiledScope, logger *logrus.Logger) *b
 }
 
 type rootConfig struct {
-	Root       *root        `hcl:"root,block"`
-	Generators []*generator `hcl:"generate,block"`
-	// Includes   []*include            `hcl:"include,block"`
-	Inputs map[string]*cty.Value `hcl:"inputs,attr"`
+	Root       *root                 `hcl:"root,block"`
+	Generators []*generator          `hcl:"generate,block"`
+	Inputs     map[string]*cty.Value `hcl:"inputs,optional"`
 }
 
 type generator struct {
@@ -64,14 +63,14 @@ func (bc *buildContext) Build() error {
 		"id": cty.StringVal(bc.root.ID),
 	})
 	scopeVariable := bc.scope.ToCtyValue()
-	attributesVariable := cty.MapVal(bc.scope.Attributes)
+	attributesVariable := cty.ObjectVal(bc.scope.Attributes)
 
 	bc.Trace("Building root")
 	// first gotta reparse the config
 	ctx := hclhelp.DefaultContext()
 	ctx.Variables["root"] = rootVariable
 	ctx.Variables["scope"] = scopeVariable
-	ctx.Variables["attributes"] = attributesVariable
+	ctx.Variables["attributes"] = cty.ObjectVal(bc.scope.Attributes)
 
 	cfg := &rootConfig{}
 	err := hclsimple.DecodeFile(bc.root.filename, ctx, cfg)
