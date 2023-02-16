@@ -1,6 +1,6 @@
-// Package surveyhelp provides helper functions for use with the package
+// Package survey provides helper functions for use with the package
 // github.com/AlecAivazis/survey/v2.
-package surveyhelp
+package survey
 
 import (
 	"reflect"

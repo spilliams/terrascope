@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spilliams/terrascope/internal/ctyhelp"
+	"github.com/spilliams/terrascope/internal/cty"
 	"github.com/spilliams/terrascope/pkg/terrascope"
 )
 
@@ -80,7 +80,7 @@ func newScopeShowCommand() *cobra.Command {
 func printScope(scope *terrascope.CompiledScope) {
 	fmt.Printf("%s:\n", scope.Address())
 	for k, v := range scope.Attributes {
-		vPrint := ctyhelp.String(v)
+		vPrint := cty.String(v)
 		fmt.Printf("\t%s: %s\n", k, vPrint)
 	}
 }

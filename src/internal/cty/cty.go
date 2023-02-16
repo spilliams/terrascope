@@ -1,6 +1,6 @@
-// Package ctyhelp provides some helper functions for use with
+// Package cty provides some helper functions for use with
 // github.com/zclconf/go-cty/cty.
-package ctyhelp
+package cty
 
 import (
 	"fmt"
