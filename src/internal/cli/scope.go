@@ -55,7 +55,7 @@ func newScopeListCommand() *cobra.Command {
 func newScopeShowCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show SCOPE",
-		Short: "Display a single scope value and it associated attributes",
+		Short: "Display a single scope value and its associated attributes",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			scopes, err := project.GetCompiledScopes(args[0])
