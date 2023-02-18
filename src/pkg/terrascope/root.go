@@ -18,8 +18,8 @@ type root struct {
 }
 
 type rootDependency struct {
-	Root   string            `hcl:"root"`
-	Scopes map[string]string `hcl:"scopes,optional"`
+	RootName string            `hcl:"root"`
+	Scopes   map[string]string `hcl:"scopes,optional"`
 }
 
 type scopeMatch struct {

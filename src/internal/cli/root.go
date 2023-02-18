@@ -97,7 +97,7 @@ func newRootGraphDependenciesCommand() *cobra.Command {
 
 			for name, root := range project.Roots {
 				for _, dep := range root.Dependencies {
-					src := fmt.Sprintf("\"%s\"", dep.Root)
+					src := fmt.Sprintf("\"%s\"", dep.RootName)
 					dst := fmt.Sprintf("\"%s\"", name)
 					if err := graph.AddEdge(src, dst, true, nil); err != nil {
 						return err
