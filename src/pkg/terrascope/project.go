@@ -7,9 +7,12 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/sirupsen/logrus"
+	"github.com/spilliams/terrascope/internal/generate"
+	hclhelp "github.com/spilliams/terrascope/internal/hcl"
 )
 
 // ProjectConfig represents the configuration file of a Terrascope project
@@ -34,16 +37,8 @@ type Project struct {
 	*logrus.Entry
 }
 
-// ScopeType represents a single scope available to a project
-type ScopeType struct {
-	Name         string `hcl:"name"`
-	Description  string `hcl:"description,optional"`
-	DefaultValue string `hcl:"default,optional"`
-	// Validations  []*ProjectScopeValidation `hcl:"validation,block"`
-}
-
-func (sc *ScopeType) String() string {
-	return sc.Name
+type scopeDataConfig struct {
+	RootScopes []*NestedScope `hcl:"scope,block"`
 }
 
 // ProjectScopeValidation
@@ -179,4 +174,215 @@ func pluralize(single, plural string, count int) string {
 		return single
 	}
 	return plural
+}
+
+// ParseRoot tells the receiver to parse a root module configuration file at the
+// given path.
+func (p *Project) ParseRoot(cfgFile string) (*root, error) {
+	// partial decode first, because we don't know what scope or attributes
+	// this config will use. We're just looking for the `root` block here.
+	cfg := &struct {
+		Root *root `hcl:"root,block"`
+	}{}
+
+	err := hclsimple.DecodeFile(cfgFile, hclhelp.DefaultContext(), cfg)
+	r := cfg.Root
+	// we purposefully ignore err until the end
+	if r == nil {
+		p.Warnf("Root detected at %s failed to decode. Does it have a complete terrascope.hcl file?", cfgFile)
+		return nil, nil
+	}
+
+	r.filename = cfgFile
+	r.name = path.Base(path.Dir(cfgFile))
+	return r, err
+}
+
+// GenerateRoot creates and runs a new root generator, using the receiver's
+// scope types.
+func (p *Project) GenerateRoot(name string) error {
+	if len(p.ScopeTypes) == 0 {
+		return fmt.Errorf("this project has no scope types! Please define them in %s with the terrascope `scope` block, then try this again", p.configFile)
+	}
+
+	scopeTypes := make([]string, len(p.ScopeTypes))
+	for i, el := range p.ScopeTypes {
+		scopeTypes[i] = el.Name
+	}
+
+	return generate.Root(name, p.RootsDir, scopeTypes, p.Logger)
+}
+
+func (p *Project) assertRootDependenciesAcyclic() error {
+	visited := make(map[string]bool)
+	for rootName := range p.Roots {
+		if visited[rootName] {
+			continue
+		}
+		stack := make(map[string]bool)
+		if has, list := hasCyclicDependency(rootName, p.Roots, visited, stack); has {
+			return fmt.Errorf("cyclical dependency detected for root '%s': %+v", rootName, list)
+		}
+	}
+	return nil
+}
+
+// hasCyclicDependency performs a depth-first search. It takes the current root
+// name, the map of all roots, a visited map to keep track of which nodes have
+// been visited, and a stack map to keep track of nodes we have yet to visit.
+// It returns true if a cyclical dependency is found, and false otherwise.
+// When it returns true, it also returns the list of root names in the cycle.
+func hasCyclicDependency(rootName string, roots map[string]*root, visited, stack map[string]bool) (bool, []string) {
+	visited[rootName] = true
+	stack[rootName] = true
+
+	for _, dep := range roots[rootName].Dependencies {
+		if !visited[dep.RootName] {
+			if has, _ := hasCyclicDependency(dep.RootName, roots, visited, stack); has {
+				return true, keys(visited)
+			}
+		} else if stack[dep.RootName] {
+			return true, keys(visited)
+		}
+	}
+
+	delete(stack, rootName)
+	return false, []string{}
+}
+
+func keys(m map[string]bool) []string {
+	l := make([]string, 0)
+	for k := range m {
+		l = append(l, k)
+	}
+	return l
+}
+
+// GenerateScopeData builds a generator for new scope data, then executes it,
+// saving the results in a file
+func (p *Project) GenerateScopeData() error {
+	if len(p.ScopeTypes) == 0 {
+		return fmt.Errorf("this project has no scope types! Please define them in %s with the terrascope `scope` block, then try this again", p.configFile)
+	}
+
+	scopeTypes := make([]string, len(p.ScopeTypes))
+	for i, el := range p.ScopeTypes {
+		scopeTypes[i] = el.Name
+	}
+
+	// this file doesn't have to exist yet
+	dataFilename := "data.hcl"
+	if p.ScopeDataFiles != nil && len(p.ScopeDataFiles) > 0 {
+		// TODO: which filename? a new one? and then update the project config with the new filename?
+		dataFilename = p.ScopeDataFiles[0]
+	}
+	dataFilename = path.Join(p.projectDir(), dataFilename)
+
+	return generate.Scope(scopeTypes, dataFilename, p.Logger)
+}
+
+// readScopeData reads all of the scope data known to the receiver
+func (p *Project) readScopeData() error {
+	if len(p.ScopeTypes) == 0 {
+		return fmt.Errorf("this project has no scope types! Please define them in %s with the terrascope `scope` block, then try this again", p.configFile)
+	}
+	if len(p.compiledScopes) > 0 {
+		return nil
+	}
+
+	list := make([]*CompiledScope, 0)
+
+	for _, filename := range p.ScopeDataFiles {
+		filename := path.Join(p.projectDir(), filename)
+		p.Debugf("Reading scope data file %s", filename)
+		if !fileExists(filename) {
+			continue
+		}
+
+		cfg := &scopeDataConfig{}
+		err := hclsimple.DecodeFile(filename, nil, cfg)
+		if err = handleDecodeNestedScopeError(err); err != nil {
+			p.Warnf("error decoding scope data file %s", filename)
+			return err
+		}
+
+		for _, rootScope := range cfg.RootScopes {
+			list = append(list, rootScope.CompiledScopes(nil)...)
+		}
+	}
+
+	compiledScopes := CompiledScopes(list)
+	compiledScopes = compiledScopes.Deduplicate()
+	sort.Sort(compiledScopes)
+
+	p.compiledScopes = compiledScopes
+	return nil
+}
+
+func fileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
+}
+
+// handleDecodeNestedScopeError takes diagnostics returned from a call to decode
+// something into a NestedScope, and it removes the diagnostics that are false
+// alarms.
+// When dealing with the `remain` tag in a struct, gohcl will add a diagnostic
+// that "Blocks are not allowed here". It's ok to ignore this type of diagnostic
+// because the blocks are handled elsewhere in the gohcl Decode process.
+// Errors that are not hcl Diagnostics, or that are other types of Diagnostic
+// will be returned.
+func handleDecodeNestedScopeError(err error) error {
+	return hclhelp.DiagnosticsWithoutSummary(err, "Unexpected \"scope\" block")
+}
+
+// GetCompiledScopes returns a list of the receiver's compiled scopes that match
+// a given address. For more information on how a scope matches an address
+// string, see `CompiledScope.Matches`.
+func (p *Project) GetCompiledScopes(address string) (CompiledScopes, error) {
+	if err := p.readScopeData(); err != nil {
+		return nil, err
+	}
+
+	scopes := CompiledScopes{}
+	filter, err := p.scopeFilterMatcher().makeFilter(address)
+	if err != nil {
+		return nil, err
+	}
+	for _, scope := range p.compiledScopes {
+		ok, err := scope.Matches(filter)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			scopes = append(scopes, scope)
+		}
+	}
+	return scopes, nil
+}
+
+// IsScopeValue checks the given address against the receiver's list of known
+// scope values. May return an error if the receiver can't read its scope
+// values.
+func (p *Project) IsScopeValue(address string) (bool, error) {
+	if err := p.readScopeData(); err != nil {
+		return false, err
+	}
+
+	filter, err := p.scopeFilterMatcher().makeFilter(address)
+	if err != nil {
+		return false, err
+	}
+
+	for _, scope := range p.compiledScopes {
+		matches, err := scope.Matches(filter)
+		if err != nil {
+			return false, err
+		}
+		p.Tracef("%s matches? %v", scope, matches)
+		if matches {
+			return true, nil
+		}
+	}
+	return false, nil
 }
