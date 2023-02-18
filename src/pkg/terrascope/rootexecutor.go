@@ -35,7 +35,7 @@ type rootExecutor struct {
 // If `chain` is `RootExecutorDependencyChainingUnknown`, this function will
 // survey the user for a "none/one/all" choice pertaining to the root's
 // dependencies.
-func newRootExecutor(root *root, scopes []string, sfm *scopeFilterMatcher, chain RootExecutorDependencyChaining, logger *logrus.Logger) (*rootExecutor, error) {
+func newRootExecutor(root *root, scopes []string, sfm *scopeMatcher, chain RootExecutorDependencyChaining, logger *logrus.Logger) (*rootExecutor, error) {
 	// make sure we know how to handle dependencies (if we need to)
 	if chain == RootExecutorDependencyChainingUnknown && len(root.Dependencies) > 0 {
 		var answer string

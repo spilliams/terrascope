@@ -8,16 +8,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type scopeFilterMatcher struct {
+type scopeMatcher struct {
 	compiledScopes CompiledScopes
 	scopeTypes     []*ScopeType
 	*logrus.Entry
 }
 
-// newScopeFilter builds a new scopeFilterMatcher object
+// newScopeMatcher builds a new scopeFilterMatcher object
 // address could be types & values interleaved, or just values
-func newScopeFilterMatcher(compiledScopes CompiledScopes, scopeTypes []*ScopeType, logger *logrus.Logger) *scopeFilterMatcher {
-	return &scopeFilterMatcher{
+func newScopeMatcher(compiledScopes CompiledScopes, scopeTypes []*ScopeType, logger *logrus.Logger) *scopeMatcher {
+	return &scopeMatcher{
 		compiledScopes: compiledScopes,
 		scopeTypes:     scopeTypes,
 
@@ -31,7 +31,7 @@ func newScopeFilterMatcher(compiledScopes CompiledScopes, scopeTypes []*ScopeTyp
 // (b) matches at least one scope given.
 // Note that a root with no scopeMatch expressions will be treated as if all its
 // scope types allow all values (`.*`).
-func (sfm *scopeFilterMatcher) determineMatchingScopes(root *root, scopes []string) (CompiledScopes, error) {
+func (sfm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (CompiledScopes, error) {
 	matchingScopes := CompiledScopes{}
 	// if they don't specify any scope matches, assume .* for all
 	if root.ScopeMatches == nil || len(root.ScopeMatches) == 0 {
@@ -92,7 +92,7 @@ func (sfm *scopeFilterMatcher) determineMatchingScopes(root *root, scopes []stri
 	return matchingScopes, nil
 }
 
-func (sfm *scopeFilterMatcher) makeFilter(address string) (map[string]string, error) {
+func (sfm *scopeMatcher) makeFilter(address string) (map[string]string, error) {
 	sfm.Debugf("makeScopeFilter %s", address)
 
 	m := make(map[string]string)

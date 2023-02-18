@@ -29,7 +29,7 @@ type Project struct {
 	ScopeTypes     []*ScopeType `hcl:"scope,block"`
 	ScopeDataFiles []string     `hcl:"scopeData"`
 	compiledScopes CompiledScopes
-	sfm            *scopeFilterMatcher
+	sfm            *scopeMatcher
 
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*root
@@ -80,11 +80,11 @@ func (p *Project) projectDir() string {
 	return path.Dir(p.configFile)
 }
 
-func (p *Project) scopeFilterMatcher() *scopeFilterMatcher {
+func (p *Project) scopeFilterMatcher() *scopeMatcher {
 	if p.sfm != nil {
 		return p.sfm
 	}
-	p.sfm = newScopeFilterMatcher(p.compiledScopes, p.ScopeTypes, p.Logger)
+	p.sfm = newScopeMatcher(p.compiledScopes, p.ScopeTypes, p.Logger)
 	return p.sfm
 }
 
