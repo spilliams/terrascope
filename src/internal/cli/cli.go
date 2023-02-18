@@ -13,10 +13,12 @@ import (
 	"github.com/spilliams/terrascope/pkg/terrascope"
 )
 
+var configFile string
+var dryRun bool
 var quiet bool
 var verbose bool
 var vertrace bool
-var configFile string
+
 var log *logrus.Entry
 
 func init() {
@@ -55,6 +57,7 @@ func NewTerrascopeCmd() *cobra.Command {
 		Short: "A build orchestrator for terraform monorepos",
 	}
 
+	cmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "don't actually execute the task, just print it out")
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase log output")
 	cmd.PersistentFlags().BoolVar(&vertrace, "vvv", false, "increase log output even more")
 	cmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "silences all logs but the errors (and prints those to stderr). Still prints command output to stdout. Overrides verbose and vvv")

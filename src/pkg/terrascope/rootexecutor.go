@@ -2,8 +2,12 @@ package terrascope
 
 import (
 	"fmt"
+	"path"
+	"reflect"
+	"runtime"
 
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/sirupsen/logrus"
 )
 
 type RootExecutorDependencyChaining int
@@ -15,15 +19,19 @@ const (
 	RootExecutorDependencyChainingAll
 )
 
+// rootExecutor represents something that knows how to execute tasks on a root.
+// This entails being able to enumerate all root-scope contexts applicable to
+// the root as well as to handle how the root may depend on other roots.
 type rootExecutor struct {
 	root     *root
-	contexts []*buildContext
+	contexts []*rootScopeContext
+	*logrus.Entry
 
 	// how to chain the dependencies found in the receiver's root contexts
 	ChainDependencies RootExecutorDependencyChaining
 }
 
-func (p *Project) newRootExecutor(rootName string, scopes []string) (*rootExecutor, error) {
+func (p *Project) newRootExecutor(rootName string, scopes []string, logger *logrus.Logger) (*rootExecutor, error) {
 	// make sure the root exists
 	root, ok := p.Roots[rootName]
 	if !ok {
@@ -31,7 +39,10 @@ func (p *Project) newRootExecutor(rootName string, scopes []string) (*rootExecut
 	}
 	root = p.Roots[rootName]
 	p.Debugf("root: %+v", root)
-	re := &rootExecutor{root: root}
+	re := &rootExecutor{
+		root:  root,
+		Entry: logger.WithFields(logrus.Fields{"prefix": "rootExec"}),
+	}
 
 	// what scopes does the root apply to?
 	matchingScopes, err := p.determineMatchingScopes(root, scopes)
@@ -43,9 +54,9 @@ func (p *Project) newRootExecutor(rootName string, scopes []string) (*rootExecut
 		p.Trace(scope.Address())
 	}
 
-	builds := make([]*buildContext, len(matchingScopes))
+	builds := make([]*rootScopeContext, len(matchingScopes))
 	for i, scope := range matchingScopes {
-		builds[i] = newBuildContext(root, scope, p.Entry.Logger)
+		builds[i] = newRootScopeContext(root, scope, p.Entry.Logger)
 	}
 	re.contexts = builds
 
@@ -75,18 +86,30 @@ func (p *Project) newRootExecutor(rootName string, scopes []string) (*rootExecut
 	return re, nil
 }
 
-type ExecFunc func(*buildContext) (string, error)
+type ExecFunc func(*rootScopeContext) (string, error)
 
-func (re *rootExecutor) Execute(f ExecFunc) ([]string, error) {
+func (re *rootExecutor) Execute(f ExecFunc, dry bool) ([]string, error) {
 	// TODO: use a worker pool
-	outputs := make([]string, len(re.contexts))
-	for i, build := range re.contexts {
+	// TODO: join all errors instead of exiting early
+	outputs := make([]string, 0)
+	for _, build := range re.contexts {
+		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+		fName = path.Base(fName)
+		if dry {
+			re.Debugf("would have run %s on %s", fName, build)
+			continue
+		} else {
+			re.Debugf("running %s on %s", fName, build)
+		}
 		output, err := f(build)
 		if err != nil {
 			return nil, err
 		}
 
-		outputs[i] = output
+		outputs = append(outputs, output)
+	}
+	if dry {
+		re.Infof("Note: This was a dry-run, so Terrascope can't guarantee to take exactly these actions if you re-run without the dry run flag enabled.")
 	}
 
 	return outputs, nil

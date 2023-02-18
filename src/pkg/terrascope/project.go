@@ -111,13 +111,13 @@ func (p *Project) AddAllRoots() error {
 
 // BuildRoot tells the receiver to build a root module, and returns a list of
 // directories where the root was built to.
-func (p *Project) BuildRoot(rootName string, scopes []string) ([]string, error) {
-	rootExec, err := p.newRootExecutor(rootName, scopes)
+func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool) ([]string, error) {
+	rootExec, err := p.newRootExecutor(rootName, scopes, p.Logger)
 	if err != nil {
 		return nil, err
 	}
 
-	return rootExec.Execute(BuildContext)
+	return rootExec.Execute(BuildContext, dryRun)
 }
 
 // addRoot tells the receiver to add a root module to its internal records.

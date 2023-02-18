@@ -42,7 +42,7 @@ func newRootBuildCommand() *cobra.Command {
 			for i := 1; i < len(args); i++ {
 				scopes[i-1] = args[i]
 			}
-			dirs, err := project.BuildRoot(args[0], scopes)
+			dirs, err := project.BuildRoot(args[0], scopes, dryRun)
 
 			for _, dir := range dirs {
 				fmt.Println(dir)
