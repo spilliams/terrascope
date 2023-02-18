@@ -23,8 +23,8 @@ const (
 // This entails being able to enumerate all root-scope contexts applicable to
 // the root as well as to handle how the root may depend on other roots.
 type rootExecutor struct {
-	root     *root
-	contexts []*rootScopeContext
+	root    *root
+	batches [][]*rootScopeContext
 	*logrus.Entry
 
 	// how to chain the dependencies found in the receiver's root contexts
@@ -43,7 +43,6 @@ func (p *Project) newRootExecutor(rootName string, scopes []string, chain RootEx
 		return nil, fmt.Errorf("Root '%s' isn't loaded. Did you run `AddAllRoots`?", rootName)
 	}
 	root = p.Roots[rootName]
-	p.Debugf("root: %+v", root)
 
 	// make sure we know how to handle dependencies (if we need to)
 	if chain == RootExecutorDependencyChainingUnknown && len(root.Dependencies) > 0 {
@@ -69,27 +68,30 @@ func (p *Project) newRootExecutor(rootName string, scopes []string, chain RootEx
 		}
 	}
 	re := &rootExecutor{
-		root:  root,
-		Entry: logger.WithFields(logrus.Fields{"prefix": "rootExec"}),
+		root:    root,
+		batches: make([][]*rootScopeContext, 1),
+		Entry:   logger.WithFields(logrus.Fields{"prefix": "rootExec"}),
 
 		ChainDependencies: chain,
 	}
+	re.Debugf("root: %+v", root)
+	// set up the batches
 
 	// what scopes does the root apply to?
 	matchingScopes, err := p.determineMatchingScopes(root, scopes)
 	if err != nil {
 		return nil, err
 	}
-	p.Infof("Root will be executed for %d %s", len(matchingScopes), pluralize("scope", "scopes", len(matchingScopes)))
+	re.Infof("Root will be executed for %d %s", len(matchingScopes), pluralize("scope", "scopes", len(matchingScopes)))
 	for _, scope := range matchingScopes {
-		p.Trace(scope.Address())
+		re.Trace(scope.Address())
 	}
 
-	builds := make([]*rootScopeContext, len(matchingScopes))
+	mainBatch := make([]*rootScopeContext, len(matchingScopes))
 	for i, scope := range matchingScopes {
-		builds[i] = newRootScopeContext(root, scope, p.Entry.Logger)
+		mainBatch[i] = newRootScopeContext(root, scope, re.Entry.Logger)
 	}
-	re.contexts = builds
+	re.batches[0] = mainBatch
 
 	return re, nil
 }
@@ -100,21 +102,24 @@ func (re *rootExecutor) Execute(f ExecFunc, dry bool) ([]string, error) {
 	// TODO: use a worker pool
 	// TODO: join all errors instead of exiting early
 	outputs := make([]string, 0)
-	for _, build := range re.contexts {
-		fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
-		fName = path.Base(fName)
-		if dry {
-			re.Debugf("would have run %s on %s", fName, build)
-			continue
-		} else {
-			re.Debugf("running %s on %s", fName, build)
-		}
-		output, err := f(build)
-		if err != nil {
-			return nil, err
-		}
 
-		outputs = append(outputs, output)
+	for _, batch := range re.batches {
+		for _, ctx := range batch {
+			fName := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+			fName = path.Base(fName)
+			if dry {
+				re.Debugf("would have run %s on %s", fName, ctx)
+				continue
+			} else {
+				re.Debugf("running %s on %s", fName, ctx)
+			}
+			output, err := f(ctx)
+			if err != nil {
+				return nil, err
+			}
+
+			outputs = append(outputs, output)
+		}
 	}
 	if dry {
 		re.Infof("Note: This was a dry-run, so Terrascope can't guarantee to take exactly these actions if you re-run without the dry run flag enabled.")
