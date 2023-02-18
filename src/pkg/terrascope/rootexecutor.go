@@ -9,14 +9,28 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type RootExecutorDependencyChaining int
+type RootDependencyChain int
 
 const (
-	RootExecutorDependencyChainingUnknown RootExecutorDependencyChaining = iota
-	RootExecutorDependencyChainingNone
-	RootExecutorDependencyChainingOne
-	RootExecutorDependencyChainingAll
+	RootDependencyChainUnknown RootDependencyChain = iota
+	RootDependencyChainNone
+	RootDependencyChainOne
+	RootDependencyChainAll
 )
+
+type rootExecutorFactory struct {
+	sm    *scopeMatcher
+	rdc   *rootDependencyCalculator
+	entry *logrus.Entry
+}
+
+func newRootExecutorFactory(sm *scopeMatcher, rdc *rootDependencyCalculator, logger *logrus.Logger) *rootExecutorFactory {
+	return &rootExecutorFactory{
+		sm:    sm,
+		rdc:   rdc,
+		entry: logger.WithFields(logrus.Fields{"prefix": "rootExec"}),
+	}
+}
 
 // rootExecutor represents something that knows how to execute tasks on a root.
 // This entails being able to enumerate all root-scope contexts applicable to
@@ -27,7 +41,7 @@ type rootExecutor struct {
 	*logrus.Entry
 
 	// how to chain the dependencies found in the receiver's root contexts
-	ChainDependencies RootExecutorDependencyChaining
+	ChainDependencies RootDependencyChain
 }
 
 // newRootExecutor builds a new rootExecutor for the given root, scopes and
@@ -35,9 +49,9 @@ type rootExecutor struct {
 // If `chain` is `RootExecutorDependencyChainingUnknown`, this function will
 // survey the user for a "none/one/all" choice pertaining to the root's
 // dependencies.
-func newRootExecutor(root *root, scopes []string, sfm *scopeMatcher, rdc *rootDependencyCalculator, chain RootExecutorDependencyChaining, logger *logrus.Logger) (*rootExecutor, error) {
+func (ref *rootExecutorFactory) newRootExecutor(root *root, scopes []string, chain RootDependencyChain) (*rootExecutor, error) {
 	// make sure we know how to handle dependencies (if we need to)
-	if chain == RootExecutorDependencyChainingUnknown && len(root.Dependencies) > 0 {
+	if chain == RootDependencyChainUnknown && len(root.Dependencies) > 0 {
 		var answer string
 		none := "No, don't run any dependencies"
 		one := "Yes, but just the direct dependencies"
@@ -52,29 +66,30 @@ func newRootExecutor(root *root, scopes []string, sfm *scopeMatcher, rdc *rootDe
 		}
 		switch answer {
 		case none:
-			chain = RootExecutorDependencyChainingNone
+			chain = RootDependencyChainNone
 		case one:
-			chain = RootExecutorDependencyChainingOne
+			chain = RootDependencyChainOne
 		case all:
-			chain = RootExecutorDependencyChainingAll
+			chain = RootDependencyChainAll
 		}
 	}
 	re := &rootExecutor{
 		root:    root,
 		batches: make([][]*rootScopeContext, 1),
-		Entry:   logger.WithFields(logrus.Fields{"prefix": "rootExec"}),
+		Entry:   ref.entry,
 
 		ChainDependencies: chain,
 	}
 	re.Debugf("root: %+v", root)
 
 	// set up the batches
-	if err := rdc.prepareBatches(re.root.name); err != nil {
+	// TODO root dependencies
+	if err := ref.rdc.prepareBatches(re.root.name); err != nil {
 		return nil, err
 	}
 
 	// what scopes does the root apply to?
-	matchingScopes, err := sfm.determineMatchingScopes(root, scopes)
+	matchingScopes, err := ref.sm.determineMatchingScopes(root, scopes)
 	if err != nil {
 		return nil, err
 	}

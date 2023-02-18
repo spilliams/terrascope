@@ -146,15 +146,15 @@ func newRootListCommand() *cobra.Command {
 	return cmd
 }
 
-func chainDependenciesOption() terrascope.RootExecutorDependencyChaining {
+func chainDependenciesOption() terrascope.RootDependencyChain {
 	if all {
-		return terrascope.RootExecutorDependencyChainingAll
+		return terrascope.RootDependencyChainAll
 	}
 	if noNone {
-		return terrascope.RootExecutorDependencyChainingNone
+		return terrascope.RootDependencyChainNone
 	}
 	if yesOne {
-		return terrascope.RootExecutorDependencyChainingOne
+		return terrascope.RootDependencyChainOne
 	}
-	return terrascope.RootExecutorDependencyChainingUnknown
+	return terrascope.RootDependencyChainUnknown
 }

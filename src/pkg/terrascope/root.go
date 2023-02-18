@@ -21,7 +21,7 @@ type scopeMatch struct {
 
 type rootDependencyCalculator struct {
 	roots map[string]*root
-	chain RootExecutorDependencyChaining
+	chain RootDependencyChain
 }
 
 func (rdc *rootDependencyCalculator) assertRootDependenciesAcyclic() error {
@@ -76,9 +76,9 @@ func (rdc *rootDependencyCalculator) prepareBatches(rootName string) error {
 	}
 	batchOrder[rootName] = 0
 	switch rdc.chain {
-	case RootExecutorDependencyChainingNone:
-	case RootExecutorDependencyChainingOne:
-	case RootExecutorDependencyChainingAll:
+	case RootDependencyChainNone:
+	case RootDependencyChainOne:
+	case RootDependencyChainAll:
 	}
 	// TODO root dependencies
 	return nil

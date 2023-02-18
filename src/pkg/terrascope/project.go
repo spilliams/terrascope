@@ -29,10 +29,12 @@ type Project struct {
 	ScopeTypes     []*ScopeType `hcl:"scope,block"`
 	ScopeDataFiles []string     `hcl:"scopeData"`
 	compiledScopes CompiledScopes
-	sfm            *scopeMatcher
+	sm             *scopeMatcher
 
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*root
+	rdc      *rootDependencyCalculator
+	ref      *rootExecutorFactory
 
 	*logrus.Entry
 }
@@ -80,12 +82,28 @@ func (p *Project) projectDir() string {
 	return path.Dir(p.configFile)
 }
 
-func (p *Project) scopeFilterMatcher() *scopeMatcher {
-	if p.sfm != nil {
-		return p.sfm
+func (p *Project) scopeMatcher() *scopeMatcher {
+	if p.sm != nil {
+		return p.sm
 	}
-	p.sfm = newScopeMatcher(p.compiledScopes, p.ScopeTypes, p.Logger)
-	return p.sfm
+	p.sm = newScopeMatcher(p.compiledScopes, p.ScopeTypes, p.Logger)
+	return p.sm
+}
+
+func (p *Project) rootDependencyCalculator() *rootDependencyCalculator {
+	if p.rdc != nil {
+		return p.rdc
+	}
+	p.rdc = &rootDependencyCalculator{roots: p.Roots}
+	return p.rdc
+}
+
+func (p *Project) rootExecutorFactory() *rootExecutorFactory {
+	if p.ref != nil {
+		return p.ref
+	}
+	p.ref = newRootExecutorFactory(p.scopeMatcher(), p.rootDependencyCalculator(), p.Logger)
+	return p.ref
 }
 
 // AddAllRoots searches the receiver's `RootsDir` for directories, and adds them
@@ -105,8 +123,7 @@ func (p *Project) AddAllRoots() error {
 	}
 
 	// check for dependency-cycles
-	rdc := &rootDependencyCalculator{roots: p.Roots}
-	if err := rdc.assertRootDependenciesAcyclic(); err != nil {
+	if err := p.rootDependencyCalculator().assertRootDependenciesAcyclic(); err != nil {
 		return err
 	}
 
@@ -118,18 +135,16 @@ func (p *Project) AddAllRoots() error {
 // If `chain` is `RootExecutorDependencyChainingUnknown`, this function will
 // survey the user for a "none/one/all" choice pertaining to the root's
 // dependencies.
-func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool, chain RootExecutorDependencyChaining) ([]string, error) {
+func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool, chain RootDependencyChain) ([]string, error) {
 	// make sure the root exists
 	root, ok := p.Roots[rootName]
 	if !ok {
 		return nil, fmt.Errorf("Root '%s' isn't loaded. Did you run `AddAllRoots`?", rootName)
 	}
 	root = p.Roots[rootName]
-	rdc := &rootDependencyCalculator{
-		roots: p.Roots,
-		chain: chain,
-	}
-	rootExec, err := newRootExecutor(root, scopes, p.scopeFilterMatcher(), rdc, chain, p.Logger)
+	rdc := p.rootDependencyCalculator()
+	rdc.chain = chain
+	rootExec, err := p.rootExecutorFactory().newRootExecutor(root, scopes, chain)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +319,7 @@ func (p *Project) GetCompiledScopes(address string) (CompiledScopes, error) {
 	}
 
 	scopes := CompiledScopes{}
-	filter, err := p.scopeFilterMatcher().makeFilter(address)
+	filter, err := p.scopeMatcher().makeFilter(address)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +343,7 @@ func (p *Project) IsScopeValue(address string) (bool, error) {
 		return false, err
 	}
 
-	filter, err := p.scopeFilterMatcher().makeFilter(address)
+	filter, err := p.scopeMatcher().makeFilter(address)
 	if err != nil {
 		return false, err
 	}

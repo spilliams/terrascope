@@ -14,14 +14,14 @@ type scopeMatcher struct {
 	*logrus.Entry
 }
 
-// newScopeMatcher builds a new scopeFilterMatcher object
+// newScopeMatcher builds a new scopeMatcher object
 // address could be types & values interleaved, or just values
 func newScopeMatcher(compiledScopes CompiledScopes, scopeTypes []*ScopeType, logger *logrus.Logger) *scopeMatcher {
 	return &scopeMatcher{
 		compiledScopes: compiledScopes,
 		scopeTypes:     scopeTypes,
 
-		Entry: logger.WithFields(logrus.Fields{"prefix": "scopeFilterMatcher"}),
+		Entry: logger.WithFields(logrus.Fields{"prefix": "scopeMatcher"}),
 	}
 }
 
@@ -31,7 +31,7 @@ func newScopeMatcher(compiledScopes CompiledScopes, scopeTypes []*ScopeType, log
 // (b) matches at least one scope given.
 // Note that a root with no scopeMatch expressions will be treated as if all its
 // scope types allow all values (`.*`).
-func (sfm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (CompiledScopes, error) {
+func (sm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (CompiledScopes, error) {
 	matchingScopes := CompiledScopes{}
 	// if they don't specify any scope matches, assume .* for all
 	if root.ScopeMatches == nil || len(root.ScopeMatches) == 0 {
@@ -45,7 +45,7 @@ func (sfm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (C
 	}
 
 	for _, scopeMatch := range root.ScopeMatches {
-		matches, err := sfm.compiledScopes.Matching(scopeMatch.ScopeTypes)
+		matches, err := sm.compiledScopes.Matching(scopeMatch.ScopeTypes)
 		if err != nil {
 			return nil, err
 		}
@@ -59,13 +59,13 @@ func (sfm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (C
 		filteredMatchingScopes := CompiledScopes{}
 		scopeFilters := make([]map[string]string, len(scopes))
 		for i, scope := range scopes {
-			scopeFilter, err := sfm.makeFilter(scope)
+			scopeFilter, err := sm.makeFilter(scope)
 			if err != nil {
 				return nil, err
 			}
 			scopeFilters[i] = scopeFilter
 		}
-		sfm.Debugf("filters on the root's full list of scope values:\n%+v", scopeFilters)
+		sm.Debugf("filters on the root's full list of scope values:\n%+v", scopeFilters)
 		for _, scope := range matchingScopes {
 			for _, filter := range scopeFilters {
 				ok, err := scope.Matches(filter)
@@ -87,13 +87,13 @@ func (sfm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (C
 			"\t- new scope data for the project,\n"+
 			"\t- different scope types in the root configuration file, or\n"+
 			"\t- new scope matches in the root configuration file.",
-			root.name, root.ScopeTypes, len(sfm.compiledScopes))
+			root.name, root.ScopeTypes, len(sm.compiledScopes))
 	}
 	return matchingScopes, nil
 }
 
-func (sfm *scopeMatcher) makeFilter(address string) (map[string]string, error) {
-	sfm.Debugf("makeScopeFilter %s", address)
+func (sm *scopeMatcher) makeFilter(address string) (map[string]string, error) {
+	sm.Debugf("makeScopeFilter %s", address)
 
 	m := make(map[string]string)
 	parts := strings.Split(address, ".")
@@ -102,7 +102,7 @@ func (sfm *scopeMatcher) makeFilter(address string) (map[string]string, error) {
 		isCollated := true
 		i := 0
 		for i*2 < len(parts) {
-			if parts[i*2] != sfm.scopeTypes[i].Name {
+			if parts[i*2] != sm.scopeTypes[i].Name {
 				isCollated = false
 				break
 			}
@@ -117,18 +117,18 @@ func (sfm *scopeMatcher) makeFilter(address string) (map[string]string, error) {
 			parts = newParts
 		}
 	}
-	sfm.Debugf("  parts after decollation: %v", parts)
+	sm.Debugf("  parts after decollation: %v", parts)
 
-	if len(parts) > len(sfm.scopeTypes) {
-		return nil, fmt.Errorf("scope address %s is too long to be mapped to scope types %v", address, sfm.scopeTypes)
+	if len(parts) > len(sm.scopeTypes) {
+		return nil, fmt.Errorf("scope address %s is too long to be mapped to scope types %v", address, sm.scopeTypes)
 	}
 	for i, v := range parts {
 		// some special regex translating
 		if v == "*" {
 			v = ".*"
 		}
-		m[sfm.scopeTypes[i].Name] = v
+		m[sm.scopeTypes[i].Name] = v
 	}
-	sfm.Debugf("  mapping %+v", m)
+	sm.Debugf("  mapping %+v", m)
 	return m, nil
 }
