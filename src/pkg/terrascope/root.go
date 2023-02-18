@@ -77,7 +77,11 @@ func (p *Project) assertRootDependenciesAcyclic() error {
 	return nil
 }
 
-// hasCyclicDependencies performs a depth-first search. It takes the current root name, the map of all roots, a visited map to keep track of which nodes have been visited, and a stack map to keep track of nodes currently on the stack. It returns true if a cyclical dependency is found, and false otherwise.
+// hasCyclicDependency performs a depth-first search. It takes the current root
+// name, the map of all roots, a visited map to keep track of which nodes have
+// been visited, and a stack map to keep track of nodes we have yet to visit.
+// It returns true if a cyclical dependency is found, and false otherwise.
+// When it returns true, it also returns the list of root names in the cycle.
 func hasCyclicDependency(rootName string, roots map[string]*root, visited, stack map[string]bool) (bool, []string) {
 	visited[rootName] = true
 	stack[rootName] = true

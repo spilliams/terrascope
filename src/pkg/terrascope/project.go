@@ -112,44 +112,12 @@ func (p *Project) AddAllRoots() error {
 // BuildRoot tells the receiver to build a root module, and returns a list of
 // directories where the root was built to.
 func (p *Project) BuildRoot(rootName string, scopes []string) ([]string, error) {
-	// first, get the root
-	root, ok := p.Roots[rootName]
-	if !ok {
-		return nil, fmt.Errorf("Root '%s' isn't loaded. Did you run `AddAllRoots`?", rootName)
-	}
-	root = p.Roots[rootName]
-	p.Debugf("root: %+v", root)
-
-	// what scopes to build for?
-	matchingScopes, err := p.determineMatchingScopes(root, scopes)
+	rootExec, err := p.newRootExecutor(rootName, scopes)
 	if err != nil {
 		return nil, err
 	}
-	p.Infof("Root will be built for %d %s", len(matchingScopes), pluralize("scope", "scopes", len(matchingScopes)))
-	for _, scope := range matchingScopes {
-		p.Trace(scope.Address())
-	}
 
-	builds := make([]*buildContext, len(matchingScopes))
-	for i, scope := range matchingScopes {
-		builds[i] = newBuildContext(root, scope, p.Entry.Logger)
-	}
-
-	// TODO: root dependencies. Do the buildContexts figure it out? Then we need
-	// to phase them and deduplicate them
-
-	// TODO: use a worker pool
-	dirs := make([]string, len(builds))
-	for i, build := range builds {
-		err := build.Build()
-		if err != nil {
-			return nil, err
-		}
-
-		dirs[i] = build.destination()
-	}
-
-	return dirs, nil
+	return rootExec.Execute(BuildContext)
 }
 
 // addRoot tells the receiver to add a root module to its internal records.

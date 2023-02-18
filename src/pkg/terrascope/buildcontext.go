@@ -55,10 +55,7 @@ func (bc *buildContext) destination() string {
 	return path.Join(parts...)
 }
 
-// Build tells the receiver to run all its operations related to building its
-// root. This may delete and/or create files on your filesystem, inside the
-// root's directory.
-func (bc *buildContext) Build() error {
+func BuildContext(bc *buildContext) (string, error) {
 	rootVariable := cty.MapVal(map[string]cty.Value{
 		"name": cty.StringVal(bc.root.name),
 	})
@@ -75,40 +72,39 @@ func (bc *buildContext) Build() error {
 	cfg := &rootConfig{}
 	err := hclsimple.DecodeFile(bc.root.filename, ctx, cfg)
 	if err != nil {
-		return err
+		return "", err
 	}
 	bc.Tracef("  fully decoded root config: %+v", cfg)
 
 	destination := bc.destination()
 	err = os.MkdirAll(destination, 0755)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// TODO: empty the directory
 	err = bc.copyAllFiles(bc.rootDirectory(), destination)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = bc.processGenerators(cfg.Generators, destination)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = bc.processInputs(cfg.Inputs, destination)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = bc.generateDebugFile(destination, rootVariable, scopeVariable, attributesVariable)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return bc.destination(), nil
 }
-
 func (bc *buildContext) copyAllFiles(srcDir, destDir string) error {
 	bc.Tracef("Walking %s", srcDir)
 	return filepath.WalkDir(srcDir, func(filepath string, d fs.DirEntry, err error) error {
