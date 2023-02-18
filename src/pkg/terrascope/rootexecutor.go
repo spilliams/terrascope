@@ -31,7 +31,12 @@ type rootExecutor struct {
 	ChainDependencies RootExecutorDependencyChaining
 }
 
-func (p *Project) newRootExecutor(rootName string, scopes []string, logger *logrus.Logger) (*rootExecutor, error) {
+// newRootExecutor builds a new rootExecutor for the given root, scopes and
+// other options.
+// If `chain` is `RootExecutorDependencyChainingUnknown`, this function will
+// survey the user for a "none/one/all" choice pertaining to the root's
+// dependencies.
+func (p *Project) newRootExecutor(rootName string, scopes []string, chain RootExecutorDependencyChaining, logger *logrus.Logger) (*rootExecutor, error) {
 	// make sure the root exists
 	root, ok := p.Roots[rootName]
 	if !ok {
@@ -39,9 +44,35 @@ func (p *Project) newRootExecutor(rootName string, scopes []string, logger *logr
 	}
 	root = p.Roots[rootName]
 	p.Debugf("root: %+v", root)
+
+	// make sure we know how to handle dependencies (if we need to)
+	if chain == RootExecutorDependencyChainingUnknown && len(root.Dependencies) > 0 {
+		var answer string
+		none := "No, don't run any dependencies"
+		one := "Yes, but just the direct dependencies"
+		all := "Yes, and run all dependencies (direct and indirect)"
+		err := survey.AskOne(&survey.Select{
+			Message: "Run the same operation on the root's dependencies?",
+			Options: []string{none, one, all},
+			Default: none,
+		}, &answer)
+		if err != nil {
+			return nil, err
+		}
+		switch answer {
+		case none:
+			chain = RootExecutorDependencyChainingNone
+		case one:
+			chain = RootExecutorDependencyChainingOne
+		case all:
+			chain = RootExecutorDependencyChainingAll
+		}
+	}
 	re := &rootExecutor{
 		root:  root,
 		Entry: logger.WithFields(logrus.Fields{"prefix": "rootExec"}),
+
+		ChainDependencies: chain,
 	}
 
 	// what scopes does the root apply to?
@@ -59,29 +90,6 @@ func (p *Project) newRootExecutor(rootName string, scopes []string, logger *logr
 		builds[i] = newRootScopeContext(root, scope, p.Entry.Logger)
 	}
 	re.contexts = builds
-
-	if len(root.Dependencies) > 0 {
-		var chain string
-		none := "No, don't run any dependencies"
-		one := "Yes, but just the direct dependencies"
-		all := "Yes, and run all dependencies (direct and indirect)"
-		err := survey.AskOne(&survey.Select{
-			Message: "Run the same operation on the root's dependencies?",
-			Options: []string{none, one, all},
-			Default: none,
-		}, &chain)
-		if err != nil {
-			return nil, err
-		}
-		switch chain {
-		case none:
-			re.ChainDependencies = RootExecutorDependencyChainingNone
-		case one:
-			re.ChainDependencies = RootExecutorDependencyChainingOne
-		case all:
-			re.ChainDependencies = RootExecutorDependencyChainingAll
-		}
-	}
 
 	return re, nil
 }

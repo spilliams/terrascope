@@ -19,6 +19,10 @@ var quiet bool
 var verbose bool
 var vertrace bool
 
+var all bool
+var yesOne bool
+var noNone bool
+
 var log *logrus.Entry
 
 func init() {
@@ -61,6 +65,10 @@ func NewTerrascopeCmd() *cobra.Command {
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase log output")
 	cmd.PersistentFlags().BoolVar(&vertrace, "vvv", false, "increase log output even more")
 	cmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "silences all logs but the errors (and prints those to stderr). Still prints command output to stdout. Overrides verbose and vvv")
+
+	cmd.PersistentFlags().BoolVarP(&all, "all", "a", false, "automatically respond to 'yes/no/all' or 'none/one/all' prompts with 'all'. Overrides both yes and no.")
+	cmd.PersistentFlags().BoolVarP(&yesOne, "yes", "y", false, "automatically respond to 'yes/no/all' prompts with 'yes', or 'none/one/all' prompts with 'one'")
+	cmd.PersistentFlags().BoolVarP(&noNone, "no", "n", false, "automatically respond to 'yes/no/all' prompts with 'no', or 'none/one/all' prompts with 'none'. Overrides yes.")
 
 	cmd.PersistentFlags().StringVarP(&configFile, "config-file", "c", "terrascope.hcl", "the filename of the project configuration")
 

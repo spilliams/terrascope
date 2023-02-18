@@ -111,8 +111,11 @@ func (p *Project) AddAllRoots() error {
 
 // BuildRoot tells the receiver to build a root module, and returns a list of
 // directories where the root was built to.
-func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool) ([]string, error) {
-	rootExec, err := p.newRootExecutor(rootName, scopes, p.Logger)
+// If `chain` is `RootExecutorDependencyChainingUnknown`, this function will
+// survey the user for a "none/one/all" choice pertaining to the root's
+// dependencies.
+func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool, chain RootExecutorDependencyChaining) ([]string, error) {
+	rootExec, err := p.newRootExecutor(rootName, scopes, chain, p.Logger)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/spf13/cobra"
+	"github.com/spilliams/terrascope/pkg/terrascope"
 )
 
 func newRootCommand() *cobra.Command {
@@ -42,7 +43,7 @@ func newRootBuildCommand() *cobra.Command {
 			for i := 1; i < len(args); i++ {
 				scopes[i-1] = args[i]
 			}
-			dirs, err := project.BuildRoot(args[0], scopes, dryRun)
+			dirs, err := project.BuildRoot(args[0], scopes, dryRun, chainDependenciesOption())
 
 			for _, dir := range dirs {
 				fmt.Println(dir)
@@ -143,4 +144,17 @@ func newRootListCommand() *cobra.Command {
 		},
 	}
 	return cmd
+}
+
+func chainDependenciesOption() terrascope.RootExecutorDependencyChaining {
+	if all {
+		return terrascope.RootExecutorDependencyChainingAll
+	}
+	if noNone {
+		return terrascope.RootExecutorDependencyChainingNone
+	}
+	if yesOne {
+		return terrascope.RootExecutorDependencyChainingOne
+	}
+	return terrascope.RootExecutorDependencyChainingUnknown
 }
