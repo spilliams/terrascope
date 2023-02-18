@@ -2,6 +2,7 @@ package terrascope
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/spilliams/terrascope/internal/generate"
@@ -10,7 +11,7 @@ import (
 
 type root struct {
 	filename     string
-	ID           string            `hcl:"id,label"`
+	name         string
 	ScopeTypes   []string          `hcl:"scopeTypes"`
 	Dependencies []*rootDependency `hcl:"dependency,block"`
 	ScopeMatches []*scopeMatch     `hcl:"scopeMatch,block"`
@@ -43,6 +44,7 @@ func (p *Project) ParseRoot(cfgFile string) (*root, error) {
 	}
 
 	r.filename = cfgFile
+	r.name = path.Base(path.Dir(cfgFile))
 	return r, err
 }
 

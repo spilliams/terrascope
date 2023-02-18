@@ -33,6 +33,11 @@ func newRootBuildCommand() *cobra.Command {
 		Short:   "Builds the given root and prints the location of the built configurations to stdout",
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
 			scopes := make([]string, len(args)-1)
 			for i := 1; i < len(args); i++ {
 				scopes[i-1] = args[i]

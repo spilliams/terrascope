@@ -27,7 +27,7 @@ func newBuildContext(root *root, scope *CompiledScope, logger *logrus.Logger) *b
 		scope: scope,
 		Entry: logger.WithFields(logrus.Fields{
 			"prefix": "builder",
-			"root":   root.ID,
+			"root":   root.name,
 			"scope":  scope.Address(),
 		}),
 	}
@@ -60,7 +60,7 @@ func (bc *buildContext) destination() string {
 // root's directory.
 func (bc *buildContext) Build() error {
 	rootVariable := cty.MapVal(map[string]cty.Value{
-		"id": cty.StringVal(bc.root.ID),
+		"name": cty.StringVal(bc.root.name),
 	})
 	scopeVariable := bc.scope.ToCtyValue()
 	attributesVariable := cty.ObjectVal(bc.scope.Attributes)

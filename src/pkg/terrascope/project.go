@@ -85,8 +85,8 @@ func (p *Project) projectDir() string {
 	return path.Dir(p.configFile)
 }
 
-// AddAllRoots searches the receiver's `RootsDir` for directories, and calls
-// `AddRoot` for each subdirectory.
+// AddAllRoots searches the receiver's `RootsDir` for directories, and adds them
+// all to the project as root configurations.
 func (p *Project) AddAllRoots() error {
 	files, err := ioutil.ReadDir(p.RootsDir)
 	if err != nil {
@@ -94,12 +94,20 @@ func (p *Project) AddAllRoots() error {
 	}
 	for _, file := range files {
 		if file.IsDir() {
-			err := p.AddRoot(file.Name())
+			err := p.addRoot(file.Name())
 			if err != nil {
 				return err
 			}
 		}
 	}
+
+	// check for dependency-cycles
+	// for _, root := range p.Roots {
+	// 	if err := root.AssertDependenciesAcyclic(); err != nil {
+	// 		return err
+	// 	}
+	// }
+
 	return nil
 }
 
@@ -109,11 +117,7 @@ func (p *Project) BuildRoot(rootName string, scopes []string) ([]string, error) 
 	// first, get the root
 	root, ok := p.Roots[rootName]
 	if !ok {
-		var err error
-		err = p.AddRoot(rootName)
-		if err != nil {
-			return nil, err
-		}
+		return nil, fmt.Errorf("Root '%s' isn't loaded. Did you run `AddAllRoots`?", rootName)
 	}
 	root = p.Roots[rootName]
 	p.Debugf("root: %+v", root)
@@ -150,9 +154,9 @@ func (p *Project) BuildRoot(rootName string, scopes []string) ([]string, error) 
 	return dirs, nil
 }
 
-// AddRoot tells the receiver to add a root module to its internal records.
+// addRoot tells the receiver to add a root module to its internal records.
 // The `rootName` must be a directory name located in the receiver's `RootsDir`.
-func (p *Project) AddRoot(rootName string) error {
+func (p *Project) addRoot(rootName string) error {
 	// look for named root
 	rootDir := path.Join(p.RootsDir, rootName)
 	_, err := os.Stat(rootDir)
@@ -181,7 +185,7 @@ func (p *Project) AddRoot(rootName string) error {
 		p.Roots = make(map[string]*root)
 	}
 	if r != nil {
-		p.Roots[r.ID] = r
+		p.Roots[r.name] = r
 	}
 	return nil
 }
@@ -248,7 +252,7 @@ func (p *Project) determineMatchingScopes(root *root, scopes []string) (Compiled
 			"\t- new scope data for the project,\n"+
 			"\t- different scope types in the root configuration file, or\n"+
 			"\t- new scope matches in the root configuration file.",
-			root.ID, root.ScopeTypes, len(p.compiledScopes))
+			root.name, root.ScopeTypes, len(p.compiledScopes))
 	}
 	return matchingScopes, nil
 }

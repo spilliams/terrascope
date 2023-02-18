@@ -1,4 +1,4 @@
-root "account-bucket" {
+root {
   scopeTypes = ["org", "platform", "domain", "environment"]
 }
 
