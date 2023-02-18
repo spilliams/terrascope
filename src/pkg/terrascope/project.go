@@ -102,11 +102,9 @@ func (p *Project) AddAllRoots() error {
 	}
 
 	// check for dependency-cycles
-	// for _, root := range p.Roots {
-	// 	if err := root.AssertDependenciesAcyclic(); err != nil {
-	// 		return err
-	// 	}
-	// }
+	if err := p.assertRootDependenciesAcyclic(); err != nil {
+		return err
+	}
 
 	return nil
 }

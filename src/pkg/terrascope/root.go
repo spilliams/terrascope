@@ -62,3 +62,44 @@ func (p *Project) GenerateRoot(name string) error {
 
 	return generate.Root(name, p.RootsDir, scopeTypes, p.Logger)
 }
+
+func (p *Project) assertRootDependenciesAcyclic() error {
+	visited := make(map[string]bool)
+	for rootName := range p.Roots {
+		if visited[rootName] {
+			continue
+		}
+		stack := make(map[string]bool)
+		if has, list := hasCyclicDependency(rootName, p.Roots, visited, stack); has {
+			return fmt.Errorf("cyclical dependency detected for root '%s': %+v", rootName, list)
+		}
+	}
+	return nil
+}
+
+// hasCyclicDependencies performs a depth-first search. It takes the current root name, the map of all roots, a visited map to keep track of which nodes have been visited, and a stack map to keep track of nodes currently on the stack. It returns true if a cyclical dependency is found, and false otherwise.
+func hasCyclicDependency(rootName string, roots map[string]*root, visited, stack map[string]bool) (bool, []string) {
+	visited[rootName] = true
+	stack[rootName] = true
+
+	for _, dep := range roots[rootName].Dependencies {
+		if !visited[dep.RootName] {
+			if has, _ := hasCyclicDependency(dep.RootName, roots, visited, stack); has {
+				return true, keys(visited)
+			}
+		} else if stack[dep.RootName] {
+			return true, keys(visited)
+		}
+	}
+
+	delete(stack, rootName)
+	return false, []string{}
+}
+
+func keys(m map[string]bool) []string {
+	l := make([]string, 0)
+	for k := range m {
+		l = append(l, k)
+	}
+	return l
+}
