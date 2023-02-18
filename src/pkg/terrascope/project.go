@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"sort"
 
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/sirupsen/logrus"
@@ -27,6 +26,7 @@ type Project struct {
 	ScopeTypes     []*ScopeType `hcl:"scope,block"`
 	ScopeDataFiles []string     `hcl:"scopeData"`
 	compiledScopes CompiledScopes
+	sfm            *scopeFilterMatcher
 
 	RootsDir string `hcl:"rootsDir"`
 	Roots    map[string]*root
@@ -85,6 +85,14 @@ func (p *Project) projectDir() string {
 	return path.Dir(p.configFile)
 }
 
+func (p *Project) scopeFilterMatcher() *scopeFilterMatcher {
+	if p.sfm != nil {
+		return p.sfm
+	}
+	p.sfm = newScopeFilterMatcher(p.compiledScopes, p.ScopeTypes, p.Logger)
+	return p.sfm
+}
+
 // AddAllRoots searches the receiver's `RootsDir` for directories, and adds them
 // all to the project as root configurations.
 func (p *Project) AddAllRoots() error {
@@ -115,7 +123,14 @@ func (p *Project) AddAllRoots() error {
 // survey the user for a "none/one/all" choice pertaining to the root's
 // dependencies.
 func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool, chain RootExecutorDependencyChaining) ([]string, error) {
-	rootExec, err := p.newRootExecutor(rootName, scopes, chain, p.Logger)
+	// make sure the root exists
+	root, ok := p.Roots[rootName]
+	if !ok {
+		return nil, fmt.Errorf("Root '%s' isn't loaded. Did you run `AddAllRoots`?", rootName)
+	}
+	root = p.Roots[rootName]
+
+	rootExec, err := newRootExecutor(root, scopes, p.scopeFilterMatcher(), chain, p.Logger)
 	if err != nil {
 		return nil, err
 	}
@@ -157,73 +172,6 @@ func (p *Project) addRoot(rootName string) error {
 		p.Roots[r.name] = r
 	}
 	return nil
-}
-
-// determineMatchingScopes takes in a root configuration and an optional list of
-// scopes. It returns a list of `CompiledScopes` where each scope in the
-// list (a) matches at least one scopeMatch expression of the root, and
-// (b) matches at least one scope given.
-// Note that a root with no scopeMatch expressions will be treated as if all its
-// scope types allow all values (`.*`).
-func (p *Project) determineMatchingScopes(root *root, scopes []string) (CompiledScopes, error) {
-	matchingScopes := CompiledScopes{}
-	// if they don't specify any scope matches, assume .* for all
-	if root.ScopeMatches == nil || len(root.ScopeMatches) == 0 {
-		allScopeMatchTypes := make(map[string]string)
-		for _, scope := range root.ScopeTypes {
-			allScopeMatchTypes[scope] = ".*"
-		}
-		root.ScopeMatches = []*scopeMatch{
-			{ScopeTypes: allScopeMatchTypes},
-		}
-	}
-
-	for _, scopeMatch := range root.ScopeMatches {
-		matches, err := p.compiledScopes.Matching(scopeMatch.ScopeTypes)
-		if err != nil {
-			return nil, err
-		}
-		matchingScopes = append(matchingScopes, matches...)
-	}
-	matchingScopes = matchingScopes.Deduplicate()
-	sort.Sort(matchingScopes)
-
-	// also abide by this list
-	if len(scopes) > 0 {
-		filteredMatchingScopes := CompiledScopes{}
-		scopeFilters := make([]map[string]string, len(scopes))
-		for i, scope := range scopes {
-			scopeFilter, err := p.makeScopeFilter(scope)
-			if err != nil {
-				return nil, err
-			}
-			scopeFilters[i] = scopeFilter
-		}
-		p.Debugf("filters on the root's full list of scope values:\n%+v", scopeFilters)
-		for _, scope := range matchingScopes {
-			for _, filter := range scopeFilters {
-				ok, err := scope.Matches(filter)
-				if err != nil {
-					return nil, err
-				}
-				if ok {
-					filteredMatchingScopes = append(filteredMatchingScopes, scope)
-				}
-			}
-		}
-		matchingScopes = filteredMatchingScopes
-	}
-
-	if len(matchingScopes) == 0 {
-		return nil, fmt.Errorf("No matching scope values found.\n"+
-			"Root '%s' applies to the scope types %v.\n"+
-			"All scopes in the project were searched (%d), and none matched these types. Please provide\n"+
-			"\t- new scope data for the project,\n"+
-			"\t- different scope types in the root configuration file, or\n"+
-			"\t- new scope matches in the root configuration file.",
-			root.name, root.ScopeTypes, len(p.compiledScopes))
-	}
-	return matchingScopes, nil
 }
 
 func pluralize(single, plural string, count int) string {

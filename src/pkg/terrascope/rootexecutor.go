@@ -1,7 +1,6 @@
 package terrascope
 
 import (
-	"fmt"
 	"path"
 	"reflect"
 	"runtime"
@@ -36,14 +35,7 @@ type rootExecutor struct {
 // If `chain` is `RootExecutorDependencyChainingUnknown`, this function will
 // survey the user for a "none/one/all" choice pertaining to the root's
 // dependencies.
-func (p *Project) newRootExecutor(rootName string, scopes []string, chain RootExecutorDependencyChaining, logger *logrus.Logger) (*rootExecutor, error) {
-	// make sure the root exists
-	root, ok := p.Roots[rootName]
-	if !ok {
-		return nil, fmt.Errorf("Root '%s' isn't loaded. Did you run `AddAllRoots`?", rootName)
-	}
-	root = p.Roots[rootName]
-
+func newRootExecutor(root *root, scopes []string, sfm *scopeFilterMatcher, chain RootExecutorDependencyChaining, logger *logrus.Logger) (*rootExecutor, error) {
 	// make sure we know how to handle dependencies (if we need to)
 	if chain == RootExecutorDependencyChainingUnknown && len(root.Dependencies) > 0 {
 		var answer string
@@ -78,7 +70,7 @@ func (p *Project) newRootExecutor(rootName string, scopes []string, chain RootEx
 	// set up the batches
 
 	// what scopes does the root apply to?
-	matchingScopes, err := p.determineMatchingScopes(root, scopes)
+	matchingScopes, err := sfm.determineMatchingScopes(root, scopes)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +81,7 @@ func (p *Project) newRootExecutor(rootName string, scopes []string, chain RootEx
 
 	mainBatch := make([]*rootScopeContext, len(matchingScopes))
 	for i, scope := range matchingScopes {
-		mainBatch[i] = newRootScopeContext(root, scope, re.Entry.Logger)
+		mainBatch[i] = newRootScopeContext(root, scope, re.Logger)
 	}
 	re.batches[0] = mainBatch
 
