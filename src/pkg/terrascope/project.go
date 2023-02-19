@@ -94,7 +94,7 @@ func (p *Project) rootDependencyCalculator() *rootDependencyCalculator {
 	if p.rdc != nil {
 		return p.rdc
 	}
-	p.rdc = &rootDependencyCalculator{roots: p.Roots}
+	p.rdc = newRootDependencyCalculator(p.Roots, p.Logger)
 	return p.rdc
 }
 
@@ -142,8 +142,6 @@ func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool, chain
 		return nil, fmt.Errorf("Root '%s' isn't loaded. Did you run `AddAllRoots`?", rootName)
 	}
 	root = p.Roots[rootName]
-	rdc := p.rootDependencyCalculator()
-	rdc.chain = chain
 	rootExec, err := p.rootExecutorFactory().newRootExecutor(root, scopes, chain)
 	if err != nil {
 		return nil, err

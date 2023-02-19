@@ -82,27 +82,12 @@ func (ref *rootExecutorFactory) newRootExecutor(root *root, scopes []string, cha
 	}
 	re.Debugf("root: %+v", root)
 
-	// set up the batches
-	// TODO root dependencies
-	if err := ref.rdc.prepareBatches(re.root.name); err != nil {
-		return nil, err
-	}
-
-	// what scopes does the root apply to?
-	matchingScopes, err := ref.sm.determineMatchingScopes(root, scopes)
+	batches, err := ref.rdc.prepareContextBatches(ref.sm, re.root, scopes)
 	if err != nil {
 		return nil, err
 	}
-	re.Infof("Root will be executed for %d %s", len(matchingScopes), pluralize("scope", "scopes", len(matchingScopes)))
-	for _, scope := range matchingScopes {
-		re.Trace(scope.Address())
-	}
 
-	mainBatch := make([]*rootScopeContext, len(matchingScopes))
-	for i, scope := range matchingScopes {
-		mainBatch[i] = newRootScopeContext(root, scope, re.Logger)
-	}
-	re.batches[0] = mainBatch
+	re.batches = batches
 
 	return re, nil
 }
