@@ -80,5 +80,3 @@ monorepo, by default this is `data.hcl` (see `example-data.hcl` for an example).
 For schema documentation, please see `docs/hcl-schema.md`
 
 ### Terrascope CLI
-
-See `src/README.md`.
