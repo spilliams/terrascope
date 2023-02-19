@@ -75,6 +75,15 @@ monorepo, by default this is `data.hcl` (see `example-data.hcl` for an example).
 
 ## Reference
 
+### Versioning
+
+While this project is not stable, it is available with unstable versions.
+
+Note: any version tag starting with `v0` is considered unstable. All minor versions under this major version should be considered as not
+backwards-compatible.
+
+See the [Changelog](./CHANGELOG.md) for version notes and migration steps.
+
 ### Terrascope HCL
 
 For schema documentation, please see `docs/hcl-schema.md`

@@ -1,14 +1,18 @@
+version := 0.1.0
+githash := $(shell git rev-parse --short HEAD)
+buildtime := $(shell date -u '+%Y-%m-%d_%I:%M:%S%pm_%Z')
+ldflags := "\
+	-X github.com/spilliams/terrascope/internal/version.versionNumber=$(version)\
+	-X github.com/spilliams/terrascope/internal/version.gitHash=$(githash)\
+	-X github.com/spilliams/terrascope/internal/version.buildTime=$(buildtime)"
+
 .PHONY: build
 build:
-	go build -o bin/terrascope main.go
+	go build -ldflags $(ldflags) -o bin/terrascope main.go
 
 .PHONY: install
 install:
-	go build -o $$GOPATH/bin/terrascope main.go
-	# GOOS=linux GOARCH=amd64 go build -o ../../bin/terrascope_linux_amd64 main.go
-	# GOOS=linux GOARCH=arm64 go build -o ../../bin/terrascope_linux_arm64 main.go
-	# GOOS=darwin GOARCH=amd64 go build -o ../../bin/terrascope_darwin_amd64 main.go
-	# GOOS=darwin GOARCH=arm64 go build -o ../../bin/terrascope_darwin_arm64 main.go
+	go build -ldflags "${ldflags}" -o $$GOPATH/bin/terrascope main.go
 
 .PHONY: test
 test:
