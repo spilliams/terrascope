@@ -38,6 +38,8 @@ func newGraphModuleCommand() *cobra.Command {
 			logrus.Debugf("%#v", parser.Parser())
 			logrus.Debugf("%#v", parser.Module())
 
+			// TODO: build a graph from the module
+
 			return nil
 		},
 	}
