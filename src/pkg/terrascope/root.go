@@ -24,15 +24,17 @@ type scopeMatch struct {
 	ScopeTypes map[string]string `hcl:"scopeTypes"`
 }
 
-func newRootDependencyCalculator(roots map[string]*root, logger *logrus.Logger) *rootDependencyCalculator {
+func newRootDependencyCalculator(roots map[string]*root, sm *scopeMatcher, logger *logrus.Logger) *rootDependencyCalculator {
 	return &rootDependencyCalculator{
 		roots: roots,
+		sm:    sm,
 		Entry: logger.WithField("prefix", "rootDepCalc"),
 	}
 }
 
 type rootDependencyCalculator struct {
 	roots map[string]*root
+	sm    *scopeMatcher
 	*logrus.Entry
 }
 
@@ -81,7 +83,20 @@ func keys(m map[string]bool) []string {
 	return l
 }
 
-func (rdc *rootDependencyCalculator) prepareContextBatches(sm *scopeMatcher, r *root, scopes []string) ([][]*rootScopeContext, error) {
+func (rdc *rootDependencyCalculator) prepareContextBatches(sm *scopeMatcher, r *root, scopes []string, chainDependencies RootDependencyChain) ([][]*rootScopeContext, error) {
+	if chainDependencies == RootDependencyChainUnknown {
+		return nil, fmt.Errorf("cannot prepare batches with an unknown chaining rule")
+	}
+	rdc.Debugf("preparingContextBatches with chaining set to %d", chainDependencies)
+	// map of rootName+scopeAddress to scope context object
+	contexts := make(map[string]*rootScopeContext)
+	// map of rootName+scopeAddress to order number (0-indexed, and reversed:
+	// the higher the number, the earlier in the exec process it should go)
+	batchOrder := make(map[string]int)
+	// Contexts we have yet  to visit
+	stack := make([]*rootScopeContext, 0)
+	// first step is to prime the pump. base case.
+
 	// what scopes does the root apply to?
 	matchingScopes, err := sm.determineMatchingScopes(r, scopes)
 	if err != nil {
@@ -90,54 +105,65 @@ func (rdc *rootDependencyCalculator) prepareContextBatches(sm *scopeMatcher, r *
 	rdc.Infof("Root will be executed for %d %s", len(matchingScopes), pluralize("scope", "scopes", len(matchingScopes)))
 	for _, scope := range matchingScopes {
 		rdc.Trace(scope.Address())
+		rootScope := newRootScopeContext(r, scope, rdc.Logger)
+		contexts[rootScope.String()] = rootScope
+		batchOrder[rootScope.String()] = 0
+		stack = append(stack, rootScope)
+	}
+	highestOrder := 0
+
+	// second step is to loop
+	keepGoing := chainDependencies != RootDependencyChainNone
+	for keepGoing && len(stack) > 0 {
+		context := stack[0]
+		key := context.String()
+		order := batchOrder[key]
+
+		for _, dep := range context.root.Dependencies {
+			depRoot := rdc.roots[dep.RootName]
+			// resolve the dep.RootName, dep.Scopes and context.scope into a new
+			// compiled scope
+			depScope, err := sm.resolveDependencyScope(depRoot, context.scope, dep.Scopes)
+			if err != nil {
+				return nil, err
+			}
+			depCtx := newRootScopeContext(depRoot, depScope, rdc.Logger)
+			contexts[depCtx.String()] = depCtx
+			// is it already in the order?
+			if _, ok := batchOrder[depCtx.String()]; ok {
+				newOrder := int(math.Max(float64(batchOrder[depCtx.String()]), float64(order+1)))
+				batchOrder[depCtx.String()] = newOrder
+				highestOrder = int(math.Max(float64(highestOrder), float64(newOrder)))
+				continue
+			}
+			batchOrder[depCtx.String()] = order + 1
+			highestOrder = int(math.Max(float64(highestOrder), float64(order+1)))
+			// go look at these too if we should do more than just the direct deps
+			if chainDependencies == RootDependencyChainAll {
+				stack = append(stack, depCtx)
+			}
+		}
+		stack = stack[1:]
 	}
 
-	mainBatch := make([]*rootScopeContext, len(matchingScopes))
-	for i, scope := range matchingScopes {
-		mainBatch[i] = newRootScopeContext(r, scope, rdc.Logger)
+	// finally, turn the batch order map into a list (in the correct order)
+	batchList := make([][]*rootScopeContext, highestOrder+1)
+	for i := 0; i <= highestOrder; i++ {
+		batchList[i] = make([]*rootScopeContext, 0)
 	}
-	// TODO root dependencies
-	return nil, nil
+	for key, index := range batchOrder {
+		reversedIndex := highestOrder - index
+		batchList[reversedIndex] = append(batchList[reversedIndex], contexts[key])
+	}
+
+	for i, batch := range batchList {
+		rdc.Infof("Batch %d:", i+1)
+		for _, item := range batch {
+			rdc.Infof("\t%s", item.String())
+		}
+	}
+	return batchList, nil
 }
-
-// func (rdc *rootDependencyCalculator) prepareBatches(rootName string) ([][]string, error) {
-// 	batchOrder := make(map[string]int)
-// 	batchOrder[rootName] = 0
-// 	chainAll := false
-// 	switch rdc.chain {
-// 	case RootDependencyChainNone:
-// 		return makeBatches(batchOrder), nil
-// 	case RootDependencyChainOne:
-// 		break
-// 	case RootDependencyChainAll:
-// 		chainAll = true
-// 		break
-// 	default:
-// 		return nil, fmt.Errorf("cannot prepare batches with unknown chaining rules")
-// 	}
-
-// 	return prepareBatchesRecursive(batchOrder, rootName, chainAll)
-// }
-
-// func (rdc *rootDependencyCalculator) prepareBatchesRecursive(batchOrder map[string]int, rootName string, recurse bool) ([][]string, error) {
-// 	root, ok := rdc.roots[rootName]
-// 	if !ok || root == nil {
-// 		return nil, fmt.Errorf("cannot prepare batches for unrecognized root name '%s'", rootName)
-// 	}
-// 	rootOrder, ok := batchOrder[rootName]
-// 	if !ok {
-// 		return nil, fmt.Errorf("unknown error happened in the batch ordering process")
-// 	}
-
-// 	for {
-// 		for _, dep := range root.Dependencies {
-
-// 		}
-// 		if !chainAll {
-// 			return makeBatches(batchOrder, numBatches), nil
-// 		}
-// 	}
-// }
 
 func makeBatches(batchOrder map[string]int) [][]string {
 	count := 0

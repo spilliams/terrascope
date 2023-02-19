@@ -39,9 +39,6 @@ type rootExecutor struct {
 	root    *root
 	batches [][]*rootScopeContext
 	*logrus.Entry
-
-	// how to chain the dependencies found in the receiver's root contexts
-	ChainDependencies RootDependencyChain
 }
 
 // newRootExecutor builds a new rootExecutor for the given root, scopes and
@@ -77,12 +74,10 @@ func (ref *rootExecutorFactory) newRootExecutor(root *root, scopes []string, cha
 		root:    root,
 		batches: make([][]*rootScopeContext, 1),
 		Entry:   ref.entry,
-
-		ChainDependencies: chain,
 	}
 	re.Debugf("root: %+v", root)
 
-	batches, err := ref.rdc.prepareContextBatches(ref.sm, re.root, scopes)
+	batches, err := ref.rdc.prepareContextBatches(ref.sm, re.root, scopes, chain)
 	if err != nil {
 		return nil, err
 	}

@@ -132,3 +132,35 @@ func (sm *scopeMatcher) makeFilter(address string) (map[string]string, error) {
 	sm.Debugf("  mapping %+v", m)
 	return m, nil
 }
+
+func (sm *scopeMatcher) resolveDependencyScope(ancestor *root, descendantScope *CompiledScope, ancestorScopes map[string]string) (*CompiledScope, error) {
+	ancestorFullScopes := make(map[string]string)
+	for _, scopeType := range ancestor.ScopeTypes {
+		if customValue, ok := ancestorScopes[scopeType]; ok {
+			ancestorFullScopes[scopeType] = customValue
+			continue
+		}
+		descendantScopeTypeIndex := indexOf(scopeType, descendantScope.ScopeTypes)
+		descendantScopeValue := descendantScope.ScopeValues[descendantScopeTypeIndex]
+		ancestorFullScopes[scopeType] = descendantScopeValue
+	}
+	sm.Tracef("Searching compiled scopes for a match to the scope description %v", ancestorFullScopes)
+	matches := make([]*CompiledScope, 0)
+	for _, cs := range sm.compiledScopes {
+		match, err := cs.Matches(ancestorFullScopes)
+		if err != nil {
+			return nil, err
+		}
+		if match {
+			sm.Tracef("\tmatch found: %s", cs.String())
+			matches = append(matches, cs)
+		}
+	}
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("cannot find a compiled scope matching the description %v", ancestorFullScopes)
+	}
+	if len(matches) > 1 {
+		return nil, fmt.Errorf("multiple matches found for a single scope description %v", ancestorFullScopes)
+	}
+	return matches[0], nil
+}

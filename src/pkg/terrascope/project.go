@@ -94,7 +94,7 @@ func (p *Project) rootDependencyCalculator() *rootDependencyCalculator {
 	if p.rdc != nil {
 		return p.rdc
 	}
-	p.rdc = newRootDependencyCalculator(p.Roots, p.Logger)
+	p.rdc = newRootDependencyCalculator(p.Roots, p.scopeMatcher(), p.Logger)
 	return p.rdc
 }
 
@@ -121,6 +121,7 @@ func (p *Project) AddAllRoots() error {
 			}
 		}
 	}
+	p.Debugf("Project has %d roots", len(p.Roots))
 
 	// check for dependency-cycles
 	if err := p.rootDependencyCalculator().assertRootDependenciesAcyclic(); err != nil {
@@ -161,7 +162,7 @@ func (p *Project) addRoot(rootName string) error {
 	} else if err != nil {
 		return err
 	}
-	p.Debugf("Adding root %s", rootDir)
+	p.Tracef("Adding root %s", rootDir)
 
 	// look for terrascope file
 	rootCfg := path.Join(rootDir, "terrascope.hcl")
