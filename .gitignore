@@ -1,3 +1,31 @@
+bin/
+.vscode/
+
+.terraform/
+*.tfstate*
+
+# some files i like to play with
+*.tf
+*.hcl
+*.tfl
+*.svg
+*.dot
+*.png
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+__debug_bin
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
 # these folders and files are for debug only
 .terrascope
 .terrascope.hcl
