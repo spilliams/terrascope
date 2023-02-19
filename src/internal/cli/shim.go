@@ -18,6 +18,11 @@ func newSpecificTerraformCommand(name string) *cobra.Command {
 
 		PersistentPreRunE: parseProject,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
 			// log.Infof("args: %+v", args)
 			scopes := make([]string, 0, len(args)-1)
 			tfargs := make([]string, 0, len(args)-1)
@@ -68,6 +73,11 @@ func newGenericTerraformCommand() *cobra.Command {
 
 		PersistentPreRunE: parseProject,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
 			// log.Infof("args: %+v", args)
 			scopes := make([]string, 0, len(args)-1)
 			tfargs := make([]string, 0, len(args)-1)
