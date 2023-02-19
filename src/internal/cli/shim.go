@@ -8,8 +8,6 @@ import (
 	"github.com/spilliams/terrascope/internal/shell"
 )
 
-var dryRun bool
-
 func newSpecificTerraformCommand(name string) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     fmt.Sprintf("%s ROOT [SCOPE]... [-- TF_FLAG=VALUE]", name),
@@ -40,7 +38,7 @@ func newSpecificTerraformCommand(name string) *cobra.Command {
 			log.Infof("found scopes: %+v", scopes)
 			log.Infof("remaining args: %+v", args[i:])
 			// get a list of locations to run in
-			dirs, err := project.BuildRoot(args[0], scopes)
+			dirs, err := project.BuildRoot(args[0], scopes, dryRun, chainDependenciesOption())
 			if err != nil {
 				return err
 			}
@@ -55,8 +53,6 @@ func newSpecificTerraformCommand(name string) *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "don't actually run the terraform command, just print it out")
 
 	return cmd
 }
@@ -91,7 +87,7 @@ func newGenericTerraformCommand() *cobra.Command {
 			log.Infof("found scopes: %+v", scopes)
 			log.Infof("remaining args: %+v", args[i:])
 			// get a list of locations to run in
-			dirs, err := project.BuildRoot(args[0], scopes)
+			dirs, err := project.BuildRoot(args[0], scopes, dryRun, chainDependenciesOption())
 			if err != nil {
 				return err
 			}
@@ -106,8 +102,6 @@ func newGenericTerraformCommand() *cobra.Command {
 			return nil
 		},
 	}
-
-	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "don't actually run the terraform command, just print it out")
 
 	return cmd
 }

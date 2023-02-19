@@ -1,4 +1,4 @@
-root "region-something" {
+root {
   scopeTypes = ["org", "platform", "domain", "environment", "region"]
 
   dependency {

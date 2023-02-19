@@ -6,6 +6,7 @@ import (
 
 	"github.com/awalterschulze/gographviz"
 	"github.com/spf13/cobra"
+	"github.com/spilliams/terrascope/pkg/terrascope"
 )
 
 func newRootCommand() *cobra.Command {
@@ -20,7 +21,7 @@ func newRootCommand() *cobra.Command {
 
 	cmd.AddCommand(newRootBuildCommand())
 	cmd.AddCommand(newRootGenerateCommand())
-	cmd.AddCommand(newRootGraphCommand())
+	cmd.AddCommand(newRootGraphDependenciesCommand())
 	cmd.AddCommand(newRootListCommand())
 
 	return cmd
@@ -33,11 +34,16 @@ func newRootBuildCommand() *cobra.Command {
 		Short:   "Builds the given root and prints the location of the built configurations to stdout",
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
 			scopes := make([]string, len(args)-1)
 			for i := 1; i < len(args); i++ {
 				scopes[i-1] = args[i]
 			}
-			dirs, err := project.BuildRoot(args[0], scopes)
+			dirs, err := project.BuildRoot(args[0], scopes, dryRun, chainDependenciesOption())
 
 			for _, dir := range dirs {
 				fmt.Println(dir)
@@ -65,10 +71,10 @@ func newRootGenerateCommand() *cobra.Command {
 	return cmd
 }
 
-func newRootGraphCommand() *cobra.Command {
+func newRootGraphDependenciesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "graph",
-		Short: "",
+		Use:   "graph-dependencies",
+		Short: "Prints out a DOT-format graph of the roots in this Terrascope project and their dependencies",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := project.AddAllRoots()
 			if err != nil {
@@ -92,7 +98,7 @@ func newRootGraphCommand() *cobra.Command {
 
 			for name, root := range project.Roots {
 				for _, dep := range root.Dependencies {
-					src := fmt.Sprintf("\"%s\"", dep.Root)
+					src := fmt.Sprintf("\"%s\"", dep.RootName)
 					dst := fmt.Sprintf("\"%s\"", name)
 					if err := graph.AddEdge(src, dst, true, nil); err != nil {
 						return err
@@ -138,4 +144,17 @@ func newRootListCommand() *cobra.Command {
 		},
 	}
 	return cmd
+}
+
+func chainDependenciesOption() terrascope.RootDependencyChain {
+	if all {
+		return terrascope.RootDependencyChainAll
+	}
+	if noNone {
+		return terrascope.RootDependencyChainNone
+	}
+	if yesOne {
+		return terrascope.RootDependencyChainOne
+	}
+	return terrascope.RootDependencyChainUnknown
 }

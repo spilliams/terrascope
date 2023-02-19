@@ -65,7 +65,7 @@ func (cs *CompiledScope) Matches(types map[string]string) (bool, error) {
 			return false, nil
 		}
 		myValue := cs.ScopeValues[scopeIdx]
-		re, err := regexp.Compile(matchValue)
+		re, err := regexp.Compile(fmt.Sprintf("^%s$", matchValue))
 		if err != nil {
 			return false, err
 		}

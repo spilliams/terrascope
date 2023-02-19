@@ -7,7 +7,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/sirupsen/logrus"
-	"github.com/spilliams/terrascope/internal/surveyhelp"
+	surveyhelp "github.com/spilliams/terrascope/internal/survey"
 	"github.com/zclconf/go-cty/cty"
 )
 

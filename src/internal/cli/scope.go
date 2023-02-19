@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spilliams/terrascope/internal/ctyhelp"
+	"github.com/spilliams/terrascope/internal/cty"
 	"github.com/spilliams/terrascope/pkg/terrascope"
 )
 
@@ -55,7 +55,7 @@ func newScopeListCommand() *cobra.Command {
 func newScopeShowCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "show SCOPE",
-		Short: "Display a single scope value and it associated attributes",
+		Short: "Display a single scope value and its associated attributes",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			scopes, err := project.GetCompiledScopes(args[0])
@@ -80,7 +80,7 @@ func newScopeShowCommand() *cobra.Command {
 func printScope(scope *terrascope.CompiledScope) {
 	fmt.Printf("%s:\n", scope.Address())
 	for k, v := range scope.Attributes {
-		vPrint := ctyhelp.String(v)
+		vPrint := cty.String(v)
 		fmt.Printf("\t%s: %s\n", k, vPrint)
 	}
 }

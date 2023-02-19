@@ -29,15 +29,15 @@ func newProviderCommand() *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&topDir, "dir", "d", ".", "the directory to search")
 	cmd.PersistentFlags().StringArrayVarP(&ignoreNames, "ignore", "i", []string{}, "names to ignore. `.terraform/` is appended to this list internally.")
 
-	cmd.AddCommand(newCacheCmd())
-	cmd.AddCommand(newHashesCmd())
-	cmd.AddCommand(newVersionsCmd())
-	cmd.AddCommand(newWhyCmd())
+	cmd.AddCommand(newProviderCacheCmd())
+	cmd.AddCommand(newProviderHashesCmd())
+	cmd.AddCommand(newProviderVersionsCmd())
+	cmd.AddCommand(newProviderWhyCmd())
 
 	return cmd
 }
 
-func newCacheCmd() *cobra.Command {
+func newProviderCacheCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cache",
 		Short: "identifies a small set of terraform roots in the top directory " + "that, when applied, will cache the full set of providers required " + "by any root under the top directory",
@@ -119,7 +119,7 @@ func newCacheCmd() *cobra.Command {
 	return cmd
 }
 
-func newHashesCmd() *cobra.Command {
+func newProviderHashesCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hashes",
 		Short: "Inspects all provider version hashes and notes exceptions",
@@ -175,7 +175,7 @@ func newHashesCmd() *cobra.Command {
 	return cmd
 }
 
-func newVersionsCmd() *cobra.Command {
+func newProviderVersionsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "versions",
 		Short: "prints out all the versions required by lockfiles in or under the top directory",
@@ -212,7 +212,7 @@ func newVersionsCmd() *cobra.Command {
 	return cmd
 }
 
-func newWhyCmd() *cobra.Command {
+func newProviderWhyCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use: "why PROVIDER[@VERSION]",
 		Short: "prints out all the roots in or under the top directory that " +
