@@ -31,7 +31,7 @@ func newScopeMatcher(compiledScopes CompiledScopes, scopeTypes []*ScopeType, log
 // (b) matches at least one scope given.
 // Note that a root with no scopeMatch expressions will be treated as if all its
 // scope types allow all values (`.*`).
-func (sm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (CompiledScopes, error) {
+func (sm *scopeMatcher) determineMatchingScopes(root *Root, scopes []string) (CompiledScopes, error) {
 	matchingScopes := CompiledScopes{}
 	// if they don't specify any scope matches, assume .* for all
 	if root.ScopeMatches == nil || len(root.ScopeMatches) == 0 {
@@ -39,7 +39,7 @@ func (sm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (Co
 		for _, scope := range root.ScopeTypes {
 			allScopeMatchTypes[scope] = ".*"
 		}
-		root.ScopeMatches = []*scopeMatch{
+		root.ScopeMatches = []*ScopeMatch{
 			{ScopeTypes: allScopeMatchTypes},
 		}
 	}
@@ -87,7 +87,7 @@ func (sm *scopeMatcher) determineMatchingScopes(root *root, scopes []string) (Co
 			"\t- new scope data for the project,\n"+
 			"\t- different scope types in the root configuration file, or\n"+
 			"\t- new scope matches in the root configuration file.",
-			root.name, root.ScopeTypes, len(sm.compiledScopes))
+			root.Name, root.ScopeTypes, len(sm.compiledScopes))
 	}
 	return matchingScopes, nil
 }
@@ -133,7 +133,7 @@ func (sm *scopeMatcher) makeFilter(address string) (map[string]string, error) {
 	return m, nil
 }
 
-func (sm *scopeMatcher) resolveDependencyScope(ancestor *root, descendantScope *CompiledScope, ancestorScopes map[string]string) (*CompiledScope, error) {
+func (sm *scopeMatcher) resolveDependencyScope(ancestor *Root, descendantScope *CompiledScope, ancestorScopes map[string]string) (*CompiledScope, error) {
 	ancestorFullScopes := make(map[string]string)
 	for _, scopeType := range ancestor.ScopeTypes {
 		if customValue, ok := ancestorScopes[scopeType]; ok {
