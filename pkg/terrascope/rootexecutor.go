@@ -113,7 +113,7 @@ func (re *rootExecutor) Execute(f ExecFunc, dry bool) ([]string, error) {
 		}
 	}
 	if dry {
-		re.Infof("Note: This was a dry-run, so Terrascope can't guarantee to take exactly these actions if you re-run without the dry run flag enabled.")
+		re.Infof("Note: This was a dry-run, so Terrascope can't guarantee to take exactly these actions if you re-run without the dry-run flag enabled.")
 	}
 
 	return outputs, nil

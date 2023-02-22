@@ -20,6 +20,7 @@ func newRootCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(newRootBuildCommand())
+	cmd.AddCommand(newRootCleanCommand())
 	cmd.AddCommand(newRootGenerateCommand())
 	cmd.AddCommand(newRootGraphDependenciesCommand())
 	cmd.AddCommand(newRootListCommand())
@@ -45,6 +46,31 @@ func newRootBuildCommand() *cobra.Command {
 			}
 			dirs, err := project.BuildRoot(args[0], scopes, dryRun, chainDependenciesOption())
 
+			for _, dir := range dirs {
+				fmt.Println(dir)
+			}
+			return err
+		},
+	}
+
+	return cmd
+}
+
+func newRootCleanCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "clean ROOT [SCOPE]",
+		Short: "Cleans a root of all generated files",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
+			scopes := make([]string, len(args)-1)
+			for i := 1; i < len(args); i++ {
+				scopes[i-1] = args[i]
+			}
+			dirs, err := project.CleanRoot(args[0], scopes, dryRun)
 			for _, dir := range dirs {
 				fmt.Println(dir)
 			}

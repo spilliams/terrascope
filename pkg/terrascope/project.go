@@ -137,6 +137,16 @@ func (p *Project) AddAllRoots() error {
 // survey the user for a "none/one/all" choice pertaining to the root's
 // dependencies.
 func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool, chain RootDependencyChain) ([]string, error) {
+	return p.rootExec(rootName, scopes, dryRun, chain, BuildContext)
+}
+
+// CleanRoot tells the receiver to clean a root module, and returns a list of
+// directories that were deleted.
+func (p *Project) CleanRoot(rootName string, scopes []string, dryRun bool) ([]string, error) {
+	return p.rootExec(rootName, scopes, dryRun, RootDependencyChainNone, CleanContext)
+}
+
+func (p *Project) rootExec(rootName string, scopes []string, dryRun bool, chain RootDependencyChain, f ExecFunc) ([]string, error) {
 	// make sure the root exists
 	root, ok := p.Roots[rootName]
 	if !ok {
@@ -148,7 +158,7 @@ func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool, chain
 		return nil, err
 	}
 
-	return rootExec.Execute(BuildContext, dryRun)
+	return rootExec.Execute(f, dryRun)
 }
 
 // addRoot tells the receiver to add a root module to its internal records.
