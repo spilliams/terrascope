@@ -7,24 +7,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type root struct {
-	filename     string
-	name         string
+type Root struct {
+	Filename     string
+	Name         string
 	ScopeTypes   []string          `hcl:"scopeTypes"`
-	Dependencies []*rootDependency `hcl:"dependency,block"`
-	ScopeMatches []*scopeMatch     `hcl:"scopeMatch,block"`
+	Dependencies []*RootDependency `hcl:"dependency,block"`
+	ScopeMatches []*ScopeMatch     `hcl:"scopeMatch,block"`
 }
 
-type rootDependency struct {
+type RootDependency struct {
 	RootName string            `hcl:"root"`
 	Scopes   map[string]string `hcl:"scopes,optional"`
 }
 
-type scopeMatch struct {
+type ScopeMatch struct {
 	ScopeTypes map[string]string `hcl:"scopeTypes"`
 }
 
-func newRootDependencyCalculator(roots map[string]*root, sm *scopeMatcher, logger *logrus.Logger) *rootDependencyCalculator {
+func newRootDependencyCalculator(roots map[string]*Root, sm *scopeMatcher, logger *logrus.Logger) *rootDependencyCalculator {
 	return &rootDependencyCalculator{
 		roots: roots,
 		sm:    sm,
@@ -33,7 +33,7 @@ func newRootDependencyCalculator(roots map[string]*root, sm *scopeMatcher, logge
 }
 
 type rootDependencyCalculator struct {
-	roots map[string]*root
+	roots map[string]*Root
 	sm    *scopeMatcher
 	*logrus.Entry
 }
@@ -83,7 +83,7 @@ func keys(m map[string]bool) []string {
 	return l
 }
 
-func (rdc *rootDependencyCalculator) prepareContextBatches(sm *scopeMatcher, r *root, scopes []string, chainDependencies RootDependencyChain) ([][]*rootScopeContext, error) {
+func (rdc *rootDependencyCalculator) prepareContextBatches(sm *scopeMatcher, r *Root, scopes []string, chainDependencies RootDependencyChain) ([][]*rootScopeContext, error) {
 	if chainDependencies == RootDependencyChainUnknown {
 		return nil, fmt.Errorf("cannot prepare batches with an unknown chaining rule")
 	}

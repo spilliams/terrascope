@@ -32,7 +32,7 @@ type Project struct {
 	sm             *scopeMatcher
 
 	RootsDir string `hcl:"rootsDir"`
-	Roots    map[string]*root
+	Roots    map[string]*Root
 	rdc      *rootDependencyCalculator
 	ref      *rootExecutorFactory
 
@@ -189,10 +189,10 @@ func (p *Project) addRoot(rootName string) error {
 	}
 
 	if p.Roots == nil {
-		p.Roots = make(map[string]*root)
+		p.Roots = make(map[string]*Root)
 	}
 	if r != nil {
-		p.Roots[r.name] = r
+		p.Roots[r.Name] = r
 	}
 	return nil
 }
@@ -206,11 +206,11 @@ func pluralize(single, plural string, count int) string {
 
 // ParseRoot tells the receiver to parse a root module configuration file at the
 // given path.
-func (p *Project) ParseRoot(cfgFile string) (*root, error) {
+func (p *Project) ParseRoot(cfgFile string) (*Root, error) {
 	// partial decode first, because we don't know what scope or attributes
 	// this config will use. We're just looking for the `root` block here.
 	cfg := &struct {
-		Root *root `hcl:"root,block"`
+		Root *Root `hcl:"root,block"`
 	}{}
 
 	err := hclsimple.DecodeFile(cfgFile, hclhelp.DefaultContext(), cfg)
@@ -221,8 +221,8 @@ func (p *Project) ParseRoot(cfgFile string) (*root, error) {
 		return nil, nil
 	}
 
-	r.filename = cfgFile
-	r.name = path.Base(path.Dir(cfgFile))
+	r.Filename = cfgFile
+	r.Name = path.Base(path.Dir(cfgFile))
 	return r, err
 }
 
@@ -368,4 +368,10 @@ func (p *Project) IsScopeValue(address string) (bool, error) {
 		}
 	}
 	return false, nil
+}
+
+// GetRoot asks the receiver to return a single root. Will return nil if the
+// receiver doesn't know of a root by the given name.
+func (p *Project) GetRoot(rootName string) *Root {
+	return p.Roots[rootName]
 }

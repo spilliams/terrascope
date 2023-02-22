@@ -17,29 +17,29 @@ import (
 )
 
 type rootScopeContext struct {
-	root  *root
+	root  *Root
 	scope *CompiledScope
 	*logrus.Entry
 }
 
-func newRootScopeContext(root *root, scope *CompiledScope, logger *logrus.Logger) *rootScopeContext {
+func newRootScopeContext(root *Root, scope *CompiledScope, logger *logrus.Logger) *rootScopeContext {
 	return &rootScopeContext{
 		root:  root,
 		scope: scope,
 		Entry: logger.WithFields(logrus.Fields{
 			"prefix": "builder",
-			"root":   root.name,
+			"root":   root.Name,
 			"scope":  scope.Address(),
 		}),
 	}
 }
 
 func (rsc *rootScopeContext) String() string {
-	return fmt.Sprintf("%s (%s)", rsc.root.name, rsc.scope.Address())
+	return fmt.Sprintf("%s (%s)", rsc.root.Name, rsc.scope.Address())
 }
 
 type rootConfig struct {
-	Root       *root                 `hcl:"root,block"`
+	Root       *Root                 `hcl:"root,block"`
 	Generators []*generator          `hcl:"generate,block"`
 	Inputs     map[string]*cty.Value `hcl:"inputs,optional"`
 }
@@ -51,7 +51,7 @@ type generator struct {
 }
 
 func (rsc *rootScopeContext) rootDirectory() string {
-	return path.Dir(rsc.root.filename)
+	return path.Dir(rsc.root.Filename)
 }
 
 func (rsc *rootScopeContext) destination() string {
@@ -62,7 +62,7 @@ func (rsc *rootScopeContext) destination() string {
 
 func BuildContext(rsc *rootScopeContext) (string, error) {
 	rootVariable := cty.MapVal(map[string]cty.Value{
-		"name": cty.StringVal(rsc.root.name),
+		"name": cty.StringVal(rsc.root.Name),
 	})
 	scopeVariable := rsc.scope.ToCtyValue()
 	attributesVariable := cty.ObjectVal(rsc.scope.Attributes)
@@ -75,7 +75,7 @@ func BuildContext(rsc *rootScopeContext) (string, error) {
 	ctx.Variables["attributes"] = cty.ObjectVal(rsc.scope.Attributes)
 
 	cfg := &rootConfig{}
-	err := hclsimple.DecodeFile(rsc.root.filename, ctx, cfg)
+	err := hclsimple.DecodeFile(rsc.root.Filename, ctx, cfg)
 	if err != nil {
 		return "", err
 	}

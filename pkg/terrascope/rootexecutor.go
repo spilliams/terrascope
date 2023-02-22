@@ -36,7 +36,7 @@ func newRootExecutorFactory(sm *scopeMatcher, rdc *rootDependencyCalculator, log
 // This entails being able to enumerate all root-scope contexts applicable to
 // the root as well as to handle how the root may depend on other roots.
 type rootExecutor struct {
-	root    *root
+	root    *Root
 	batches [][]*rootScopeContext
 	*logrus.Entry
 }
@@ -46,7 +46,7 @@ type rootExecutor struct {
 // If `chain` is `RootExecutorDependencyChainingUnknown`, this function will
 // survey the user for a "none/one/all" choice pertaining to the root's
 // dependencies.
-func (ref *rootExecutorFactory) newRootExecutor(root *root, scopes []string, chain RootDependencyChain) (*rootExecutor, error) {
+func (ref *rootExecutorFactory) newRootExecutor(root *Root, scopes []string, chain RootDependencyChain) (*rootExecutor, error) {
 	// make sure we know how to handle dependencies (if we need to)
 	if chain == RootDependencyChainUnknown && len(root.Dependencies) > 0 {
 		var answer string
