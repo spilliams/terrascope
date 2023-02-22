@@ -2,6 +2,12 @@
 
 See [Versioning](./README.md#Versioning) for how to regard these version numbers.
 
+## 0.1.1
+
+Adds a new command: `terrascope root clean ROOT [SCOPE]`, to clean up builds.
+
+Also adds a shorthand to the `--dry-run` flag: `-d`.
+
 ## 0.1.0
 
 Initial release of the CLI tool and package!

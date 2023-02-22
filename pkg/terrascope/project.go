@@ -140,6 +140,8 @@ func (p *Project) BuildRoot(rootName string, scopes []string, dryRun bool, chain
 	return p.rootExec(rootName, scopes, dryRun, chain, BuildContext)
 }
 
+// CleanRoot tells the receiver to clean a root module, and returns a list of
+// directories that were deleted.
 func (p *Project) CleanRoot(rootName string, scopes []string, dryRun bool) ([]string, error) {
 	return p.rootExec(rootName, scopes, dryRun, RootDependencyChainNone, CleanContext)
 }
