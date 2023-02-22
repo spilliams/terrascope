@@ -210,3 +210,9 @@ func (rsc *rootScopeContext) generateDebugFile(destination string, rootVar, scop
 	_, err = debugFile.WriteTo(file)
 	return err
 }
+
+func CleanContext(rsc *rootScopeContext) (string, error) {
+	destination := rsc.destination()
+	err := os.RemoveAll(destination)
+	return destination, err
+}
