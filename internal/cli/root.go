@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"io/ioutil"
 	"sort"
 
 	"github.com/awalterschulze/gographviz"
@@ -24,6 +25,7 @@ func newRootCommand() *cobra.Command {
 	cmd.AddCommand(newRootGenerateCommand())
 	cmd.AddCommand(newRootGraphDependenciesCommand())
 	cmd.AddCommand(newRootListCommand())
+	cmd.AddCommand(newRootShowCommand())
 
 	return cmd
 }
@@ -59,6 +61,7 @@ func newRootBuildCommand() *cobra.Command {
 func newRootCleanCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clean ROOT [SCOPE]",
+		Args:  cobra.MinimumNArgs(1),
 		Short: "Cleans a root of all generated files",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := project.AddAllRoots()
@@ -169,6 +172,34 @@ func newRootListCommand() *cobra.Command {
 			return nil
 		},
 	}
+	return cmd
+}
+
+func newRootShowCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "show ROOT",
+		Short: "Prints information about a root",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
+			root := project.GetRoot(args[0])
+			if root == nil {
+				log.Warnf("No root named %s was found", args[0])
+			}
+
+			file, err := ioutil.ReadFile(root.Filename)
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(file))
+			return nil
+		},
+	}
+
 	return cmd
 }
 

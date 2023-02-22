@@ -369,3 +369,9 @@ func (p *Project) IsScopeValue(address string) (bool, error) {
 	}
 	return false, nil
 }
+
+// GetRoot asks the receiver to return a single root. Will return nil if the
+// receiver doesn't know of a root by the given name.
+func (p *Project) GetRoot(rootName string) *Root {
+	return p.Roots[rootName]
+}
