@@ -1,4 +1,4 @@
-// Package cli provides fucntions relating to running terrascope as a command-
+// Package cli provides functions relating to running terrascope as a command-
 // line interface.
 package cli
 
