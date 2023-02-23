@@ -8,6 +8,7 @@ See [Versioning](./README.md#Versioning) for how to regard these version numbers
   configuration file for the given root.
 - Generated context files will now show which scope each value came from, for
   debugging purposes.
+- Bumps golang.org/x/text from 0.3.7 to 0.3.8
 
 ## 0.1.1
 
