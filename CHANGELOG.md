@@ -2,11 +2,17 @@
 
 See [Versioning](./README.md#Versioning) for how to regard these version numbers.
 
+## 0.1.2
+
+- Adds a command `terrascope root show ROOT` which will print out the terrascope
+  configuration file for the given root.
+- Generated context files will now show which scope each value came from, for
+  debugging purposes.
+
 ## 0.1.1
 
-Adds a new command: `terrascope root clean ROOT [SCOPE]`, to clean up builds.
-
-Also adds a shorthand to the `--dry-run` flag: `-d`.
+- Adds a new command: `terrascope root clean ROOT [SCOPE]`, to clean up builds.
+-nAlso adds a shorthand to the `--dry-run` flag: `-d`.
 
 ## 0.1.0
 

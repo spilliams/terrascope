@@ -12,7 +12,8 @@ import (
 // attributes gained from each scope value along the way, with attribute values
 // from narrower scopes overriding those of broader scopes
 type CompiledScope struct {
-	Attributes map[string]cty.Value
+	Attributes       map[string]cty.Value
+	attributeSources map[string]string
 
 	// can't do map of types to values because maps are unordered
 	ScopeTypes  []string
@@ -25,10 +26,14 @@ func (cs *CompiledScope) String() string {
 
 // Address returns the fully-qualified address of the receiver
 func (cs *CompiledScope) Address() string {
+	return addressFromScopeTypesAndValues(cs.ScopeTypes, cs.ScopeValues)
+}
+
+func addressFromScopeTypesAndValues(types []string, values []string) string {
 	addr := ""
-	for i := range cs.ScopeTypes {
-		addr += fmt.Sprintf("%s.%s", cs.ScopeTypes[i], cs.ScopeValues[i])
-		if i < len(cs.ScopeTypes)-1 {
+	for i := range types {
+		addr += fmt.Sprintf("%s.%s", types[i], values[i])
+		if i < len(types)-1 {
 			addr += "."
 		}
 	}
@@ -74,6 +79,12 @@ func (cs *CompiledScope) Matches(types map[string]string) (bool, error) {
 		}
 	}
 	return true, nil
+}
+
+// AttributeSource returns the source of the receiver's given attribute. Will
+// return an empty string if the receiver has no such attribute.
+func (cs *CompiledScope) AttributeSource(key string) string {
+	return cs.attributeSources[key]
 }
 
 func indexOf(item string, list []string) int {
