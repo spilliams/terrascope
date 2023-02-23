@@ -6,7 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.6
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
 	github.com/hashicorp/hcl/v2 v2.16.1
-	github.com/hashicorp/terraform-config-inspect v0.0.0-20230201191712-8cad743c8c26
+	github.com/hashicorp/terraform-config-inspect v0.0.0-20230223165911-2d94e3d51111
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
