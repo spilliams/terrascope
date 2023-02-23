@@ -25,13 +25,13 @@ func initLogger() {
 	logger.SetFormatter(&logformatter.PrefixedTextFormatter{
 		UseColor: true,
 	})
-	logger.SetLevel(logrus.DebugLevel)
+	logger.SetLevel(logrus.TraceLevel)
 
 	log = logger.WithField("prefix", "main")
 }
 
 func parseConfigAndProject() error {
-	configFile := "../../../terrascope.hcl"
+	configFile := "../../os/terrascope.hcl"
 	log.Debugf("Using project configuration file: %s", configFile)
 	var err error
 	project, err = terrascope.ParseProject(configFile, log.Logger)
@@ -52,10 +52,16 @@ func parseConfigAndProject() error {
 }
 
 func main() {
-	rootName := "account-bucket"
+	rootName := "aws-transit-gateway"
 	var scopes []string
 
-	dirs, err := project.BuildRoot(rootName, scopes)
+	err := project.AddAllRoots()
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
+
+	dirs, err := project.BuildRoot(rootName, scopes, false, terrascope.RootDependencyChainAll)
 	if err != nil {
 		log.Error(err)
 		os.Exit(1)
