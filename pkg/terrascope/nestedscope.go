@@ -41,12 +41,14 @@ func (ns *NestedScope) Count() int {
 // Optionally provide a parent scope to
 func (ns *NestedScope) CompiledScope(parent *CompiledScope) *CompiledScope {
 	attrs := make(map[string]cty.Value)
+	attrSources := make(map[string]string)
 	scopeTypes := make([]string, 0)
 	scopeValues := make([]string, 0)
 	if parent != nil {
 		// TODO: scope value attributes; do a deep copy
 		for k, v := range parent.Attributes {
 			attrs[k] = v
+			attrSources[k] = parent.Address()
 		}
 		scopeTypes = append(scopeTypes, parent.ScopeTypes...)
 		scopeValues = append(scopeValues, parent.ScopeValues...)
@@ -58,12 +60,14 @@ func (ns *NestedScope) CompiledScope(parent *CompiledScope) *CompiledScope {
 	for k, v := range ns.Attrs {
 		value, _ := v.Expr.Value(nil)
 		attrs[k] = value
+		attrSources[k] = addressFromScopeTypesAndValues(scopeTypes, scopeValues)
 	}
 
 	return &CompiledScope{
-		Attributes:  attrs,
-		ScopeTypes:  scopeTypes,
-		ScopeValues: scopeValues,
+		Attributes:       attrs,
+		attributeSources: attrSources,
+		ScopeTypes:       scopeTypes,
+		ScopeValues:      scopeValues,
 	}
 }
 

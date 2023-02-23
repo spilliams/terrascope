@@ -65,7 +65,6 @@ func BuildContext(rsc *rootScopeContext) (string, error) {
 		"name": cty.StringVal(rsc.root.Name),
 	})
 	scopeVariable := rsc.scope.ToCtyValue()
-	attributesVariable := cty.ObjectVal(rsc.scope.Attributes)
 
 	rsc.Trace("Building root")
 	// first gotta reparse the config
@@ -82,12 +81,17 @@ func BuildContext(rsc *rootScopeContext) (string, error) {
 	rsc.Tracef("  fully decoded root config: %+v", cfg)
 
 	destination := rsc.destination()
+
+	err = os.RemoveAll(destination)
+	if err != nil {
+		return "", err
+	}
+
 	err = os.MkdirAll(destination, 0755)
 	if err != nil {
 		return "", err
 	}
 
-	// TODO: empty the directory
 	err = rsc.copyAllFiles(rsc.rootDirectory(), destination)
 	if err != nil {
 		return "", err
@@ -103,12 +107,12 @@ func BuildContext(rsc *rootScopeContext) (string, error) {
 		return "", err
 	}
 
-	err = rsc.generateDebugFile(destination, rootVariable, scopeVariable, attributesVariable)
+	err = rsc.generateDebugFile(destination, rootVariable, scopeVariable, rsc.scope.Attributes, rsc.scope.attributeSources)
 	if err != nil {
 		return "", err
 	}
 
-	return rsc.destination(), nil
+	return destination, nil
 }
 
 func (rsc *rootScopeContext) copyAllFiles(srcDir, destDir string) error {
@@ -193,13 +197,13 @@ func (rsc *rootScopeContext) processInputs(inputs map[string]*cty.Value, destina
 	return err
 }
 
-func (rsc *rootScopeContext) generateDebugFile(destination string, rootVar, scopeVar, attrVar cty.Value) error {
+func (rsc *rootScopeContext) generateDebugFile(destination string, rootVar, scopeVar cty.Value, attrs map[string]cty.Value, attrSources map[string]string) error {
 	debugFile := hclwrite.NewEmptyFile()
 	body := debugFile.Body()
 
 	body.SetAttributeValue("root", rootVar)
 	body.SetAttributeValue("scope", scopeVar)
-	body.SetAttributeValue("attributes", attrVar)
+	body.SetAttributeRaw("attributes", hclhelp.TokensForObjectWithComments(attrs, attrSources))
 
 	file, err := os.Create(path.Join(destination, ".terrascope.context.hcl"))
 	if err != nil {

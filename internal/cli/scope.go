@@ -81,7 +81,11 @@ func printScope(scope *terrascope.CompiledScope) {
 	fmt.Printf("%s:\n", scope.Address())
 	for k, v := range scope.Attributes {
 		vPrint := cty.String(v)
-		fmt.Printf("\t%s: %s\n", k, vPrint)
+		source := scope.AttributeSource(k)
+		if len(source) == 0 {
+			source = "unknown"
+		}
+		fmt.Printf("\t%s: %s (from %s)\n", k, vPrint, source)
 	}
 }
 
