@@ -2,6 +2,12 @@
 
 See [Versioning](./README.md#Versioning) for how to regard these version numbers.
 
+## 0.2.0
+
+- The command `terrascope root graph-dependencies` is now
+  `terrascope project graph-roots`, to better align with other command naming
+  patterns.
+
 ## 0.1.2
 
 - Adds a command `terrascope root show ROOT` which will print out the terrascope

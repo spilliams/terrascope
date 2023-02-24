@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/awalterschulze/gographviz"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 	"github.com/sirupsen/logrus"
 	"github.com/spilliams/terrascope/internal/generate"
@@ -374,4 +375,32 @@ func (p *Project) IsScopeValue(address string) (bool, error) {
 // receiver doesn't know of a root by the given name.
 func (p *Project) GetRoot(rootName string) *Root {
 	return p.Roots[rootName]
+}
+
+func (p *Project) RootDependencyGraph() (string, error) {
+	graphAst, _ := gographviz.ParseString(`digraph G {}`)
+	graph := gographviz.NewGraph()
+	if err := gographviz.Analyse(graphAst, graph); err != nil {
+		return "", err
+	}
+	if err := graph.SetDir(true); err != nil {
+		return "", err
+	}
+
+	for name := range p.Roots {
+		if err := graph.AddNode("G", fmt.Sprintf("\"%s\"", name), nil); err != nil {
+			return "", err
+		}
+	}
+
+	for name, root := range p.Roots {
+		for _, dep := range root.Dependencies {
+			src := fmt.Sprintf("\"%s\"", dep.RootName)
+			dst := fmt.Sprintf("\"%s\"", name)
+			if err := graph.AddEdge(src, dst, true, nil); err != nil {
+				return "", err
+			}
+		}
+	}
+	return graph.String(), nil
 }

@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/spilliams/terrascope/internal/generate"
 )
@@ -15,6 +17,7 @@ func newProjectCommand() *cobra.Command {
 
 	cmd.AddCommand(newProjectGenerateCommand())
 	cmd.AddCommand(newProjectGenerateScopesCommand())
+	cmd.AddCommand(newProjectGraphRootDependenciesCommand())
 
 	return cmd
 }
@@ -42,5 +45,30 @@ func newProjectGenerateScopesCommand() *cobra.Command {
 		},
 	}
 
+	return cmd
+}
+
+func newProjectGraphRootDependenciesCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "graph-roots",
+		Short: "Prints out a DOT-format graph of the roots in this Terrascope project and their dependencies",
+
+		PersistentPreRunE: parseProject,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+
+			graph, err := project.RootDependencyGraph()
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(graph)
+
+			return nil
+		},
+	}
 	return cmd
 }

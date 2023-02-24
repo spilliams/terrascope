@@ -1,4 +1,4 @@
-version := 0.1.2
+version := 0.2.0
 githash := $(shell git rev-parse --short HEAD)
 buildtime := $(shell date -u '+%Y-%m-%d_%I:%M:%S%pm_%Z')
 ldflags := "\

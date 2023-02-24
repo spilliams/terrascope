@@ -6,7 +6,6 @@ import (
 	"path"
 	"sort"
 
-	"github.com/awalterschulze/gographviz"
 	"github.com/spf13/cobra"
 	"github.com/spilliams/terrascope/pkg/terrascope"
 )
@@ -24,7 +23,6 @@ func newRootCommand() *cobra.Command {
 	cmd.AddCommand(newRootBuildCommand())
 	cmd.AddCommand(newRootCleanCommand())
 	cmd.AddCommand(newRootGenerateCommand())
-	cmd.AddCommand(newRootGraphDependenciesCommand())
 	cmd.AddCommand(newRootGraphResourcesCommand())
 	cmd.AddCommand(newRootListCommand())
 	cmd.AddCommand(newRootShowCommand())
@@ -100,56 +98,6 @@ func newRootGenerateCommand() *cobra.Command {
 		},
 	}
 	return cmd
-}
-
-func newRootGraphDependenciesCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "graph-dependencies",
-		Short: "Prints out a DOT-format graph of the roots in this Terrascope project and their dependencies",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			err := project.AddAllRoots()
-			if err != nil {
-				return err
-			}
-
-			graph, err := initializeGraph()
-			if err != nil {
-				return err
-			}
-
-			for name := range project.Roots {
-				if err := graph.AddNode("G", fmt.Sprintf("\"%s\"", name), nil); err != nil {
-					return err
-				}
-			}
-
-			for name, root := range project.Roots {
-				for _, dep := range root.Dependencies {
-					src := fmt.Sprintf("\"%s\"", dep.RootName)
-					dst := fmt.Sprintf("\"%s\"", name)
-					if err := graph.AddEdge(src, dst, true, nil); err != nil {
-						return err
-					}
-				}
-			}
-			fmt.Println(graph.String())
-
-			return nil
-		},
-	}
-	return cmd
-}
-
-func initializeGraph() (*gographviz.Graph, error) {
-	graphAst, _ := gographviz.ParseString(`digraph G {}`)
-	graph := gographviz.NewGraph()
-	if err := gographviz.Analyse(graphAst, graph); err != nil {
-		return nil, err
-	}
-	if err := graph.SetDir(true); err != nil {
-		return nil, err
-	}
-	return graph, nil
 }
 
 func newRootGraphResourcesCommand() *cobra.Command {
