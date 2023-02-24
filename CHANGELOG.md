@@ -7,6 +7,14 @@ See [Versioning](./README.md#Versioning) for how to regard these version numbers
 - The command `terrascope root graph-dependencies` is now
   `terrascope project graph-roots`, to better align with other command naming
   patterns.
+- Adds a new command `terrascope module graph-resources DIR`, which prints an
+  experimental DOT-format graph of the resources inside a terraform module. This
+  command works on any module, not just one configured for a terrascope project.
+- Adds a new command `terrascope root graph-resources ROOT`, which does the same
+  thing as `module graph-resources`, but takes the name of a project root instead
+  of a whole directory path.
+- Updates dependency github.com/hashicorp/terraform-config-inspect digest to 2d94e3d
+- Updates module dependency github.com/zclconf/go-cty to v1.13.0
 
 ## 0.1.2
 
