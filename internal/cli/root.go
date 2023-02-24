@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
+	"path"
 	"sort"
 
 	"github.com/awalterschulze/gographviz"
@@ -24,6 +25,7 @@ func newRootCommand() *cobra.Command {
 	cmd.AddCommand(newRootCleanCommand())
 	cmd.AddCommand(newRootGenerateCommand())
 	cmd.AddCommand(newRootGraphDependenciesCommand())
+	cmd.AddCommand(newRootGraphResourcesCommand())
 	cmd.AddCommand(newRootListCommand())
 	cmd.AddCommand(newRootShowCommand())
 
@@ -139,6 +141,29 @@ func newRootGraphDependenciesCommand() *cobra.Command {
 			return nil
 		},
 	}
+	return cmd
+}
+
+func newRootGraphResourcesCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "graph-resources ROOT",
+		Short: "Prints out a DOT-format graph of the resource and data blocks in the given root.",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			err := project.AddAllRoots()
+			if err != nil {
+				return err
+			}
+			root := project.GetRoot(args[0])
+			graph, err := graphModule(path.Dir(root.Filename))
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(graph))
+			return nil
+		},
+	}
+
 	return cmd
 }
 

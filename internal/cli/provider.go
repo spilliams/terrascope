@@ -22,7 +22,7 @@ var defaultIgnoreNames = []string{".terraform/"}
 func newProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "provider COMMAND",
-		Short:   "a toolbox for working with Terraform providers",
+		Short:   "A toolbox for working with Terraform providers",
 		GroupID: commandGroupIDTunnelvision,
 	}
 
