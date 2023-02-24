@@ -1,11 +1,13 @@
 package hcl
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path"
 	"strings"
 
+	"github.com/awalterschulze/gographviz"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/terraform-config-inspect/tfconfig"
@@ -33,24 +35,12 @@ var configFileSchema = &hcl.BodySchema{
 type configuration struct {
 	locals map[string]*hcl.Attribute
 	blocks map[string]*hcl.Block
-	// ctx    *hcl.EvalContext
 }
 
 func newConfiguration() *configuration {
 	return &configuration{
 		locals: make(map[string]*hcl.Attribute, 0),
 		blocks: make(map[string]*hcl.Block, 0),
-		// ctx: &hcl.EvalContext{
-		// 	Variables: make(map[string]cty.Value, 0),
-		// 	Functions: map[string]function.Function{
-		// 		"upper":  stdlib.UpperFunc,
-		// 		"lower":  stdlib.LowerFunc,
-		// 		"min":    stdlib.MinFunc,
-		// 		"max":    stdlib.MaxFunc,
-		// 		"strlen": stdlib.StrlenFunc,
-		// 		"substr": stdlib.SubstrFunc,
-		// 	},
-		// },
 	}
 }
 
@@ -62,14 +52,14 @@ type Module interface {
 	ParseModuleDirectory(string) error
 	Parser() *hclparse.Parser
 	ParseTerraformFile(string) error
-	DependencyGraph() (map[string][]string, error)
+	DependencyGraph() (string, error)
 }
 
 type module struct {
 	cfg         *configuration
 	fundamental *hclparse.Parser
 	module      *tfconfig.Module
-	*logrus.Logger
+	*logrus.Entry
 }
 
 // NewModule builds an object that conforms to the ModuleParser interface
@@ -77,7 +67,7 @@ func NewModule(logger *logrus.Logger) Module {
 	return &module{
 		cfg:         newConfiguration(),
 		fundamental: hclparse.NewParser(),
-		Logger:      logger,
+		Entry:       logger.WithField("prefix", "module"),
 	}
 }
 
@@ -96,10 +86,8 @@ func (m *module) ParseModuleDirectory(dirname string) error {
 		if f.IsDir() {
 			continue
 		}
-		logrus.Debugf("examining file %s", f.Name())
 		if strings.HasSuffix(f.Name(), ".tf") || strings.HasSuffix(f.Name(), ".hcl") {
 			fullname := path.Join(dirname, f.Name())
-			logrus.Debug("parsing!")
 			if err := m.ParseTerraformFile(fullname); err != nil {
 				return err
 			}
@@ -157,7 +145,8 @@ func (m *module) ParseTerraformFile(filename string) error {
 	return nil
 }
 
-func (m *module) DependencyGraph() (map[string][]string, error) {
+// DependencyGraph returns a DOT-format graph of the receiver
+func (m *module) DependencyGraph() (string, error) {
 	graph := make(map[string][]string, 0)
 
 	for name, local := range m.cfg.locals {
@@ -167,12 +156,10 @@ func (m *module) DependencyGraph() (map[string][]string, error) {
 	for name, block := range m.cfg.blocks {
 		deps, err := blockDependencies(block)
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		graph[name] = deps
 	}
-
-	m.Debugf("dependency graph before pruning for index and unknowns: %#v", graph)
 
 	// dependencies go all the way through attribute names. For instance, an
 	// output.stack_name might depend on random_string.slug.result, but the
@@ -200,7 +187,38 @@ func (m *module) DependencyGraph() (map[string][]string, error) {
 		graph[upstream] = unique(keepers)
 	}
 
-	return graph, nil
+	graphJSON, err := json.MarshalIndent(graph, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	m.Debugf("dependencies:\n%s", string(graphJSON))
+
+	graphAst, _ := gographviz.ParseString(`digraph G {}`)
+	dotGraph := gographviz.NewGraph()
+	if err := gographviz.Analyse(graphAst, dotGraph); err != nil {
+		return "", err
+	}
+	if err := dotGraph.SetDir(true); err != nil {
+		return "", err
+	}
+
+	for name := range graph {
+		if err := dotGraph.AddNode("G", fmt.Sprintf("\"%s\"", name), nil); err != nil {
+			return "", err
+		}
+	}
+
+	for name, deps := range graph {
+		for _, dep := range deps {
+			src := fmt.Sprintf("\"%s\"", dep)
+			dst := fmt.Sprintf("\"%s\"", name)
+			if err := dotGraph.AddEdge(src, dst, true, nil); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	return dotGraph.String(), err
 }
 
 func unique[T comparable](list []T) []T {

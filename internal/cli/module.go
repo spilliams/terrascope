@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,7 +25,7 @@ func newModuleCommand() *cobra.Command {
 func newModuleGraphResourcesCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "graph-resources [DIRECTORY]",
-		Short: "graphs the root module at the given directory (`.` by default)",
+		Short: "(EXPERIMENTAL) graphs the root module at the given directory (`.` by default)",
 		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			rootDir, err := os.Getwd()
@@ -40,40 +39,24 @@ func newModuleGraphResourcesCommand() *cobra.Command {
 					return err
 				}
 			}
-			// outFilename := "output.dot"
-			graph, err := graphModule(rootDir)
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(graph))
-			return nil
+			return printModuleGraph(rootDir)
 		},
 	}
 }
 
-func graphModule(dir string) ([]byte, error) {
+func printModuleGraph(dir string) error {
 	log.Infof("reading configuration at %s", dir)
-	// logrus.Infof("outputting graph in file %s", outFilename)
 
 	parser := hcl.NewModule(log.Logger)
 	if err := parser.ParseModuleDirectory(dir); err != nil {
-		return nil, err
+		return err
 	}
-
-	// logrus.Debugf("%#v", parser.Parser())
-	// logrus.Debugf("%#v", parser.Module())
-	// logrus.Debugf("configuration: %#v", parser.Configuration())
-
-	// TODO: build a graph from the module
 
 	graph, err := parser.DependencyGraph()
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	graphJSON, err := json.MarshalIndent(graph, "", "  ")
-	if err != nil {
-		return nil, err
-	}
-	return graphJSON, err
+	fmt.Println(graph)
+	log.Warnf("Note: this graph is experimental and may not represent\n100%% of the resources or relationships of your configuration. If you know how\nthis could be improved, please submit an Issue or a PR to the source repository!\nhttps://github.com/spilliams/terrascope")
+	return nil
 }

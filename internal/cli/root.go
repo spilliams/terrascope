@@ -112,12 +112,8 @@ func newRootGraphDependenciesCommand() *cobra.Command {
 				return err
 			}
 
-			graphAst, _ := gographviz.ParseString(`digraph G {}`)
-			graph := gographviz.NewGraph()
-			if err := gographviz.Analyse(graphAst, graph); err != nil {
-				return err
-			}
-			if err := graph.SetDir(true); err != nil {
+			graph, err := initializeGraph()
+			if err != nil {
 				return err
 			}
 
@@ -144,10 +140,22 @@ func newRootGraphDependenciesCommand() *cobra.Command {
 	return cmd
 }
 
+func initializeGraph() (*gographviz.Graph, error) {
+	graphAst, _ := gographviz.ParseString(`digraph G {}`)
+	graph := gographviz.NewGraph()
+	if err := gographviz.Analyse(graphAst, graph); err != nil {
+		return nil, err
+	}
+	if err := graph.SetDir(true); err != nil {
+		return nil, err
+	}
+	return graph, nil
+}
+
 func newRootGraphResourcesCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "graph-resources ROOT",
-		Short: "Prints out a DOT-format graph of the resource and data blocks in the given root.",
+		Short: "(EXPERIMENTAL) Prints out a DOT-format graph of the resource and data blocks in the given root.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := project.AddAllRoots()
@@ -155,12 +163,7 @@ func newRootGraphResourcesCommand() *cobra.Command {
 				return err
 			}
 			root := project.GetRoot(args[0])
-			graph, err := graphModule(path.Dir(root.Filename))
-			if err != nil {
-				return err
-			}
-			fmt.Println(string(graph))
-			return nil
+			return printModuleGraph(path.Dir(root.Filename))
 		},
 	}
 
