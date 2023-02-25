@@ -23,7 +23,7 @@ func newProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "provider COMMAND",
 		Short:   "A toolbox for working with Terraform providers",
-		GroupID: commandGroupIDTunnelvision,
+		GroupID: commandGroupIDTerraformTools,
 	}
 
 	cmd.PersistentFlags().StringVarP(&topDir, "dir", "d", ".", "the directory to search")

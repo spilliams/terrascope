@@ -14,7 +14,7 @@ func newSpecificTerraformCommand(name string) *cobra.Command {
 		Short:   fmt.Sprintf("Runs `terraform %s` in the given root", name),
 		Long:    fmt.Sprintf("Runs `terraform %s` in the given root. Pass arguments to terraform after a `--` (for example `terrascope %s ROOT -- -lock=false`)", name, name),
 		Args:    cobra.MinimumNArgs(1),
-		GroupID: commandGroupIDTerraform,
+		GroupID: commandGroupIDTerraformShim,
 
 		PersistentPreRunE: parseProject,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -69,7 +69,7 @@ func newGenericTerraformCommand() *cobra.Command {
 		Short:   "Runs a given terraform command in the given root",
 		Long:    fmt.Sprintf("Runs a given terraform command in the given root. Pass arguments to terraform after a `--` (for example `terrascope tf ROOT -- state list`)"),
 		Args:    cobra.MinimumNArgs(1),
-		GroupID: commandGroupIDTerraform,
+		GroupID: commandGroupIDTerraformShim,
 
 		PersistentPreRunE: parseProject,
 		RunE: func(cmd *cobra.Command, args []string) error {
