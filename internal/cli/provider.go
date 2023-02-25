@@ -22,8 +22,8 @@ var defaultIgnoreNames = []string{".terraform/"}
 func newProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "provider COMMAND",
-		Short:   "a toolbox for working with Terraform providers",
-		GroupID: commandGroupIDTunnelvision,
+		Short:   "A toolbox for working with Terraform providers",
+		GroupID: commandGroupIDTerraformTools,
 	}
 
 	cmd.PersistentFlags().StringVarP(&topDir, "dir", "d", ".", "the directory to search")
