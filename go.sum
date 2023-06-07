@@ -33,6 +33,8 @@ github.com/hashicorp/terraform-config-inspect v0.0.0-20230308124657-d7dec65d5f3a
 github.com/hashicorp/terraform-config-inspect v0.0.0-20230308124657-d7dec65d5f3a/go.mod h1:l8HcFPm9cQh6Q0KSWoYPiePqMvRFenybP1CH2MjKdlg=
 github.com/hashicorp/terraform-config-inspect v0.0.0-20230313152339-7c9946b1df49 h1:RaeQ6nS6XH2p4hpV5MFHwDuXEcjfqn/HAKLlGyhdvfQ=
 github.com/hashicorp/terraform-config-inspect v0.0.0-20230313152339-7c9946b1df49/go.mod h1:l8HcFPm9cQh6Q0KSWoYPiePqMvRFenybP1CH2MjKdlg=
+github.com/hashicorp/terraform-config-inspect v0.0.0-20230522202058-dbe9bfcbfe7a h1:zKVsrHhIOWiXHYqFrOXfHacOOVDMYv+v/Wx8DUeyySs=
+github.com/hashicorp/terraform-config-inspect v0.0.0-20230522202058-dbe9bfcbfe7a/go.mod h1:l8HcFPm9cQh6Q0KSWoYPiePqMvRFenybP1CH2MjKdlg=
 github.com/hinshun/vt10x v0.0.0-20220119200601-820417d04eec h1:qv2VnGeEQHchGaZ/u7lxST/RaJw+cv273q79D81Xbog=
 github.com/hinshun/vt10x v0.0.0-20220119200601-820417d04eec/go.mod h1:Q48J4R4DvxnHolD5P8pOtXigYlRuPLGl6moFx3ulM68=
 github.com/inconshreveable/mousetrap v1.0.1 h1:U3uMjPSQEBMNp1lFxmllqCPM6P5u/Xq7Pgzkat/bFNc=
