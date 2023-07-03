@@ -46,12 +46,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.20
-
-      - name: Go Debug
-        run: |
-          go env
-          go get .
+          go-version: "^1.20"
+          cache: true
 
       - name: Go Build
         run: make build
