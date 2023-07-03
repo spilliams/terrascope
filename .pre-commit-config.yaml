@@ -15,12 +15,17 @@ repos:
       - id: trailing-whitespace
         name: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-      # - id: no-commit-to-branch
-      #   name: prevent-commits-to-default-branch
+      - id: no-commit-to-branch
+        name: prevent-commits-to-default-branch
       - id: check-merge-conflict
         name: check-merge-conflict
 
   # todo: actionlint
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.53.3
+    hooks:
+      - id: golangci-lint
+        name: golangci-lint
 
   - repo: https://github.com/adrienverge/yamllint
     rev: v1.32.0
