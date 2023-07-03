@@ -1,6 +1,6 @@
-version := 0.2.0
+version := 0.2.1
 githash := $(shell git rev-parse --short HEAD)
-buildtime := $(shell date -u '+%Y-%m-%d_%I:%M:%S%pm_%Z')
+buildtime := $(shell date -u '+%Y-%m-%d_%I:%M:%S%p_%Z')
 ldflags := "\
 	-X github.com/spilliams/terrascope/internal/version.versionNumber=$(version)\
 	-X github.com/spilliams/terrascope/internal/version.gitHash=$(githash)\

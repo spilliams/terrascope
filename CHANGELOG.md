@@ -2,6 +2,16 @@
 
 See [Versioning](./README.md#Versioning) for how to regard these version numbers.
 
+## 0.2.1
+
+- Dependency upgrades
+- Fixes a small typo in the build date visible in `terrascope version`
+
+This is probably the last beta version for a while that will have any features
+related to the "Big Idea" in the Readme. I'm going to split all that code off
+into a feature branch, because I want to keep developing (and releasing) other
+features without that unfinished project making me look bad.
+
 ## 0.2.0
 
 - The command `terrascope root graph-dependencies` is now
