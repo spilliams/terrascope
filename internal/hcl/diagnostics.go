@@ -27,24 +27,3 @@ func handleDiags(diags hcl.Diagnostics, files map[string]*hcl.File, writer io.Wr
 	}
 	return nil
 }
-
-// DiagnosticsWithoutSummary takes an error (should be type `hcl.Diagnostics`),
-// and filters out the ones with the given summary. It returns the rest.
-func DiagnosticsWithoutSummary(err error, summary string) error {
-	diags, typeOK := err.(hcl.Diagnostics)
-	if !typeOK {
-		return err
-	}
-
-	var newDiags hcl.Diagnostics
-	for _, diag := range diags {
-		if diag.Summary != summary {
-			newDiags = append(newDiags, diag)
-		}
-	}
-
-	if len(newDiags) > 0 {
-		return newDiags
-	}
-	return nil
-}
