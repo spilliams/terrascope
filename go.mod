@@ -1,6 +1,6 @@
 module github.com/spilliams/terrascope
 
-go 1.19
+go 1.20
 
 require (
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
