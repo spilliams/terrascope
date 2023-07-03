@@ -11,7 +11,7 @@ on:
       - main
 
 env:
-  GO111MODULE: true
+  GO111MODULE: "on"
 
 permissions:
   contents: read
