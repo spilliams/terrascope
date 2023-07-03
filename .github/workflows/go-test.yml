@@ -40,10 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - run: |
-          pre-commit --version
-          pre-commit run --from-ref origin/main --to-ref HEAD
+      - uses: actions/setup-python@v3
+      - uses: pre-commit/action@v3.0.0
+        with:
+          extra_args: --from-ref origin/main --to-ref HEAD
 
   build:
     name: build & test
