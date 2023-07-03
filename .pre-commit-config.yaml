@@ -50,5 +50,4 @@ repos:
     hooks:
       - id: go-build-mod
       - id: go-test-mod
-      # - id: go-vet
       - id: go-fmt
