@@ -36,6 +36,15 @@ jobs:
           version: latest
           args: --verbose
 
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - run: |
+          pre-commit --version
+          pre-commit run --from-ref origin/main --to-ref HEAD
+
   build:
     name: build & test
     runs-on: ubuntu-latest
