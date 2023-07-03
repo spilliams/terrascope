@@ -39,6 +39,7 @@ jobs:
           args: --verbose
 
   build:
+    name: build & test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
