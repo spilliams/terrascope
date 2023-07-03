@@ -3,7 +3,7 @@ package hcl
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 
@@ -78,7 +78,7 @@ func (m *module) ParseModuleDirectory(dirname string) error {
 	}
 	m.module = module
 
-	files, err := ioutil.ReadDir(dirname)
+	files, err := os.ReadDir(dirname)
 	if err != nil {
 		return err
 	}

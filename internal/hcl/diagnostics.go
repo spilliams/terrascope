@@ -22,7 +22,8 @@ func handleDiags(diags hcl.Diagnostics, files map[string]*hcl.File, writer io.Wr
 			100,   // wrapping width
 			false, // colors
 		)
-		wr.WriteDiagnostics(diags)
+		// ignore the errors that come from writing diagnostics as diagnostics
+		_ = wr.WriteDiagnostics(diags)
 		return fmt.Errorf("diagnostic errors found")
 	}
 	return nil
