@@ -2,6 +2,12 @@
 
 See [Versioning](./README.md#Versioning) for how to regard these version numbers.
 
+## 1.0.0
+
+Removes all features in the orchestration part of this tool.
+
+What remains are tools for provider inspection and an experimental module graph.
+
 ## 0.2.1
 
 - Dependency upgrades
