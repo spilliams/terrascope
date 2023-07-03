@@ -25,7 +25,7 @@ func newProviderCommand() *cobra.Command {
 		Short: "A toolbox for working with Terraform providers",
 	}
 
-	cmd.PersistentFlags().StringVarP(&topDir, "dir", "d", ".", "the directory to search")
+	cmd.PersistentFlags().StringVar(&topDir, "dir", ".", "the directory to search")
 	cmd.PersistentFlags().StringArrayVarP(&ignoreNames, "ignore", "i", []string{}, "names to ignore. `.terraform/` is appended to this list internally.")
 
 	cmd.AddCommand(newProviderCacheCmd())
