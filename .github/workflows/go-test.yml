@@ -40,6 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          # get the whole repo, not just the last commit, so
+          # we can compare changes on this branch to main
+          fetch-depth: 0
       - uses: actions/setup-python@v3
       - uses: pre-commit/action@v3.0.0
         with:
