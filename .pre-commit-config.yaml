@@ -1,0 +1,54 @@
+---
+default_stages: [commit]
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      # - id: check-executables-have-shebangs
+      #   name: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+        name: check-shebang-scripts-are-executable
+      # - id: check-symlinks
+      #   name: check-symlinks
+      - id: end-of-file-fixer
+        name: end-of-file-fixer
+      - id: trailing-whitespace
+        name: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      # - id: no-commit-to-branch
+      #   name: prevent-commits-to-default-branch
+      - id: check-merge-conflict
+        name: check-merge-conflict
+
+  # todo: actionlint
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.32.0
+    hooks:
+      - id: yamllint
+        name: yamllint
+        args: ["--strict"]
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.8.1
+    hooks:
+      - id: markdownlint-cli2
+        alias: markdownlint
+        name: markdownlint
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.23.2
+    hooks:
+      - id: check-github-workflows
+        name: check-github-workflows
+      - id: check-renovate
+        name: check-renovate
+        types: [file]
+
+  - repo: https://github.com/TekWizely/pre-commit-golang
+    rev: v0.8.3
+    hooks:
+      - id: go-build-mod
+      - id: go-test-mod
+      # - id: go-vet
+      - id: go-fmt

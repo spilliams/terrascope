@@ -1,4 +1,4 @@
-# Hypothetically...
+# Hypothetically
 
 Let's say your company ("Acme Inc") wants to operate in the cloud. They've
 chosen AWS as a cloud provider, and have given you a credit card to go set it
