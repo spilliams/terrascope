@@ -1,4 +1,4 @@
-version := 0.2.1
+version := 1.0.0
 githash := $(shell git rev-parse --short HEAD)
 buildtime := $(shell date -u '+%Y-%m-%d_%I:%M:%S%p_%Z')
 ldflags := "\
@@ -17,3 +17,10 @@ install:
 .PHONY: test
 test:
 	go test ./...
+
+.PHONY: lint
+lint:
+	# binary will be $(go env GOPATH)/bin/golangci-lint
+	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.53.3
+
+	golangci-lint run -v

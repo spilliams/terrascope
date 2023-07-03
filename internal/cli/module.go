@@ -14,7 +14,6 @@ func newModuleCommand() *cobra.Command {
 		Use:     "module",
 		Aliases: []string{"m"},
 		Short:   "A toolbox for working with Terraform modules",
-		GroupID: commandGroupIDTerraformTools,
 	}
 
 	cmd.AddCommand(newModuleGraphResourcesCommand())

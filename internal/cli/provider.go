@@ -21,12 +21,11 @@ var defaultIgnoreNames = []string{".terraform/"}
 
 func newProviderCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "provider COMMAND",
-		Short:   "A toolbox for working with Terraform providers",
-		GroupID: commandGroupIDTerraformTools,
+		Use:   "provider COMMAND",
+		Short: "A toolbox for working with Terraform providers",
 	}
 
-	cmd.PersistentFlags().StringVarP(&topDir, "dir", "d", ".", "the directory to search")
+	cmd.PersistentFlags().StringVar(&topDir, "dir", ".", "the directory to search")
 	cmd.PersistentFlags().StringArrayVarP(&ignoreNames, "ignore", "i", []string{}, "names to ignore. `.terraform/` is appended to this list internally.")
 
 	cmd.AddCommand(newProviderCacheCmd())
@@ -344,4 +343,11 @@ func setIntersect[T comparable](one, two []T) []T {
 		}
 	}
 	return final
+}
+
+func pluralize(single, plural string, count int) string {
+	if count == 1 {
+		return single
+	}
+	return plural
 }
