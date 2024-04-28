@@ -43,7 +43,7 @@ jobs:
           # get the whole repo, not just the last commit, so
           # we can compare changes on this branch to main
           fetch-depth: 0
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
       - uses: pre-commit/action@v3.0.0
         with:
           extra_args: --from-ref origin/main --to-ref HEAD
