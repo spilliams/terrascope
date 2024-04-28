@@ -2,10 +2,7 @@
 
 A kitchen-sink of terraform tools.
 
-This repository contains both the source code for the tool `terrascope`
-
-Note: if you are looking for the Terraform orchestration tool of the same name,
-knwo that it is in this repo, under the branch `feature/scopes`.
+Note: if you are looking for the Terraform orchestration tool of the same name, know that it is in this repo, under the branch `feature/scopes`.
 
 ## Installation & Usage
 
