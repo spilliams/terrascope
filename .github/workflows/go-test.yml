@@ -23,14 +23,14 @@ jobs:
       pull-requests: read # for golangci/golangci-lint-action to fetch PRs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: "^1.20"
           check-latest: true
 
-      - uses: golangci/golangci-lint-action@v3.7.1
+      - uses: golangci/golangci-lint-action@v5.0.0
         with:
           version: latest
           args: --verbose
@@ -38,13 +38,13 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # get the whole repo, not just the last commit, so
           # we can compare changes on this branch to main
           fetch-depth: 0
-      - uses: actions/setup-python@v4
-      - uses: pre-commit/action@v3.0.0
+      - uses: actions/setup-python@v5
+      - uses: pre-commit/action@v3.0.1
         with:
           extra_args: --from-ref origin/main --to-ref HEAD
 
@@ -52,10 +52,10 @@ jobs:
     name: build & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: "^1.20"
 
