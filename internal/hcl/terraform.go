@@ -2,6 +2,7 @@ package hcl
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -74,7 +75,7 @@ func NewModule(logger *logrus.Logger) Module {
 func (m *module) ParseModuleDirectory(dirname string) error {
 	module, diags := tfconfig.LoadModule(dirname)
 	if diags.HasErrors() {
-		return fmt.Errorf(diags.Error())
+		return errors.New(diags.Error())
 	}
 	m.module = module
 
