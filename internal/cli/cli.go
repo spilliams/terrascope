@@ -54,6 +54,7 @@ func NewTerrascopeCmd() *cobra.Command {
 
 	cmd.AddCommand(newModuleCommand())
 	cmd.AddCommand(newProviderCommand())
+	cmd.AddCommand(newServerCommand())
 
 	return cmd
 }
