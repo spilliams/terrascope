@@ -1,6 +1,6 @@
 # demo flow
 
-(checkboxes indicate the feature is built)
+(checkboxes indicate the feature is built in feature/scopes)
 
 1. [x] create a new project from nothing.
    1. [x] prompts for top directory, project name, scope names, roots directory,
