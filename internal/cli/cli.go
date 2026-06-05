@@ -19,6 +19,10 @@ var quiet bool
 var verbose bool
 var vertrace bool
 
+var all bool
+var yesOne bool
+var noNone bool
+
 var log *logrus.Entry
 
 func init() {
@@ -57,6 +61,7 @@ func NewTerrascopeCmd() *cobra.Command {
 		Short: "A build orchestrator for terraform monorepos",
 	}
 
+	cmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "d", false, "don't actually execute the task, just print it out")
 	cmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "increase log output")
 	cmd.PersistentFlags().BoolVar(&vertrace, "vvv", false, "increase log output even more")
 	cmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "silences all logs but the errors (and prints those to stderr). Still prints command output to stdout. Overrides verbose and vvv")
