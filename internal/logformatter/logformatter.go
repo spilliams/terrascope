@@ -51,13 +51,13 @@ func (ptf *PrefixedTextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	}
 
 	// this mutates b
-	print(b, entry, keys, timestampFormat, colorScheme)
+	err := print(b, entry, keys, timestampFormat, colorScheme)
 
-	return b.Bytes(), nil
+	return b.Bytes(), err
 }
 
 func print(wr io.Writer, entry *logrus.Entry, keys []string,
-	timestampFormat string, colorScheme *colorScheme) {
+	timestampFormat string, colorScheme *colorScheme) error {
 
 	levelColorFunc := colorScheme.levelColorFunc(entry.Level)
 	levelText := entry.Level.String()
@@ -75,7 +75,10 @@ func print(wr io.Writer, entry *logrus.Entry, keys []string,
 	timestampColorFunc := colorScheme.timestampColorFunc()
 	timestampText := timestampColorFunc(entry.Time.Format(timestampFormat))
 
-	fmt.Fprintf(wr, "%s%s %s%s", timestampText, levelText, prefixText, entry.Message)
+	_, err := fmt.Fprintf(wr, "%s%s %s%s", timestampText, levelText, prefixText, entry.Message)
+	if err != nil {
+		return err
+	}
 
 	for _, k := range keys {
 		if k == "prefix" {
@@ -83,8 +86,12 @@ func print(wr io.Writer, entry *logrus.Entry, keys []string,
 		}
 
 		v := entry.Data[k]
-		fmt.Fprintf(wr, " %s=%+v", levelColorFunc(k), v)
+		_, err = fmt.Fprintf(wr, " %s=%+v", levelColorFunc(k), v)
+		if err != nil {
+			return err
+		}
 	}
 
-	fmt.Fprintln(wr, "")
+	_, err = fmt.Fprintln(wr, "")
+	return err
 }
