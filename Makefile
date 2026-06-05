@@ -12,7 +12,7 @@ build:
 
 .PHONY: install
 install:
-	go build -ldflags "${ldflags}" -o $$GOPATH/bin/terrascope main.go
+	go build -ldflags ${ldflags} -o $$GOPATH/bin/terrascope main.go
 
 .PHONY: test
 test:

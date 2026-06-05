@@ -23,6 +23,15 @@ func TestDependencyGraph(t *testing.T) {
 
 }`,
 		},
+		{
+			moduleDir: "../../fixtures/roots/mapped-resource",
+			expectedGraph: `digraph G {
+	"var.keys"->"random_string.this";
+	"random_string.this";
+	"var.keys";
+
+}`,
+		},
 	}
 
 	for _, tc := range tests {
