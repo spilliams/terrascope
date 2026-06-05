@@ -13,44 +13,49 @@ environments.
 You decide to use AWS Organizations to power your infrastructure. You also want
 to keep some bulkheads in place to help contain certain organization- or
 networking-related elements from application- or product-related elements. With
-this in ind, you set up the following AWS accounts:
+this in mind, you set up the following AWS accounts:
 
 1. an Organization account. This will be your Consolidated Billing account for
    the entirety of Acme Inc's engineering department. All other accounts will be
    made inside of this account.
-2. a Security Portal account. This is where you'll manage the IAM users for your
+2. a Security account. This is where you'll manage the IAM users for your
    engineers, managers, third-party vendors, etc.
-3. a Networking account. This is where you'll set up a VPN that will connect all
-   the domain accounts' private subnets to each other, so that engineers can do
-   their work without sending database credentials over the Internet.
-4. a set of Domain accounts: one set per team, and within each set will be a
-   Dev, Stage and Prod account.
+3. a Networking account. This is where you'll set up a VPN and Transit Gateways
+   that will connect all the domain accounts' private subnets to each other, so
+   that engineers can do their work without sending database credentials over
+   the Internet.
+4. a set of Domain accounts: one set per product (not necessarily one per team,
+   but close, hopefully), and within each will be some Environment account(s).
 
-Since you're just starting out, you set up one set of Domain accounts for your
-primary engineering team: the Product team. This means you now have 6 accounts
-to manage! Organization, Security Portal, Networking, Product Dev, Product
-Stage, and Product Prod.
+Since you're just starting out, you create one set of Domain accounts for your
+primary engineering team: the Product team. You create accounts for Product Dev,
+Product Stage, and Product Prod. This means you now have 6 accounts to manage!
+Organization, Security, Networking, Product Dev, Product Stage, and Product Prod.
 
 Because you also need a sandbox for your own team to develop changes to your
-infrastructure, you need a second Security Portal, Networking and set of Domain
-accounts. So this is 5 more accounts to manage, and the names "Security Portal"
+infrastructure, you need a second Security, Networking and set of Domain
+accounts. So this is 5 more accounts to manage, and the names "Security"
 and "Networking" are already taken. Time to introduce the first core concept of
 terrascope: scope.
 
 A "scope" here refers to a layer of infrastructure. You can define your own set
 of scopes for your infrastructure, and `terrascope` will pick up on it, but for
-this hypothetical situation we want to define the following:
+this hypothetical situation we want to use the following scopes as an example:
 
 - an `org` (e.g. "Acme Inc") contains an Organization account and several
   platforms.
-- a `platform` (e.g. "Gold", "Silver", or "Bronze") contains one Security Portal
+- a `platform` (e.g. "Gold", "Silver", or "Bronze") contains one Security
   and one Networking account, as well as several domains.
-- a `domain` (e.g. "Product", or "Red") contains three environments.
+- a `domain` (e.g. "Product") contains three environments.
 - an `environment` (e.g. "Dev", "Stage", or "Prod") contains the AWS accounts
   for our engineers ("Product Dev" etc), as well as any primary deployment
-  regions within those environments.
-- a `region` (e.g. "us-west-2") contains regional resources in an environment
+  regions within those environments. Note that an environment has a _name_ and a
+  _type_. This is important later. For now consider the example environments to
+  have names equal to their types.
+- a `region` (e.g. "us-west-2") contains regional resources within an environment
   account.
+- we won't go this deep in this example, but you could also end up with a `zone`
+  scope for mapping resources in a specific availability-zone.
 
 The scope types for this hypothetical situation are: `org`, `platform`,
 `domain`, `environment`, and `region`.
@@ -58,8 +63,9 @@ The scope types for this hypothetical situation are: `org`, `platform`,
 At every level of this infrastructure, we could have a terraform root
 configuration that says "build me these resources". At any level we could also
 want our roots to depend on the levels before it. For instance: at the
-`environment` scope we provision a single S3 bucket in every domain account, and
-at the `region` scope below it we provision prefixes inside that s3 bucket.
+`environment` scope we provision a single S3 bucket in every domain environment
+account, and at the `region` scope below it we provision prefixes inside that s3
+bucket.
 
 The goal of `terrascope` is to be able to manage this kind of infrastructure
 without having 500 separate terraform root configurations which are mostly
