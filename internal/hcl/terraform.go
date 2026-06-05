@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"os"
 	"path"
 	"strings"
@@ -13,9 +14,13 @@ import (
 	"github.com/hashicorp/hcl/v2/hclparse"
 	"github.com/hashicorp/terraform-config-inspect/tfconfig"
 	"github.com/sirupsen/logrus"
+	"github.com/zclconf/go-cty/cty/gocty"
 )
 
 const separator = "."
+const indexLeft = "["
+const indexRight = "]"
+const splat = "[*]"
 
 // configFileSchema is the schema for the top-level of a config file. We use
 // the low-level HCL API for this level so we can easily deal with each
@@ -149,9 +154,13 @@ func (m *module) ParseTerraformFile(filename string) error {
 // DependencyGraph returns a DOT-format graph of the receiver
 func (m *module) DependencyGraph() (string, error) {
 	graph := make(map[string][]string, 0)
+	var err error
 
 	for name, local := range m.cfg.locals {
-		graph[name] = attributeDependencies(local)
+		graph[name], err = attributeDependencies(local)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	for name, block := range m.cfg.blocks {
@@ -245,23 +254,29 @@ func (m *module) Has(path string) bool {
 	return false
 }
 
-func attributeDependencies(attr *hcl.Attribute) []string {
+// attributeDependencies examines an hcl Attribute for its dependencies,
+// and returns...what, exactly?
+func attributeDependencies(attr *hcl.Attribute) ([]string, error) {
 	return expressionDependencies(attr.Expr)
 }
 
 func blockDependencies(block *hcl.Block) ([]string, error) {
-	deps := make([]string, 0)
+	blockDeps := make([]string, 0)
 
 	attrs, _ := block.Body.JustAttributes()
 	for _, attr := range attrs {
-		deps = append(deps, attributeDependencies(attr)...)
+		attrDeps, err := attributeDependencies(attr)
+		if err != nil {
+			return nil, err
+		}
+		blockDeps = append(blockDeps, attrDeps...)
 	}
 
 	// TODO how can we take into account exprs of nested blocks?
-	return deps, nil
+	return blockDeps, nil
 }
 
-func expressionDependencies(expr hcl.Expression) []string {
+func expressionDependencies(expr hcl.Expression) ([]string, error) {
 	deps := make([]string, 0)
 	for _, traversal := range expr.Variables() {
 		var varName string
@@ -270,12 +285,38 @@ func expressionDependencies(expr hcl.Expression) []string {
 				varName = step.(hcl.TraverseRoot).Name
 				continue
 			}
-			varName += separator + step.(hcl.TraverseAttr).Name
+			stepAsAttr, ok := step.(hcl.TraverseAttr)
+			if ok {
+				varName += separator + stepAsAttr.Name
+				continue
+			}
+			stepAsIndex, ok := step.(hcl.TraverseIndex)
+			// TraverseIndex can be a big.Float or a string
+			if ok {
+				var indexString string
+				errString := gocty.FromCtyValue(stepAsIndex.Key, &indexString)
+				if errString != nil {
+					varName += indexLeft + indexString + indexRight
+					continue
+				}
+				var indexFloat *big.Float
+				errFloat := gocty.FromCtyValue(stepAsIndex.Key, &indexFloat)
+				if errFloat != nil {
+					varName += indexLeft + indexFloat.String() + indexRight
+					continue
+				}
+				return nil, fmt.Errorf("could not read dependencies of %v, because index was neither string nor float. Error when converting to string: %v. Error when converting to float: %v", varName, errString.Error(), errFloat.Error())
+			}
+			_, ok = step.(hcl.TraverseSplat)
+			if ok {
+				varName += splat
+				continue
+			}
 		}
 		deps = append(deps, varName)
 	}
 
-	return deps
+	return deps, nil
 }
 
 func (m *module) Parser() *hclparse.Parser {

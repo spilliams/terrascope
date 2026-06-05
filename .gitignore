@@ -6,6 +6,7 @@ bin/
 
 # some files i like to play with
 *.tf
+!fixtures/**/*.tf
 *.hcl
 *.tfl
 *.svg
