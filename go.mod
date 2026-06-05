@@ -3,6 +3,7 @@ module github.com/spilliams/terrascope
 go 1.25
 
 require (
+	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
 	github.com/hashicorp/hcl/v2 v2.24.0
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20260224005459-813a97530220
@@ -19,6 +20,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect

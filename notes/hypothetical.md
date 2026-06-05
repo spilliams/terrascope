@@ -20,12 +20,11 @@ this in mind, you set up the following AWS accounts:
    made inside of this account.
 2. a Security account. This is where you'll manage the IAM users for your
    engineers, managers, third-party vendors, etc.
-3. a Networking account. This is where you'll set up a VPN and Transit Gateways
-   that will connect all the domain accounts' private subnets to each other, so
-   that engineers can do their work without sending database credentials over
-   the Internet.
-4. a set of Domain accounts: one set per product (not necessarily one per team,
-   but close, hopefully), and within each will be some Environment account(s).
+3. a Networking account. This is where you'll set up a VPN that will connect all
+   the domain accounts' private subnets to each other, so that engineers can do
+   their work without sending database credentials over the Internet.
+4. a set of Domain accounts: one set per team, and within each set will be a
+   Dev, Stage and Prod account.
 
 Since you're just starting out, you create one set of Domain accounts for your
 primary engineering team: the Product team. You create accounts for Product Dev,
