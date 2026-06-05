@@ -1,6 +1,6 @@
 module github.com/spilliams/terrascope
 
-go 1.23.0
+go 1.25
 
 require (
 	github.com/awalterschulze/gographviz v2.0.3+incompatible
@@ -9,7 +9,7 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
-	github.com/zclconf/go-cty v1.16.3
+	github.com/zclconf/go-cty v1.18.1
 )
 
 require (
