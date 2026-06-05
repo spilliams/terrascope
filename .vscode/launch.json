@@ -9,7 +9,12 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${fileDirname}",
+            "program": "main.go",
+            "args": [
+                "module",
+                "graph-resources",
+                "./fixtures/roots/mapped-resource"
+            ]
         }
     ]
 }

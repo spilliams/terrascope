@@ -16,6 +16,9 @@ import (
 )
 
 const separator = "."
+const indexLeft = "["
+const indexRight = "]"
+const splat = "[*]"
 
 // configFileSchema is the schema for the top-level of a config file. We use
 // the low-level HCL API for this level so we can easily deal with each
@@ -245,6 +248,8 @@ func (m *module) Has(path string) bool {
 	return false
 }
 
+// attributeDependencies examines an hcl Attribute for its dependencies,
+// and returns...what, exactly?
 func attributeDependencies(attr *hcl.Attribute) []string {
 	return expressionDependencies(attr.Expr)
 }
@@ -270,7 +275,22 @@ func expressionDependencies(expr hcl.Expression) []string {
 				varName = step.(hcl.TraverseRoot).Name
 				continue
 			}
-			varName += separator + step.(hcl.TraverseAttr).Name
+			stepAsAttr, ok := step.(hcl.TraverseAttr)
+			if ok {
+				varName += separator + stepAsAttr.Name
+				continue
+			}
+			stepAsIndex, ok := step.(hcl.TraverseIndex)
+			if ok {
+				stepFloat := stepAsIndex.Key.AsBigFloat()
+				varName += indexLeft + stepFloat.String() + indexRight
+				continue
+			}
+			_, ok = step.(hcl.TraverseSplat)
+			if ok {
+				varName += splat
+				continue
+			}
 		}
 		deps = append(deps, varName)
 	}
